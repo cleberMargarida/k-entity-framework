@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<OutputType>Library</OutputType>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+
+		<!-- NuGet Metadata -->
+		<IsPackable>true</IsPackable>
+		<PackageId>Kafka.KEntityFramework</PackageId>
+		<Authors>cleberMargarida</Authors>
+		<Description>A .NET library to simplify Apache Kafka producer and consumer configuration and usage.</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/cleberMargarida/k-entity-framework</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/cleberMargarida/k-entity-framework</PackageProjectUrl>
+		<DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+		<Title>Kafka.KEntityFramework</Title>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="bin\Debug\netstandard2.0\Kafka.KEntityFramework.dll" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" />
+		<None Remove="bin\Debug\netstandard2.0\Kafka.KEntityFramework.xml" />
+		<None Include="$(OutputPath)$(AssemblyName).xml" Pack="true" PackagePath="analyzers/dotnet/cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Confluent.Kafka" Version="2.10.1" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="[1.0.0,)" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="[3.11.0,)">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="[4.8.0,)" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.0" />
+		<PackageReference Include="Nerdbank.GitVersioning" Version="[3.6.141,)">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+</Project>
