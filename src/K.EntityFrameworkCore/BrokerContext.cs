@@ -23,6 +23,19 @@ public abstract class BrokerContext
         _ = nameof(Confluent.Kafka.IProducer<string, string>.ProduceAsync);
         throw new NotImplementedException("This method is not implemented. Use a producer to send messages to the topic.");
     }
+        /// <inheritdoc/>
+    public virtual void ProduceRange(object[] message, IEnumerable<KeyValuePair<string, string>>? headers = default)
+    {
+        _ = nameof(Confluent.Kafka.IProducer<string, string>.Produce);
+        throw new NotImplementedException("This method is not implemented. Use a producer to send messages to the topic.");
+    }
+
+    /// <inheritdoc/>
+    public virtual Task ProduceRangeAsync(object[] message, IEnumerable<KeyValuePair<string, string>>? headers = default, CancellationToken cancellationToken = default)
+    {
+        _ = nameof(Confluent.Kafka.IProducer<string, string>.ProduceAsync);
+        throw new NotImplementedException("This method is not implemented. Use a producer to send messages to the topic.");
+    }
 
     public virtual void Flush(CancellationToken cancellationToken = default)
     {

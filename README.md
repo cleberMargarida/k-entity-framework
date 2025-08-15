@@ -7,11 +7,11 @@ Here is an example of how to create a producer and send messages to a Kafka topi
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddBrokerContext("localhost:9092");
+builder.Services.AddBrokerContext<MyBrokerContext>("localhost:9092");
 
 var app = builder.Build();
 
-var kafka = app.Services.GetService<Kafka>();
+var kafka = app.Services.GetService<MyBrokerContext>();
 
 await kafka.OrderEvents.ProduceAsync(new OrderPlaced());
 ```
@@ -21,13 +21,13 @@ Here is an example of how to create a consumer and read messages from a Kafka to
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddBrokerContext("localhost:9092");
+builder.Services.AddBrokerContext<MyBrokerContext>("localhost:9092");
 
 var app = builder.Build();
 
-var kafka = app.Services.GetService<Kafka>();
+var kafka = app.Services.GetService<MyBrokerContext>();
 
-var result = await kafka.OrderEvents.Consumer.ConsumeAsync();
+var result = await kafka.OrderEvents.FirstAsync();
 
-await kafka.OrderEvents.Consumer.CommitAsync();
+await kafka.OrderEvents.CommitAsync();
 ```
