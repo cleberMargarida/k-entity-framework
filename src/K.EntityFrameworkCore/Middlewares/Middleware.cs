@@ -19,17 +19,12 @@ internal abstract class Middleware<T>(MiddlewareOptions<T> options) : IMiddlewar
 
     protected void Use(IMiddleware<T> middleware)
     {
-        middlewareStack.Push(middleware);
+        if (middleware.IsEnabled)
+            middlewareStack.Push(middleware);
     }
 
     public virtual ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default)
     {
-        // Only execute middleware if it's enabled
-        if (!IsEnabled)
-        {
-            return ValueTask.CompletedTask;
-        }
-
         return middlewareStack.Pop().InvokeAsync(message, cancellationToken);
     }
 }

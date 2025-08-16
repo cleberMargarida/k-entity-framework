@@ -1,23 +1,24 @@
-﻿using K.EntityFrameworkCore.Interfaces;
-
-namespace K.EntityFrameworkCore.Middlewares;
+﻿namespace K.EntityFrameworkCore.Middlewares;
 
 internal class ConsumerMiddlewareInvoker<T> : Middleware<T>
     where T : class
 {
-    private ConsumerMiddlewareInvoker(params Middleware<T>[] middlewares)
-    {
-        foreach (var middleware in middlewares)
-        {
-            if (middleware.IsEnabled) Use(middleware);
-        }
-    }
-
     public ConsumerMiddlewareInvoker(
           InboxMiddleware<T> inboxMiddleware
         , RetryMiddleware<T> retryMiddleware
-        , ) 
-        : this(retryMiddleware, inboxMiddleware)
+        , CircuitBreakerMiddleware<T> circuitBreakerMiddleware
+        , ThrottleMiddleware<T> throttleMiddleware
+        , BatchMiddleware<T> batchMiddleware
+        , AwaitForgetMiddleware<T> awaitForgetMiddleware
+        , FireForgetMiddleware<T> fireForgetMiddleware
+        )
     {
+        Use(inboxMiddleware);
+        Use(retryMiddleware);
+        Use(circuitBreakerMiddleware);
+        Use(throttleMiddleware);
+        Use(batchMiddleware);
+        Use(awaitForgetMiddleware);
+        Use(fireForgetMiddleware);
     }
 }
