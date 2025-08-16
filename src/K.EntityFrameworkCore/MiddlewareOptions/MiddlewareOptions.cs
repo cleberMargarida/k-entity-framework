@@ -4,7 +4,7 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// Base class for all middleware configuration options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public abstract class MiddlewareOptions<T>
+public class MiddlewareOptions<T>
     where T : class
 {
     /// <summary>
