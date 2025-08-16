@@ -2,7 +2,7 @@
 
 namespace K.EntityFrameworkCore.Middlewares;
 
-internal class CustomerMiddleware<T, TCustom>(TCustom middleware) : Middleware<T>
+internal class CustomMiddleware<T, TCustom>(TCustom middleware) : Middleware<T>
     where T : class
     where TCustom : IMiddleware<T>
 {
