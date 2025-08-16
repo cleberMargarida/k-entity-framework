@@ -1,91 +1,74 @@
 ﻿using HelloWorld;
-using KEntityFramework;
+using K.EntityFrameworkCore;
+using K.EntityFrameworkCore.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddBrokerContext<MyBrokerContext>("localhost:9092");
+builder.Services.AddDbContext<MyDbContext>(optionsBuilder => 
+{
+    optionsBuilder.UseKafkaExtensibility(client =>
+    {
+        client.BootstrapServers = "localhost:9092"; // Adjust to your Kafka server
+        //...
+    });
+});
 
 using var app = builder.Build();
 
 app.Start();
 
-var kafka = app.Services.GetRequiredService<MyBrokerContext>();
+var scope = app.Services.CreateScope();
 
-/*
-publish synchrounsly
-kafka.OrderEvents.Produce(new OrderEvent());
+var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
-publish asynchronously but without specifying the topic
-await kafka.ProduceAsync(new OrderEvent());
+// here you're intending to mark the entity to be persisted.
+dbContext.Orders.Add(new Order { Status = "New" });
 
-publish synchronously but without specifying the topic
-kafka.Produce(new OrderEvent());
- */
-await kafka.OrderEvents.ProduceAsync(new OrderEvent());
+// here you're signing the event to be published.
+dbContext.OrderEvents.Publish(new OrderCreated { Id = 1, Status = "Created" });
 
-var result =  await kafka.OrderEvents.FirstAsync();
+// here you're saving the changes to the database and publishing the event.
+await dbContext.SaveChangesAsync();
 
-await kafka.OrderEvents.CommitAsync();
+// here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
+while (await dbContext.OrderEvents.MoveNextAsync())
+{
+    // here you're accessing event related to the current offset.
+    _ = dbContext.OrderEvents.Current;
 
-app.WaitForShutdown();
+    // here you're commiting the offset of the current event.
+    await dbContext.SaveChangesAsync();
+}
 
 namespace HelloWorld
 {
-    public class MyBrokerContext : BrokerContext
+    public class MyDbContext(DbContextOptions options) : DbContext(options)
     {
-        public Topic<OrderEvent> OrderEvents { get; set; }
-        public Topic<CustomerEvent> CustomerEvents { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
-        protected override void OnModelCreating(BrokerModelBuilder model)
+        public Topic<OrderCreated> OrderEvents { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            model.Topic<OrderEvent>(topic =>
-            {
-                topic.HasName("order-events")
-                     .HasSetting(x => x.RetentionMs = "5000");
-
-                topic.HasProducer()// adding producer registers the ProduceAsync
-                     .HasKey(x => x.OrderId)
-                     .SetSerializer(x => x.UseJsonSerializer())
-                     .Features
-                        .AddOutbox(outbox => outbox.UseInMemory())
-                        .AddRetry(retry => retry.WithIntervals(100, 500, 3000));
-
-                topic.HasConsumer()// adding consumer register the GetConsumer
-                     .GroupId("hello-world-consumer")
-                     .SetDeserializer(x => x.UseJsonDeserializer())
-                     .UseHandler<ConsoleHandler>();//adding handler do not register the GetConsumer extension
-            });
-
-            model.Topic<CustomerEvent>(topic =>
-            {
-                topic.HasName("customer-events").HasConsumer();
-            });
+            optionsBuilder.UseSqlServer();
         }
 
-        protected override void OnConfiguring(BrokerOptionsBuilder options)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            options.WithBootstrapServers("localhost:9092")
-                   .WithClientId("HelloWorldClient");
+            base.OnModelCreating(modelBuilder);
         }
     }
 
-    internal class ConsoleHandler
+    public class Order
     {
-        public static async ValueTask HandleAsync(OrderEvent message, ConsumeContext context, CancellationToken cancellationToken = default)
-        {
-            Console.WriteLine($"Received Order Event: {message.OrderId} at {context.Timestamp}");
-
-            await context.CommitAsync(cancellationToken);
-        }
+        public int Id { get; set; }
+        public string Status { get; set; }
     }
 
-    public class CustomerEvent
+    public class OrderCreated
     {
-        public string CustomerId { get; set; }
-    }
-
-    public class OrderEvent
-    {
-        public string OrderId { get; set; }
+        public int Id { get; set; }
+        public string Status { get; set; }
     }
 }

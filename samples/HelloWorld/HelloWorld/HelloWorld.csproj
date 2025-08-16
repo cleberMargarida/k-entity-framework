@@ -14,12 +14,12 @@
 
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.19" />
 	  <PackageReference Include="System.Linq.Async" Version="6.0.3" />
 	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\src\K.EntityFrameworkCore\K.EntityFrameworkCore.csproj" />
-    <ProjectReference Include="..\..\..\src\KEntityFramework\KEntityFramework.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\src\K.EntityFrameworkCore\K.EntityFrameworkCore.csproj" />
+	</ItemGroup>
 
 </Project>
