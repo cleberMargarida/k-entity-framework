@@ -70,8 +70,9 @@ namespace K.EntityFrameworkCore.Extensions
             return this;
         }
 
-        public TopicTypeBuilder<T> UseJsonSerializer(Action<JsonSerializerOptions> jsonSerializerOptions)
+        public TopicTypeBuilder<T> UseJsonSerializer(Action<JsonSerializerOptions>? jsonSerializerOptions = null)
         {
+
             return this;
         }
     }

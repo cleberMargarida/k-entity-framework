@@ -67,6 +67,21 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ProducerFireForgetMiddleware<>));
 
             services.AddSingleton<Infrastructure<ClientConfig>>(_ => new(client));
+            services.AddSingleton<Infrastructure<IProducer<byte[], byte[]>>>(ConfluentProducerFactory);
+            services.AddSingleton<Infrastructure<IConsumer<Ignore, byte[]>>>(ConfluentConsumerFactory);
+        }
+
+        private Infrastructure<IProducer<byte[], byte[]>> ConfluentProducerFactory(IServiceProvider provider)
+        {
+            var client = provider.GetRequiredService<Infrastructure<ClientConfig>>().Instance;
+            return new Infrastructure<IProducer<byte[], byte[]>>(new ProducerBuilder<byte[], byte[]>(client).Build());
+
+        }
+
+        private Infrastructure<IConsumer<Ignore, byte[]>> ConfluentConsumerFactory(IServiceProvider provider)
+        {
+            var client = provider.GetRequiredService<Infrastructure<ClientConfig>>().Instance;
+            return new Infrastructure<IConsumer<Ignore, byte[]>>(new ConsumerBuilder<Ignore, byte[]>(client).Build());
         }
 
         public void Validate(IDbContextOptions options)

@@ -1,4 +1,6 @@
-﻿namespace K.EntityFrameworkCore.Interfaces;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+
+namespace K.EntityFrameworkCore.Interfaces;
 
 /// <summary>
 /// Represents a message envelope that contains a message of type <typeparamref name="T"/>.

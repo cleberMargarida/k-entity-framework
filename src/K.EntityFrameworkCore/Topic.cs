@@ -67,5 +67,7 @@ public class Topic<T>(DbContext dbContext)
     internal class Envelope(ref T? message) : IEnvelope<T>
     {
         public T? Message { get; } = message;
+
+        public object? TransientBag { get; set; }
     }
 }
