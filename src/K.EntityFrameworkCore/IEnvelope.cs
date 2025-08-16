@@ -1,6 +1,6 @@
 ﻿namespace K.EntityFrameworkCore;
 
-public interface IEnvelope<T>
+public interface IEnvelope<out T>
 {
     T Message { get; }
 }

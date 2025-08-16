@@ -21,7 +21,7 @@ namespace K.EntityFrameworkCore.Extensions
 
         public void ApplyServices(IServiceCollection services)
         {
-            services.AddSingleton<IInfrastructure<ClientConfig>, Infrastructure<ClientConfig>>(_ => new(client));
+            services.AddSingleton<Infrastructure<ClientConfig>>(_ => new(client));
         }
 
         public void Validate(IDbContextOptions options)
