@@ -7,15 +7,8 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// Fluent builder for configuring OutboxMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class OutboxBuilder<T> where T : class
+public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : class
 {
-    private readonly OutboxMiddlewareOptions<T> _options;
-
-    internal OutboxBuilder(OutboxMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the polling interval for publishing outbox messages.
     /// </summary>
@@ -23,7 +16,7 @@ public class OutboxBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> WithPollingInterval(TimeSpan interval)
     {
-        _options.PollingInterval = interval;
+        options.PollingInterval = interval;
         return this;
     }
 }
@@ -32,15 +25,8 @@ public class OutboxBuilder<T> where T : class
 /// Fluent builder for configuring producer RetryMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerRetryBuilder<T> where T : class
+public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) where T : class
 {
-    private readonly ProducerRetryMiddlewareOptions<T> _options;
-
-    internal ProducerRetryBuilder(ProducerRetryMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of retry attempts.
     /// </summary>
@@ -48,7 +34,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithMaxAttempts(int maxAttempts)
     {
-        _options.MaxRetryAttempts = maxAttempts;
+        options.MaxRetryAttempts = maxAttempts;
         return this;
     }
 
@@ -59,7 +45,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithBaseDelay(TimeSpan delay)
     {
-        _options.BaseDelay = delay;
+        options.BaseDelay = delay;
         return this;
     }
 
@@ -70,7 +56,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithMaxDelay(TimeSpan maxDelay)
     {
-        _options.MaxDelay = maxDelay;
+        options.MaxDelay = maxDelay;
         return this;
     }
 
@@ -81,7 +67,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithBackoffStrategy(RetryBackoffStrategy strategy)
     {
-        _options.BackoffStrategy = strategy;
+        options.BackoffStrategy = strategy;
         return this;
     }
 
@@ -92,7 +78,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithBackoffMultiplier(double multiplier)
     {
-        _options.BackoffMultiplier = multiplier;
+        options.BackoffMultiplier = multiplier;
         return this;
     }
 
@@ -103,7 +89,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithJitter(bool useJitter = true)
     {
-        _options.UseJitter = useJitter;
+        options.UseJitter = useJitter;
         return this;
     }
 
@@ -114,7 +100,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithRetriableExceptions(params Type[] exceptionTypes)
     {
-        _options.RetriableExceptionTypes = exceptionTypes;
+        options.RetriableExceptionTypes = exceptionTypes;
         return this;
     }
 
@@ -125,7 +111,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> WithRetryPredicate(Func<Exception, bool> predicate)
     {
-        _options.ShouldRetryPredicate = predicate;
+        options.ShouldRetryPredicate = predicate;
         return this;
     }
 
@@ -136,7 +122,7 @@ public class ProducerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> OnRetry(Action<int, Exception> onRetry)
     {
-        _options.OnRetry = onRetry;
+        options.OnRetry = onRetry;
         return this;
     }
 }
@@ -145,15 +131,8 @@ public class ProducerRetryBuilder<T> where T : class
 /// Fluent builder for configuring producer CircuitBreakerMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerCircuitBreakerBuilder<T> where T : class
+public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOptions<T> options) where T : class
 {
-    private readonly ProducerCircuitBreakerMiddlewareOptions<T> _options;
-
-    internal ProducerCircuitBreakerBuilder(ProducerCircuitBreakerMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the number of consecutive failures required to trip the circuit breaker.
     /// </summary>
@@ -161,7 +140,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> WithFailureThreshold(int threshold)
     {
-        _options.FailureThreshold = threshold;
+        options.FailureThreshold = threshold;
         return this;
     }
 
@@ -172,7 +151,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> WithOpenTimeout(TimeSpan timeout)
     {
-        _options.OpenTimeout = timeout;
+        options.OpenTimeout = timeout;
         return this;
     }
 
@@ -183,7 +162,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> WithSamplingDuration(TimeSpan duration)
     {
-        _options.SamplingDuration = duration;
+        options.SamplingDuration = duration;
         return this;
     }
 
@@ -194,7 +173,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> WithMinimumThroughput(int throughput)
     {
-        _options.MinimumThroughput = throughput;
+        options.MinimumThroughput = throughput;
         return this;
     }
 
@@ -205,7 +184,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
     {
-        _options.ExceptionTypesToBreakOn = exceptionTypes;
+        options.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
     }
 
@@ -216,7 +195,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> OnCircuitOpened(Action action)
     {
-        _options.OnCircuitOpened = action;
+        options.OnCircuitOpened = action;
         return this;
     }
 
@@ -227,7 +206,7 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> OnCircuitClosed(Action action)
     {
-        _options.OnCircuitClosed = action;
+        options.OnCircuitClosed = action;
         return this;
     }
 }
@@ -236,15 +215,8 @@ public class ProducerCircuitBreakerBuilder<T> where T : class
 /// Fluent builder for configuring producer ThrottleMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerThrottleBuilder<T> where T : class
+public class ProducerThrottleBuilder<T>(ProducerThrottleMiddlewareOptions<T> options) where T : class
 {
-    private readonly ProducerThrottleMiddlewareOptions<T> _options;
-
-    internal ProducerThrottleBuilder(ProducerThrottleMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of concurrent executions allowed.
     /// </summary>
@@ -252,7 +224,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithMaxConcurrency(int maxConcurrency)
     {
-        _options.MaxConcurrency = maxConcurrency;
+        options.MaxConcurrency = maxConcurrency;
         return this;
     }
 
@@ -263,7 +235,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithMaxRequestsPerWindow(int maxRequests)
     {
-        _options.MaxRequestsPerWindow = maxRequests;
+        options.MaxRequestsPerWindow = maxRequests;
         return this;
     }
 
@@ -274,7 +246,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithTimeWindow(TimeSpan timeWindow)
     {
-        _options.TimeWindow = timeWindow;
+        options.TimeWindow = timeWindow;
         return this;
     }
 
@@ -285,7 +257,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithMaxWaitTime(TimeSpan maxWaitTime)
     {
-        _options.MaxWaitTime = maxWaitTime;
+        options.MaxWaitTime = maxWaitTime;
         return this;
     }
 
@@ -296,7 +268,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithStrategy(ThrottlingStrategy strategy)
     {
-        _options.Strategy = strategy;
+        options.Strategy = strategy;
         return this;
     }
 
@@ -307,7 +279,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithQueueRequests(bool queueRequests = true)
     {
-        _options.QueueRequests = queueRequests;
+        options.QueueRequests = queueRequests;
         return this;
     }
 
@@ -318,7 +290,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithMaxQueueSize(int maxQueueSize)
     {
-        _options.MaxQueueSize = maxQueueSize;
+        options.MaxQueueSize = maxQueueSize;
         return this;
     }
 
@@ -329,7 +301,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> OnThrottled(Action<string> onThrottled)
     {
-        _options.OnThrottled = onThrottled;
+        options.OnThrottled = onThrottled;
         return this;
     }
 
@@ -340,7 +312,7 @@ public class ProducerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerThrottleBuilder<T> WithKeyGenerator(Func<object, string> keyGenerator)
     {
-        _options.KeyGenerator = keyGenerator;
+        options.KeyGenerator = keyGenerator;
         return this;
     }
 }
@@ -349,15 +321,8 @@ public class ProducerThrottleBuilder<T> where T : class
 /// Fluent builder for configuring producer BatchMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerBatchBuilder<T> where T : class
+public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) where T : class
 {
-    private readonly ProducerBatchMiddlewareOptions<T> _options;
-
-    internal ProducerBatchBuilder(ProducerBatchMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of messages to batch together.
     /// </summary>
@@ -365,7 +330,7 @@ public class ProducerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerBatchBuilder<T> WithBatchSize(int batchSize)
     {
-        _options.BatchSize = batchSize;
+        options.BatchSize = batchSize;
         return this;
     }
 
@@ -376,7 +341,7 @@ public class ProducerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerBatchBuilder<T> WithBatchTimeout(TimeSpan timeout)
     {
-        _options.BatchTimeout = timeout;
+        options.BatchTimeout = timeout;
         return this;
     }
 
@@ -387,7 +352,7 @@ public class ProducerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerBatchBuilder<T> WithParallelProcessing(bool processInParallel = true)
     {
-        _options.ProcessInParallel = processInParallel;
+        options.ProcessInParallel = processInParallel;
         return this;
     }
 
@@ -398,7 +363,7 @@ public class ProducerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerBatchBuilder<T> WithMaxDegreeOfParallelism(int maxDegreeOfParallelism)
     {
-        _options.MaxDegreeOfParallelism = maxDegreeOfParallelism;
+        options.MaxDegreeOfParallelism = maxDegreeOfParallelism;
         return this;
     }
 }
@@ -407,15 +372,8 @@ public class ProducerBatchBuilder<T> where T : class
 /// Fluent builder for configuring producer AwaitForgetMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerAwaitForgetBuilder<T> where T : class
+public class ProducerAwaitForgetBuilder<T>(ProducerAwaitForgetMiddlewareOptions<T> options) where T : class
 {
-    private readonly ProducerAwaitForgetMiddlewareOptions<T> _options;
-
-    internal ProducerAwaitForgetBuilder(ProducerAwaitForgetMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the timeout duration for awaiting message processing.
     /// </summary>
@@ -423,7 +381,7 @@ public class ProducerAwaitForgetBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerAwaitForgetBuilder<T> WithTimeout(TimeSpan timeout)
     {
-        _options.Timeout = timeout;
+        options.Timeout = timeout;
         return this;
     }
 }
@@ -432,14 +390,7 @@ public class ProducerAwaitForgetBuilder<T> where T : class
 /// Fluent builder for configuring producer FireForgetMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerFireForgetBuilder<T> where T : class
+public class ProducerFireForgetBuilder<T>(ProducerFireForgetMiddlewareOptions<T> options) where T : class
 {
-    private readonly ProducerFireForgetMiddlewareOptions<T> _options;
-
-    internal ProducerFireForgetBuilder(ProducerFireForgetMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     // ProducerFireForgetMiddlewareOptions<T> is currently empty, but we can add methods as needed
 }

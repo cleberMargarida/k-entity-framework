@@ -70,7 +70,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseOutbox(Action<OutboxBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new OutboxMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<OutboxMiddlewareOptions<T>>();
+
             var builder = new OutboxBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -83,7 +86,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseRetry(Action<ProducerRetryBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ProducerRetryMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerRetryMiddlewareOptions<T>>();
+
             var builder = new ProducerRetryBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -96,7 +102,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseCircuitBreaker(Action<ProducerCircuitBreakerBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ProducerCircuitBreakerMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerCircuitBreakerMiddlewareOptions<T>>();
+
             var builder = new ProducerCircuitBreakerBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -109,7 +118,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseThrottle(Action<ProducerThrottleBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ProducerThrottleMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerThrottleMiddlewareOptions<T>>();
+
             var builder = new ProducerThrottleBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -122,7 +134,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseFireForget(Action<ProducerFireForgetBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ProducerFireForgetMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerFireForgetMiddlewareOptions<T>>();
+
             var builder = new ProducerFireForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -135,7 +150,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseAwaitForget(Action<ProducerAwaitForgetBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ProducerAwaitForgetMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerAwaitForgetMiddlewareOptions<T>>();
+
             var builder = new ProducerAwaitForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -148,7 +166,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The producer builder instance.</returns>
         public ProducerBuilder<T> UseBatch(Action<ProducerBatchBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ProducerBatchMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerBatchMiddlewareOptions<T>>();
+
             var builder = new ProducerBatchBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -170,7 +191,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The consumer builder instance.</returns>
         public ConsumerBuilder<T> UseInbox(Action<InboxBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new InboxMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<InboxMiddlewareOptions<T>>();
+
             var builder = new InboxBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -183,7 +207,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The consumer builder instance.</returns>
         public ConsumerBuilder<T> UseRetry(Action<ConsumerRetryBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ConsumerRetryMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ConsumerRetryMiddlewareOptions<T>>();
+
             var builder = new ConsumerRetryBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -196,7 +223,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The consumer builder instance.</returns>
         public ConsumerBuilder<T> UseCircuitBreaker(Action<ConsumerCircuitBreakerBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ConsumerCircuitBreakerMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ConsumerCircuitBreakerMiddlewareOptions<T>>();
+
             var builder = new ConsumerCircuitBreakerBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -209,7 +239,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The consumer builder instance.</returns>
         public ConsumerBuilder<T> UseThrottle(Action<ConsumerThrottleBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ConsumerThrottleMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ConsumerThrottleMiddlewareOptions<T>>();
+
             var builder = new ConsumerThrottleBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -238,7 +271,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The consumer builder instance.</returns>
         public ConsumerBuilder<T> UseAwaitForget(Action<ConsumerAwaitForgetBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ConsumerAwaitForgetMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ConsumerAwaitForgetMiddlewareOptions<T>>();
+
             var builder = new ConsumerAwaitForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -251,7 +287,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The consumer builder instance.</returns>
         public ConsumerBuilder<T> UseFireForget(Action<ConsumerFireForgetBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance.GetOrAdd(() => new ConsumerFireForgetMiddlewareOptions<T>());
+            var options = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ConsumerFireForgetMiddlewareOptions<T>>();
+
             var builder = new ConsumerFireForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;

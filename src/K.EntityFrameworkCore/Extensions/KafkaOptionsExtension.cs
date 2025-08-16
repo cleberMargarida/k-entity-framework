@@ -2,10 +2,7 @@
 using K.EntityFrameworkCore.MiddlewareOptions;
 using K.EntityFrameworkCore.Middlewares;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
-#pragma warning disable IDE0079
-#pragma warning disable EF1001
 
 namespace K.EntityFrameworkCore.Extensions
 {
@@ -57,7 +54,7 @@ namespace K.EntityFrameworkCore.Extensions
 
         public void Validate(IDbContextOptions options)
         {
-            this.CachedOptions = options;
+            CachedOptions = options;
         }
     }
 }

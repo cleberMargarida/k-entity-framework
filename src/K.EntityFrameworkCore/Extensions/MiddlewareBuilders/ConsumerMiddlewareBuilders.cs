@@ -7,15 +7,8 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// Fluent builder for configuring InboxMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class InboxBuilder<T> where T : class
+public class InboxBuilder<T>(InboxMiddlewareOptions<T> options) where T : class
 {
-    private readonly InboxMiddlewareOptions<T> _options;
-
-    internal InboxBuilder(InboxMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the timeout for duplicate message detection.
     /// </summary>
@@ -23,7 +16,7 @@ public class InboxBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public InboxBuilder<T> WithDuplicateDetectionTimeout(TimeSpan timeout)
     {
-        _options.DuplicateDetectionTimeout = timeout;
+        options.DuplicateDetectionTimeout = timeout;
         return this;
     }
 }
@@ -32,15 +25,8 @@ public class InboxBuilder<T> where T : class
 /// Fluent builder for configuring consumer RetryMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerRetryBuilder<T> where T : class
+public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) where T : class
 {
-    private readonly ConsumerRetryMiddlewareOptions<T> _options;
-
-    internal ConsumerRetryBuilder(ConsumerRetryMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of retry attempts.
     /// </summary>
@@ -48,7 +34,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithMaxAttempts(int maxAttempts)
     {
-        _options.MaxRetryAttempts = maxAttempts;
+        options.MaxRetryAttempts = maxAttempts;
         return this;
     }
 
@@ -59,7 +45,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithBaseDelay(TimeSpan delay)
     {
-        _options.BaseDelay = delay;
+        options.BaseDelay = delay;
         return this;
     }
 
@@ -70,7 +56,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithMaxDelay(TimeSpan maxDelay)
     {
-        _options.MaxDelay = maxDelay;
+        options.MaxDelay = maxDelay;
         return this;
     }
 
@@ -81,7 +67,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithBackoffStrategy(RetryBackoffStrategy strategy)
     {
-        _options.BackoffStrategy = strategy;
+        options.BackoffStrategy = strategy;
         return this;
     }
 
@@ -92,7 +78,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithBackoffMultiplier(double multiplier)
     {
-        _options.BackoffMultiplier = multiplier;
+        options.BackoffMultiplier = multiplier;
         return this;
     }
 
@@ -103,7 +89,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithJitter(bool useJitter = true)
     {
-        _options.UseJitter = useJitter;
+        options.UseJitter = useJitter;
         return this;
     }
 
@@ -114,7 +100,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithRetriableExceptions(params Type[] exceptionTypes)
     {
-        _options.RetriableExceptionTypes = exceptionTypes;
+        options.RetriableExceptionTypes = exceptionTypes;
         return this;
     }
 
@@ -125,7 +111,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithRetryPredicate(Func<Exception, bool> predicate)
     {
-        _options.ShouldRetryPredicate = predicate;
+        options.ShouldRetryPredicate = predicate;
         return this;
     }
 
@@ -136,7 +122,7 @@ public class ConsumerRetryBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> OnRetry(Action<int, Exception> onRetry)
     {
-        _options.OnRetry = onRetry;
+        options.OnRetry = onRetry;
         return this;
     }
 }
@@ -145,15 +131,8 @@ public class ConsumerRetryBuilder<T> where T : class
 /// Fluent builder for configuring consumer CircuitBreakerMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerCircuitBreakerBuilder<T> where T : class
+public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOptions<T> options) where T : class
 {
-    private readonly ConsumerCircuitBreakerMiddlewareOptions<T> _options;
-
-    internal ConsumerCircuitBreakerBuilder(ConsumerCircuitBreakerMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the number of consecutive failures required to trip the circuit breaker.
     /// </summary>
@@ -161,7 +140,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithFailureThreshold(int threshold)
     {
-        _options.FailureThreshold = threshold;
+        options.FailureThreshold = threshold;
         return this;
     }
 
@@ -172,7 +151,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithOpenTimeout(TimeSpan timeout)
     {
-        _options.OpenTimeout = timeout;
+        options.OpenTimeout = timeout;
         return this;
     }
 
@@ -183,7 +162,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithSamplingDuration(TimeSpan duration)
     {
-        _options.SamplingDuration = duration;
+        options.SamplingDuration = duration;
         return this;
     }
 
@@ -194,7 +173,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithMinimumThroughput(int throughput)
     {
-        _options.MinimumThroughput = throughput;
+        options.MinimumThroughput = throughput;
         return this;
     }
 
@@ -205,7 +184,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
     {
-        _options.ExceptionTypesToBreakOn = exceptionTypes;
+        options.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
     }
 
@@ -216,7 +195,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> OnCircuitOpened(Action action)
     {
-        _options.OnCircuitOpened = action;
+        options.OnCircuitOpened = action;
         return this;
     }
 
@@ -227,7 +206,7 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> OnCircuitClosed(Action action)
     {
-        _options.OnCircuitClosed = action;
+        options.OnCircuitClosed = action;
         return this;
     }
 }
@@ -236,15 +215,8 @@ public class ConsumerCircuitBreakerBuilder<T> where T : class
 /// Fluent builder for configuring consumer ThrottleMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerThrottleBuilder<T> where T : class
+public class ConsumerThrottleBuilder<T>(ConsumerThrottleMiddlewareOptions<T> options) where T : class
 {
-    private readonly ConsumerThrottleMiddlewareOptions<T> _options;
-
-    internal ConsumerThrottleBuilder(ConsumerThrottleMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of concurrent executions allowed.
     /// </summary>
@@ -252,7 +224,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithMaxConcurrency(int maxConcurrency)
     {
-        _options.MaxConcurrency = maxConcurrency;
+        options.MaxConcurrency = maxConcurrency;
         return this;
     }
 
@@ -263,7 +235,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithMaxRequestsPerWindow(int maxRequests)
     {
-        _options.MaxRequestsPerWindow = maxRequests;
+        options.MaxRequestsPerWindow = maxRequests;
         return this;
     }
 
@@ -274,7 +246,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithTimeWindow(TimeSpan timeWindow)
     {
-        _options.TimeWindow = timeWindow;
+        options.TimeWindow = timeWindow;
         return this;
     }
 
@@ -285,7 +257,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithMaxWaitTime(TimeSpan maxWaitTime)
     {
-        _options.MaxWaitTime = maxWaitTime;
+        options.MaxWaitTime = maxWaitTime;
         return this;
     }
 
@@ -296,7 +268,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithStrategy(ThrottlingStrategy strategy)
     {
-        _options.Strategy = strategy;
+        options.Strategy = strategy;
         return this;
     }
 
@@ -307,7 +279,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithQueueRequests(bool queueRequests = true)
     {
-        _options.QueueRequests = queueRequests;
+        options.QueueRequests = queueRequests;
         return this;
     }
 
@@ -318,7 +290,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithMaxQueueSize(int maxQueueSize)
     {
-        _options.MaxQueueSize = maxQueueSize;
+        options.MaxQueueSize = maxQueueSize;
         return this;
     }
 
@@ -329,7 +301,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> OnThrottled(Action<string> onThrottled)
     {
-        _options.OnThrottled = onThrottled;
+        options.OnThrottled = onThrottled;
         return this;
     }
 
@@ -340,7 +312,7 @@ public class ConsumerThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerThrottleBuilder<T> WithKeyGenerator(Func<object, string> keyGenerator)
     {
-        _options.KeyGenerator = keyGenerator;
+        options.KeyGenerator = keyGenerator;
         return this;
     }
 }
@@ -349,15 +321,8 @@ public class ConsumerThrottleBuilder<T> where T : class
 /// Fluent builder for configuring consumer BatchMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerBatchBuilder<T> where T : class
+public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareOptions<T> options) where T : class
 {
-    private readonly ConsumerBatchMiddlewareOptions<T> _options;
-
-    internal ConsumerBatchBuilder(ConsumerBatchMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of messages to batch together.
     /// </summary>
@@ -365,7 +330,7 @@ public class ConsumerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerBatchBuilder<T> WithBatchSize(int batchSize)
     {
-        _options.BatchSize = batchSize;
+        options.BatchSize = batchSize;
         return this;
     }
 
@@ -376,7 +341,7 @@ public class ConsumerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerBatchBuilder<T> WithBatchTimeout(TimeSpan timeout)
     {
-        _options.BatchTimeout = timeout;
+        options.BatchTimeout = timeout;
         return this;
     }
 
@@ -387,7 +352,7 @@ public class ConsumerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerBatchBuilder<T> WithParallelProcessing(bool processInParallel = true)
     {
-        _options.ProcessInParallel = processInParallel;
+        options.ProcessInParallel = processInParallel;
         return this;
     }
 
@@ -398,7 +363,7 @@ public class ConsumerBatchBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerBatchBuilder<T> WithMaxDegreeOfParallelism(int maxDegreeOfParallelism)
     {
-        _options.MaxDegreeOfParallelism = maxDegreeOfParallelism;
+        options.MaxDegreeOfParallelism = maxDegreeOfParallelism;
         return this;
     }
 }
