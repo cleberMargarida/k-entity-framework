@@ -116,6 +116,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerRetryMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasRetry is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new ProducerRetryBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -131,6 +134,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerCircuitBreakerMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasCircuitBreaker is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new ProducerCircuitBreakerBuilder<T>(options);
             configure?.Invoke(builder);
@@ -148,6 +154,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerThrottleMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasThrottle is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new ProducerThrottleBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -163,6 +172,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerFireForgetMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasFireForget is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new ProducerFireForgetBuilder<T>(options);
             configure?.Invoke(builder);
@@ -180,6 +192,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerAwaitForgetMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasAwaitForget is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new ProducerAwaitForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -195,6 +210,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerBatchMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasBatch is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new ProducerBatchBuilder<T>(options);
             configure?.Invoke(builder);
@@ -242,6 +260,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ConsumerRetryMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasRetry is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new ConsumerRetryBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -257,6 +278,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ConsumerCircuitBreakerMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasCircuitBreaker is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new ConsumerCircuitBreakerBuilder<T>(options);
             configure?.Invoke(builder);
@@ -274,6 +298,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ConsumerThrottleMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasThrottle is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new ConsumerThrottleBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -289,6 +316,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ConsumerBatchMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasBatch is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new ConsumerBatchBuilder<T>(options);
             configure?.Invoke(builder);
@@ -306,6 +336,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ConsumerAwaitForgetMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasAwaitForget is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new ConsumerAwaitForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -321,6 +354,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ConsumerFireForgetMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasFireForget is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new ConsumerFireForgetBuilder<T>(options);
             configure?.Invoke(builder);
