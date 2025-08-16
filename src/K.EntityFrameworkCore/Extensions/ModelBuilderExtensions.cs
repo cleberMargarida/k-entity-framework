@@ -69,8 +69,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the outbox middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseOutbox(Action<OutboxBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
         {
+            modelBuilder.Entity<OutboxMessage>();
+
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<OutboxMiddlewareOptions<T>>();
@@ -85,7 +87,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the retry middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseRetry(Action<ProducerRetryBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasRetry(Action<ProducerRetryBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -101,7 +103,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the circuit breaker middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseCircuitBreaker(Action<ProducerCircuitBreakerBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasCircuitBreaker(Action<ProducerCircuitBreakerBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -117,7 +119,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the throttle middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseThrottle(Action<ProducerThrottleBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasThrottle(Action<ProducerThrottleBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -133,7 +135,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the fire-and-forget middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseFireForget(Action<ProducerFireForgetBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasFireForget(Action<ProducerFireForgetBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -149,7 +151,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the await-and-forget middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseAwaitForget(Action<ProducerAwaitForgetBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasAwaitForget(Action<ProducerAwaitForgetBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -165,7 +167,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the batch middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> UseBatch(Action<ProducerBatchBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasBatch(Action<ProducerBatchBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -190,8 +192,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the inbox middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseInbox(Action<InboxBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasInbox(Action<InboxBuilder<T>>? configure = null)
         {
+            modelBuilder.Entity<InboxMessage>();
+
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<InboxMiddlewareOptions<T>>();
@@ -206,7 +210,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the retry middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseRetry(Action<ConsumerRetryBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasRetry(Action<ConsumerRetryBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -222,7 +226,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the circuit breaker middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseCircuitBreaker(Action<ConsumerCircuitBreakerBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasCircuitBreaker(Action<ConsumerCircuitBreakerBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -238,7 +242,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the throttle middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseThrottle(Action<ConsumerThrottleBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasThrottle(Action<ConsumerThrottleBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -254,7 +258,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the batch middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseBatch(Action<ConsumerBatchBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasBatch(Action<ConsumerBatchBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -270,7 +274,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the await-and-forget middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseAwaitForget(Action<ConsumerAwaitForgetBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasAwaitForget(Action<ConsumerAwaitForgetBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -286,7 +290,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="configure">Action to configure the fire-and-forget middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> UseFireForget(Action<ConsumerFireForgetBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasFireForget(Action<ConsumerFireForgetBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)

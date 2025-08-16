@@ -9,14 +9,31 @@ public class OutboxMiddlewareOptions<T>
 {
     /// <summary>
     /// Gets or sets the interval for polling and publishing outbox messages.
-    /// Default is 30 seconds.
+    /// Default is 5 seconds.
     /// </summary>
-    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(30);
+    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
 
-    /*
-     
-    - publish immediatelly after saving, if success, remove it.
-    - publish in background after saving.
+    /// <summary>
+    /// Gets or sets the outbox publishing strategy.
+    /// </summary>
+    public OutboxPublishingStrategy Strategy { get; set; } = OutboxPublishingStrategy.ImmediateWithFallback;
+}
 
-     */
+/// <summary>
+/// Defines the publishing strategy for outbox messages.
+/// </summary>
+public enum OutboxPublishingStrategy
+{
+    /// <summary>
+    /// Always publish messages in the background after saving.
+    /// Messages are processed during the next polling cycle.
+    /// </summary>
+    BackgroundOnly,
+
+    /// <summary>
+    /// Publish immediately after saving. If successful, remove the message.
+    /// If immediate publishing fails, fall back to background processing.
+    /// </summary>
+    ImmediateWithFallback,
+
 }

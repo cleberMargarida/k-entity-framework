@@ -19,6 +19,29 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
         options.PollingInterval = interval;
         return this;
     }
+
+    /// <summary>
+    /// Configures immediate publishing strategy with fallback to background processing.
+    /// Messages are published immediately after saving. If successful, they are removed.
+    /// If immediate publishing fails, messages fall back to background processing.
+    /// </summary>
+    /// <returns>The builder instance.</returns>
+    public OutboxBuilder<T> UseImmediateWithFallback()
+    {
+        options.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures background-only publishing strategy.
+    /// Messages are always published in the background after saving.
+    /// </summary>
+    /// <returns>The builder instance.</returns>
+    public OutboxBuilder<T> UseBackgroundOnly()
+    {
+        options.Strategy = OutboxPublishingStrategy.BackgroundOnly;
+        return this;
+    }
 }
 
 /// <summary>

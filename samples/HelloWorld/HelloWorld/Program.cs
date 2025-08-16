@@ -57,27 +57,27 @@ namespace HelloWorld
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Topic<OrderCreated>(orderCreatedTopic => 
+            modelBuilder.Topic<OrderCreated>(topic => 
             {
-                orderCreatedTopic.HasName("order-created-topic");
+                topic.HasName("order-created-topic");
 
-                orderCreatedTopic.UseJsonSerializer(settings =>
+                topic.UseJsonSerializer(settings =>
                 {
                     settings.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
 
-                orderCreatedTopic.HasProducer(producer => 
+                topic.HasProducer(producer => 
                 {
                     producer.HasKey(o => o.OrderId);
-                    producer.UseOutbox();
+                    producer.HasOutbox();
                 });
 
-                orderCreatedTopic.HasConsumer(consumer => 
+                topic.HasConsumer(consumer => 
                 {
                     consumer.GroupId("");
                 });
 
-                orderCreatedTopic.HasSetting(_ => { });
+                topic.HasSetting(_ => { });
             });
 
             base.OnModelCreating(modelBuilder);
