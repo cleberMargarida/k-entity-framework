@@ -77,6 +77,9 @@ namespace K.EntityFrameworkCore.Extensions
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<OutboxMiddlewareOptions<T>>();
 
+            // Enable the middleware by default when HasOutbox is called
+            options.IsMiddlewareEnabled = true;
+
             var builder = new OutboxBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
@@ -199,6 +202,9 @@ namespace K.EntityFrameworkCore.Extensions
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<InboxMiddlewareOptions<T>>();
+
+            // Enable the middleware by default when HasInbox is called
+            options.IsMiddlewareEnabled = true;
 
             var builder = new InboxBuilder<T>(options);
             configure?.Invoke(builder);

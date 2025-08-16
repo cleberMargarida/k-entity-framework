@@ -4,11 +4,12 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// Configuration options for the AwaitForgetMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class AwaitForgetMiddlewareOptions<T>
+public class AwaitForgetMiddlewareOptions<T> : MiddlewareOptions<T>
     where T : class
 {
     /// <summary>
     /// Gets or sets the timeout duration for awaiting the message processing before forgetting.
+    /// Default is 30 seconds.
     /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 }

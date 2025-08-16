@@ -4,7 +4,7 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// Configuration options for the ThrottleMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ThrottleMiddlewareOptions<T>
+public class ThrottleMiddlewareOptions<T> : MiddlewareOptions<T>
     where T : class
 {
     /// <summary>

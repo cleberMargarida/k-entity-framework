@@ -4,7 +4,7 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// Configuration options for the InboxMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class InboxMiddlewareOptions<T>
+public class InboxMiddlewareOptions<T> : MiddlewareOptions<T>
     where T : class
 {
     /// <summary>
