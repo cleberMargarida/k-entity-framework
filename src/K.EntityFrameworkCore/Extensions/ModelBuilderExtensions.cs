@@ -30,6 +30,7 @@ namespace K.EntityFrameworkCore.Extensions
     {
         public TopicTypeBuilder<T> HasConsumer(Action<ConsumerBuilder<T>> consumer)
         {
+            consumer(new ConsumerBuilder<T>(modelBuilder));
             return this;
         }
 
@@ -40,6 +41,7 @@ namespace K.EntityFrameworkCore.Extensions
 
         public TopicTypeBuilder<T> HasProducer(Action<ProducerBuilder<T>> producer)
         {
+            producer(new ProducerBuilder<T>(modelBuilder));
             return this;
         }
 
@@ -54,7 +56,7 @@ namespace K.EntityFrameworkCore.Extensions
         }
     }
 
-    public class ProducerBuilder<T>
+    public class ProducerBuilder<T>(ModelBuilder modelBuilder)
         where T : class
     {
         public ProducerBuilder<T> HasKey<TProp>(Expression<Func<T, TProp>> keyPropertyAccessor)
@@ -175,7 +177,7 @@ namespace K.EntityFrameworkCore.Extensions
         }
     }
 
-    public class ConsumerBuilder<T>
+    public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         where T : class
     {
         public ConsumerBuilder<T> GroupId(string value)

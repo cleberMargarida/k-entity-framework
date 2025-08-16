@@ -1,5 +1,3 @@
-using K.EntityFrameworkCore.MiddlewareOptions;
-
 namespace K.EntityFrameworkCore.MiddlewareOptions.Consumer;
 
 /// <summary>
