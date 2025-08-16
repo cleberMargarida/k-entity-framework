@@ -1,8 +1,5 @@
-﻿using K.EntityFrameworkCore.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Interfaces;
 
 namespace K.EntityFrameworkCore.Middlewares;
 

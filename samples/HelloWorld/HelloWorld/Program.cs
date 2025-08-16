@@ -2,6 +2,7 @@
 using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +27,7 @@ var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 dbContext.Orders.Add(new Order { Status = "New" });
 
 // here you're signing the event to be published.
-dbContext.OrderEvents.Publish(new OrderCreated { Id = 1, Status = "Created" });
+dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, Status = "Created" });
 
 // here you're saving the changes to the database and publishing the event.
 await dbContext.SaveChangesAsync();
@@ -56,6 +57,28 @@ namespace HelloWorld
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Topic<OrderCreated>(orderCreatedTopic => 
+            {
+                orderCreatedTopic.HasName("order-created-topic");
+
+                orderCreatedTopic.UseJsonSerializer(settings =>
+                {
+                    settings.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                });
+
+                orderCreatedTopic.HasProducer(producer => 
+                {
+                    producer.HasKey(o => o.OrderId);
+                });
+
+                orderCreatedTopic.HasConsumer(consumer => 
+                {
+                    consumer.GroupId("");
+                });
+
+                orderCreatedTopic.HasSetting(_ => { });
+            });
+
             base.OnModelCreating(modelBuilder);
         }
     }
@@ -68,7 +91,7 @@ namespace HelloWorld
 
     public class OrderCreated
     {
-        public int Id { get; set; }
+        public int OrderId { get; set; }
         public string Status { get; set; }
     }
 }

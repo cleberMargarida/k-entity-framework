@@ -8,5 +8,5 @@ public interface IEnvelope<out T>
     /// <summary>
     /// Gets the message contained in the envelope.
     /// </summary>
-    T Message { get; }
+    T? Message { get; }
 }

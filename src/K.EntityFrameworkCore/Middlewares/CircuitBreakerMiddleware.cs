@@ -1,8 +1,9 @@
 ﻿using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.MiddlewareOptions;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
-internal class CircuitBreakerMiddleware<T> : Middleware<T>
+internal class CircuitBreakerMiddleware<T>(CircuitBreakerMiddlewareOptions<T> options) : Middleware<T>
     where T : class
 {
     public override async ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default)
