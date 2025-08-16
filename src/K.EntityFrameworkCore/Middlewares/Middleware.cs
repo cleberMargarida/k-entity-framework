@@ -1,4 +1,4 @@
-﻿using K.EntityFrameworkCore.Middlewares.Interfaces;
+﻿using K.EntityFrameworkCore.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;

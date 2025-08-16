@@ -1,9 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Confluent.Kafka;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace K.EntityFrameworkCore;
 
-public class Topic<T>(DbContext dbContext) : IAsyncEnumerator<T?>, IAsyncDisposable
+using K.EntityFrameworkCore.Interfaces;
+
+public class Topic<T>(DbContext dbContext) 
+    : IProducer<T>
+    , IConsumer<T>
+    , IAsyncDisposable
     where T : class
 {
     private readonly IServiceProvider serviceProvider = dbContext.GetInfrastructure();
@@ -13,16 +19,12 @@ public class Topic<T>(DbContext dbContext) : IAsyncEnumerator<T?>, IAsyncDisposa
     /// </summary>
     public T? Current { get; private set; }
 
-    /// <summary>
-    /// Publishes a domain event to the Kafka topic.
-    /// </summary>
+    /// <inheritdoc/>
     public void Publish(in T domainEvent)
     {
     }
 
-    /// <summary>
-    /// Moves the enumerator to the next message in the topic partition.
-    /// </summary>
+    /// <inheritdoc/>
     public async ValueTask<bool> MoveNextAsync()
     {
         return true;

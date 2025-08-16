@@ -3,7 +3,9 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// <summary>
 /// Configuration options for the InboxMiddleware.
 /// </summary>
-public class InboxMiddlewareOptions
+/// <typeparam name="T">The message type.</typeparam>
+public class InboxMiddlewareOptions<T>
+    where T : class
 {
     /// <summary>
     /// Gets or sets the timeout for duplicate message detection.

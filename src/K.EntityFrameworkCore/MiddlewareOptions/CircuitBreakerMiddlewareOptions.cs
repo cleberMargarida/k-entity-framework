@@ -3,7 +3,9 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// <summary>
 /// Configuration options for the CircuitBreakerMiddleware.
 /// </summary>
-public class CircuitBreakerMiddlewareOptions
+/// <typeparam name="T">The message type.</typeparam>
+public class CircuitBreakerMiddlewareOptions<T>
+    where T : class
 {
     /// <summary>
     /// Gets or sets the number of consecutive failures required to trip the circuit breaker.

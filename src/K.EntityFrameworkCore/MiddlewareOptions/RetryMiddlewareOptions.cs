@@ -3,7 +3,9 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// <summary>
 /// Configuration options for the RetryMiddleware.
 /// </summary>
-public class RetryMiddlewareOptions
+/// <typeparam name="T">The message type.</typeparam>
+public class RetryMiddlewareOptions<T>
+    where T : class
 {
     /// <summary>
     /// Gets or sets the maximum number of retry attempts.
@@ -51,11 +53,6 @@ public class RetryMiddlewareOptions
     /// Gets or sets a custom predicate to determine if an exception should trigger a retry.
     /// </summary>
     public Func<Exception, bool>? ShouldRetryPredicate { get; set; }
-
-    /// <summary>
-    /// Gets or sets a custom action to execute before each retry attempt.
-    /// </summary>
-    public Action<int, Exception>? OnRetry { get; set; }
 }
 
 /// <summary>

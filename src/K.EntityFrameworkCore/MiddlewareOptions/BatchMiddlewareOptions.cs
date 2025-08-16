@@ -3,7 +3,9 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// <summary>
 /// Configuration options for the BatchMiddleware.
 /// </summary>
-public class BatchMiddlewareOptions
+/// <typeparam name="T">The message type.</typeparam>
+public class BatchMiddlewareOptions<T>
+    where T : class
 {
     /// <summary>
     /// Gets or sets the maximum number of messages to batch together.
@@ -16,16 +18,4 @@ public class BatchMiddlewareOptions
     /// Default is 5 seconds.
     /// </summary>
     public TimeSpan BatchTimeout { get; set; } = TimeSpan.FromSeconds(5);
-
-    /// <summary>
-    /// Gets or sets whether to process batches in parallel.
-    /// Default is false.
-    /// </summary>
-    public bool ProcessInParallel { get; set; } = false;
-
-    /// <summary>
-    /// Gets or sets the maximum degree of parallelism when ProcessInParallel is true.
-    /// Default is Environment.ProcessorCount.
-    /// </summary>
-    public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 }

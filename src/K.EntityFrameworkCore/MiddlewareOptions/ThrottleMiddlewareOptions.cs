@@ -3,7 +3,9 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// <summary>
 /// Configuration options for the ThrottleMiddleware.
 /// </summary>
-public class ThrottleMiddlewareOptions
+/// <typeparam name="T">The message type.</typeparam>
+public class ThrottleMiddlewareOptions<T>
+    where T : class
 {
     /// <summary>
     /// Gets or sets the maximum number of concurrent executions allowed.

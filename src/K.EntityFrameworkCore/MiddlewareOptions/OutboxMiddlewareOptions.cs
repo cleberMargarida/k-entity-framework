@@ -3,7 +3,9 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 /// <summary>
 /// Configuration options for the OutboxMiddleware.
 /// </summary>
-public class OutboxMiddlewareOptions
+/// <typeparam name="T">The message type.</typeparam>
+public class OutboxMiddlewareOptions<T>
+    where T : class
 {
     /// <summary>
     /// Gets or sets the interval for polling and publishing outbox messages.

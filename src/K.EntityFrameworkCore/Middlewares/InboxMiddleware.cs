@@ -1,4 +1,4 @@
-﻿using K.EntityFrameworkCore.Middlewares.Interfaces;
+﻿using K.EntityFrameworkCore.Interfaces;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
