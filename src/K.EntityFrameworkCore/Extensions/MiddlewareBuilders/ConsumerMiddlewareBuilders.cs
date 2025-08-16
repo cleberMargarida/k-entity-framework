@@ -16,7 +16,6 @@ public class InboxBuilder<T>(InboxMiddlewareOptions<T> options) where T : class
     /// <returns>The builder instance.</returns>
     public InboxBuilder<T> WithDuplicateDetectionTimeout(TimeSpan timeout)
     {
-        options.IsMiddlewareEnabled = true;
         options.DuplicateDetectionTimeout = timeout;
         return this;
     }

@@ -16,7 +16,6 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> WithPollingInterval(TimeSpan interval)
     {
-        options.IsMiddlewareEnabled = true;
         options.PollingInterval = interval;
         return this;
     }
@@ -29,7 +28,6 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseImmediateWithFallback()
     {
-        options.IsMiddlewareEnabled = true;
         options.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
         return this;
     }
@@ -41,7 +39,6 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseBackgroundOnly()
     {
-        options.IsMiddlewareEnabled = true;
         options.Strategy = OutboxPublishingStrategy.BackgroundOnly;
         return this;
     }

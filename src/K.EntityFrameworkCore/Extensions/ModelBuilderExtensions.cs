@@ -6,6 +6,7 @@ using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Text.Json;
 
@@ -18,10 +19,29 @@ namespace K.EntityFrameworkCore.Extensions
     /// </summary>
     public static class ModelBuilderExtensions
     {
+        private static readonly ConcurrentDictionary<Type, bool> configuredTypes = new();
+
+        /// <summary>
+        /// Configures a topic for the specified message type. This method ensures that each message type
+        /// is configured only once to avoid duplicate configuration.
+        /// </summary>
+        /// <typeparam name="T">The message type.</typeparam>
+        /// <param name="modelBuilder">The model builder instance.</param>
+        /// <param name="topic">Action to configure the topic.</param>
+        /// <returns>The model builder instance.</returns>
         public static ModelBuilder Topic<T>(this ModelBuilder modelBuilder, Action<TopicTypeBuilder<T>> topic) where T : class
         {
-            topic(new TopicTypeBuilder<T>(modelBuilder));
+            if (!IsTypeConfigured<T>())
+            {
+                topic(new TopicTypeBuilder<T>(modelBuilder));
+            }
+
             return modelBuilder;
+        }
+
+        private static bool IsTypeConfigured<T>() where T : class
+        {
+            return configuredTypes.TryAdd(typeof(T), true);
         }
     }
 
