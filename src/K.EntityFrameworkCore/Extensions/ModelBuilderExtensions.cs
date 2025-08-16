@@ -72,6 +72,17 @@ namespace K.EntityFrameworkCore.Extensions
 
         public TopicTypeBuilder<T> UseJsonSerializer(Action<JsonSerializerOptions>? jsonSerializerOptions = null)
         {
+            var sharedOptions = ServiceProviderCache.Instance
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<SerializationOptions<T>>();
+
+            if (jsonSerializerOptions != null)
+            {
+                jsonSerializerOptions(sharedOptions.Options);
+                jsonSerializerOptions(sharedOptions.Options);
+            }
+
+            sharedOptions.IsMiddlewareEnabled = true;
 
             return this;
         }

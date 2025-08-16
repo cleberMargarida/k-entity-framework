@@ -341,7 +341,7 @@ public class CompressionMiddlewareOptions<T> : MiddlewareOptions<T>
 internal class CompressionMiddleware<T>(CompressionMiddlewareOptions<T> options) : Middleware<T>(options)
     where T : class
 {
-    public override async ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default)
+    public override async ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
     {
         // Compress message if size exceeds threshold
         if (ShouldCompress(message))
@@ -353,7 +353,7 @@ internal class CompressionMiddleware<T>(CompressionMiddlewareOptions<T> options)
         await base.InvokeAsync(message, cancellationToken);
     }
     
-    private bool ShouldCompress(IEnvelope<T> message) => 
+    private bool ShouldCompress(IEnvelope<T> envelope) => 
         GetMessageSize(message) > options.MinSizeBytes;
 }
 ```

@@ -10,7 +10,7 @@ public interface IMiddleware<T> where T : class
     /// <summary>
     /// Asynchronously invokes the middleware with the specified message.
     /// </summary>
-    ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default);
+    ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a value indicating whether this middleware is enabled based on the options.

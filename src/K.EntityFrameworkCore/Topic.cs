@@ -7,6 +7,7 @@ namespace K.EntityFrameworkCore;
 
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares;
+using System.Collections.Generic;
 
 /// <summary>
 /// Represents a topic in the Kafka message broker that can be used for both producing and consuming messages.
@@ -35,14 +36,15 @@ public class Topic<T>(DbContext dbContext)
     /// <inheritdoc/>
     public void Publish(in T domainEvent)
     {
-        var envelope = SealEnvelop(domainEvent);
+        var envelope = SealEnvelop(ref domainEvent);
         producerMiddlewareInvoker.Value.InvokeAsync(envelope).AsTask();
     }
 
     /// <inheritdoc/>
     public async ValueTask<bool> MoveNextAsync()
     {
-        var envelope = SealEnvelop(null);
+        T? message = null;
+        var envelope = SealEnvelop(ref message);
         await consumerMiddlewareInvoker.Value.InvokeAsync(envelope);
         return Unseal(envelope);
     }
@@ -52,7 +54,7 @@ public class Topic<T>(DbContext dbContext)
         return envelope.Message is not null && (current = envelope.Message) != null;
     }
 
-    private static Envelope SealEnvelop(T? message)
+    private static Envelope SealEnvelop(ref T? message)
     {
         return new(ref message);
     }
@@ -64,10 +66,18 @@ public class Topic<T>(DbContext dbContext)
         return ValueTask.CompletedTask;
     }
 
-    internal class Envelope(ref T? message) : IEnvelope<T>
+    internal ref struct Envelope(ref T? message) : IEnvelope<T>, ISerializedEnvelope<T>
     {
-        public T? Message { get; } = message;
+        private ref T? message = ref message;
 
-        public object? TransientBag { get; set; }
+        public Dictionary<string, object>? Headers { get; set; }
+
+        public byte[]? SerializedData { get; set; }
+
+        public T? Message 
+        { 
+            readonly get => message; 
+            set => message = value; 
+        }
     }
 }

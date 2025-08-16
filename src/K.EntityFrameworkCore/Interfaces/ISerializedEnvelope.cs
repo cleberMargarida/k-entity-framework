@@ -5,15 +5,17 @@ namespace K.EntityFrameworkCore.Middlewares;
 /// <summary>
 /// Interface for envelopes that contain serialized data.
 /// </summary>
-public interface ISerializedEnvelope<T> : IEnvelope<T> where T : class
+internal interface ISerializedEnvelope<T> : IEnvelope<T> where T : class
 {
-    /// <summary>
-    /// Gets the serialized data bytes.
-    /// </summary>
-    byte[] SerializedData { get; }
+    new public T? Message { set; }
 
     /// <summary>
     /// Gets metadata headers for the serialized message.
     /// </summary>
-    IDictionary<string, object> Headers { get; }
+    Dictionary<string, object>? Headers { get; }
+
+    /// <summary>
+    /// Gets the serialized data bytes.
+    /// </summary>
+    byte[]? SerializedData { get; }
 }

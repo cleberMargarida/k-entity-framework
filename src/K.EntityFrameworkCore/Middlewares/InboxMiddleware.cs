@@ -6,7 +6,7 @@ namespace K.EntityFrameworkCore.Middlewares;
 internal class InboxMiddleware<T>(InboxMiddlewareOptions<T> options) : Middleware<T>(options)
     where T : class
 {
-    public override async ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default)
+    public override async ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
     {
         await base.InvokeAsync(message, cancellationToken);
     }
