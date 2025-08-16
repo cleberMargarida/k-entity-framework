@@ -1,6 +1,10 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.MiddlewareOptions;
+using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
+using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using K.EntityFrameworkCore.Middlewares;
+using K.EntityFrameworkCore.Middlewares.Consumer;
+using K.EntityFrameworkCore.Middlewares.Producer;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,29 +29,43 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
 
-            services.AddSingleton(typeof(AwaitForgetMiddlewareOptions<>));
-            services.AddScoped(typeof(AwaitForgetMiddleware<>));
+            // Consumer-specific middleware options and classes
+            services.AddSingleton(typeof(ConsumerRetryMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerRetryMiddleware<>));
 
-            services.AddSingleton(typeof(BatchMiddlewareOptions<>));
-            services.AddScoped(typeof(BatchMiddleware<>));
+            services.AddSingleton(typeof(ConsumerCircuitBreakerMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerCircuitBreakerMiddleware<>));
 
-            services.AddSingleton(typeof(FireForgetMiddlewareOptions<>));
-            services.AddScoped(typeof(FireForgetMiddleware<>));
+            services.AddSingleton(typeof(ConsumerThrottleMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerThrottleMiddleware<>));
 
-            services.AddSingleton(typeof(CircuitBreakerMiddlewareOptions<>));
-            services.AddScoped(typeof(CircuitBreakerMiddleware<>));
+            services.AddSingleton(typeof(ConsumerBatchMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerBatchMiddleware<>));
 
-            services.AddSingleton(typeof(RetryMiddlewareOptions<>));
-            services.AddScoped(typeof(RetryMiddleware<>));
+            services.AddSingleton(typeof(ConsumerAwaitForgetMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerAwaitForgetMiddleware<>));
 
-            services.AddSingleton(typeof(InboxMiddlewareOptions<>));
-            services.AddScoped(typeof(InboxMiddleware<>));
+            services.AddSingleton(typeof(ConsumerFireForgetMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerFireForgetMiddleware<>));
 
-            services.AddSingleton(typeof(OutboxMiddlewareOptions<>));
-            services.AddScoped(typeof(OutboxMiddleware<>));
+            // Producer-specific middleware options and classes
+            services.AddSingleton(typeof(ProducerRetryMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerRetryMiddleware<>));
 
-            services.AddSingleton(typeof(ThrottleMiddlewareOptions<>));
-            services.AddScoped(typeof(ThrottleMiddleware<>));
+            services.AddSingleton(typeof(ProducerCircuitBreakerMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerCircuitBreakerMiddleware<>));
+
+            services.AddSingleton(typeof(ProducerThrottleMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerThrottleMiddleware<>));
+
+            services.AddSingleton(typeof(ProducerBatchMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerBatchMiddleware<>));
+
+            services.AddSingleton(typeof(ProducerAwaitForgetMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerAwaitForgetMiddleware<>));
+
+            services.AddSingleton(typeof(ProducerFireForgetMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerFireForgetMiddleware<>));
 
             services.AddSingleton<Infrastructure<ClientConfig>>(_ => new(client));
         }

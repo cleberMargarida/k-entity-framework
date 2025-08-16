@@ -114,17 +114,6 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
         options.ShouldRetryPredicate = predicate;
         return this;
     }
-
-    /// <summary>
-    /// Sets a custom action to execute before each retry attempt.
-    /// </summary>
-    /// <param name="onRetry">The action to execute on retry.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> OnRetry(Action<int, Exception> onRetry)
-    {
-        options.OnRetry = onRetry;
-        return this;
-    }
 }
 
 /// <summary>
@@ -185,28 +174,6 @@ public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOp
     public ConsumerCircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
     {
         options.ExceptionTypesToBreakOn = exceptionTypes;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a custom action to execute when the circuit breaker opens.
-    /// </summary>
-    /// <param name="action">The action to execute.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerCircuitBreakerBuilder<T> OnCircuitOpened(Action action)
-    {
-        options.OnCircuitOpened = action;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a custom action to execute when the circuit breaker closes.
-    /// </summary>
-    /// <param name="action">The action to execute.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerCircuitBreakerBuilder<T> OnCircuitClosed(Action action)
-    {
-        options.OnCircuitClosed = action;
         return this;
     }
 }
@@ -342,28 +309,6 @@ public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareOptions<T> options) 
     public ConsumerBatchBuilder<T> WithBatchTimeout(TimeSpan timeout)
     {
         options.BatchTimeout = timeout;
-        return this;
-    }
-
-    /// <summary>
-    /// Enables or disables parallel processing of batches.
-    /// </summary>
-    /// <param name="processInParallel">Whether to process in parallel.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerBatchBuilder<T> WithParallelProcessing(bool processInParallel = true)
-    {
-        options.ProcessInParallel = processInParallel;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the maximum degree of parallelism when parallel processing is enabled.
-    /// </summary>
-    /// <param name="maxDegreeOfParallelism">The maximum degree of parallelism.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerBatchBuilder<T> WithMaxDegreeOfParallelism(int maxDegreeOfParallelism)
-    {
-        options.MaxDegreeOfParallelism = maxDegreeOfParallelism;
         return this;
     }
 }

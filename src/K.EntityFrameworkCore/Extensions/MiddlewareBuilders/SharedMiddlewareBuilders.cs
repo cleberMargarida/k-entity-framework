@@ -6,15 +6,9 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// Fluent builder for configuring CircuitBreakerMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class CircuitBreakerBuilder<T> where T : class
+public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options) 
+    where T : class
 {
-    private readonly CircuitBreakerMiddlewareOptions<T> _options;
-
-    internal CircuitBreakerBuilder(CircuitBreakerMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the number of consecutive failures required to trip the circuit breaker.
     /// </summary>
@@ -22,7 +16,7 @@ public class CircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithFailureThreshold(int threshold)
     {
-        _options.FailureThreshold = threshold;
+        options.FailureThreshold = threshold;
         return this;
     }
 
@@ -33,7 +27,7 @@ public class CircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithOpenTimeout(TimeSpan timeout)
     {
-        _options.OpenTimeout = timeout;
+        options.OpenTimeout = timeout;
         return this;
     }
 
@@ -44,7 +38,7 @@ public class CircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithSamplingDuration(TimeSpan duration)
     {
-        _options.SamplingDuration = duration;
+        options.SamplingDuration = duration;
         return this;
     }
 
@@ -55,7 +49,7 @@ public class CircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithMinimumThroughput(int throughput)
     {
-        _options.MinimumThroughput = throughput;
+        options.MinimumThroughput = throughput;
         return this;
     }
 
@@ -66,29 +60,7 @@ public class CircuitBreakerBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
     {
-        _options.ExceptionTypesToBreakOn = exceptionTypes;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a custom action to execute when the circuit breaker opens.
-    /// </summary>
-    /// <param name="action">The action to execute.</param>
-    /// <returns>The builder instance.</returns>
-    public CircuitBreakerBuilder<T> OnCircuitOpened(Action action)
-    {
-        _options.OnCircuitOpened = action;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a custom action to execute when the circuit breaker closes.
-    /// </summary>
-    /// <param name="action">The action to execute.</param>
-    /// <returns>The builder instance.</returns>
-    public CircuitBreakerBuilder<T> OnCircuitClosed(Action action)
-    {
-        _options.OnCircuitClosed = action;
+        options.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
     }
 }
@@ -97,15 +69,8 @@ public class CircuitBreakerBuilder<T> where T : class
 /// Fluent builder for configuring ThrottleMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ThrottleBuilder<T> where T : class
+public class ThrottleBuilder<T>(ThrottleMiddlewareOptions<T> options) where T : class
 {
-    private readonly ThrottleMiddlewareOptions<T> _options;
-
-    internal ThrottleBuilder(ThrottleMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the maximum number of concurrent executions allowed.
     /// </summary>
@@ -113,7 +78,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithMaxConcurrency(int maxConcurrency)
     {
-        _options.MaxConcurrency = maxConcurrency;
+        options.MaxConcurrency = maxConcurrency;
         return this;
     }
 
@@ -124,7 +89,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithMaxRequestsPerWindow(int maxRequests)
     {
-        _options.MaxRequestsPerWindow = maxRequests;
+        options.MaxRequestsPerWindow = maxRequests;
         return this;
     }
 
@@ -135,7 +100,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithTimeWindow(TimeSpan timeWindow)
     {
-        _options.TimeWindow = timeWindow;
+        options.TimeWindow = timeWindow;
         return this;
     }
 
@@ -146,7 +111,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithMaxWaitTime(TimeSpan maxWaitTime)
     {
-        _options.MaxWaitTime = maxWaitTime;
+        options.MaxWaitTime = maxWaitTime;
         return this;
     }
 
@@ -157,7 +122,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithStrategy(ThrottlingStrategy strategy)
     {
-        _options.Strategy = strategy;
+        options.Strategy = strategy;
         return this;
     }
 
@@ -168,7 +133,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithQueueRequests(bool queueRequests = true)
     {
-        _options.QueueRequests = queueRequests;
+        options.QueueRequests = queueRequests;
         return this;
     }
 
@@ -179,7 +144,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithMaxQueueSize(int maxQueueSize)
     {
-        _options.MaxQueueSize = maxQueueSize;
+        options.MaxQueueSize = maxQueueSize;
         return this;
     }
 
@@ -190,7 +155,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> OnThrottled(Action<string> onThrottled)
     {
-        _options.OnThrottled = onThrottled;
+        options.OnThrottled = onThrottled;
         return this;
     }
 
@@ -201,7 +166,7 @@ public class ThrottleBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ThrottleBuilder<T> WithKeyGenerator(Func<object, string> keyGenerator)
     {
-        _options.KeyGenerator = keyGenerator;
+        options.KeyGenerator = keyGenerator;
         return this;
     }
 }

@@ -3,7 +3,7 @@ using K.EntityFrameworkCore.MiddlewareOptions;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
-internal class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : Middleware<T>
+internal abstract class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : Middleware<T>
     where T : class
 {
     public override async ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default)

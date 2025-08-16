@@ -3,7 +3,7 @@ using K.EntityFrameworkCore.MiddlewareOptions;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
-internal class FireForgetMiddleware<T>(FireForgetMiddlewareOptions<T> options) : Middleware<T>
+internal abstract class FireForgetMiddleware<T>(FireForgetMiddlewareOptions<T> options) : Middleware<T>
     where T : class
 {
     public override ValueTask InvokeAsync(IEnvelope<T> message, CancellationToken cancellationToken = default)

@@ -69,6 +69,7 @@ namespace HelloWorld
                 orderCreatedTopic.HasProducer(producer => 
                 {
                     producer.HasKey(o => o.OrderId);
+                    producer.UseOutbox();
                 });
 
                 orderCreatedTopic.HasConsumer(consumer => 
