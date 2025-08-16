@@ -1,5 +1,4 @@
 ﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.MiddlewareOptions;
 using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
 using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using K.EntityFrameworkCore.Middlewares;

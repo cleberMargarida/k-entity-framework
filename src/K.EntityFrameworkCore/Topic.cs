@@ -52,9 +52,9 @@ public class Topic<T>(DbContext dbContext)
         return envelope.Message is not null && (current = envelope.Message) != null;
     }
 
-    private static Envelope SealEnvelop(T? current)
+    private static Envelope SealEnvelop(T? message)
     {
-        return new(ref current);
+        return new(ref message);
     }
 
     /// <inheritdoc/>

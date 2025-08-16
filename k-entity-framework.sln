@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{446945EA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solutions Items", "Solutions Items", "{6B1C438D-63B6-4144-8A60-1C7C57BC335A}"
 	ProjectSection(SolutionItems) = preProject
+		MIDDLEWARE_ARCHITECTURE.md = MIDDLEWARE_ARCHITECTURE.md
 		README.md = README.md
 	EndProjectSection
 EndProject
