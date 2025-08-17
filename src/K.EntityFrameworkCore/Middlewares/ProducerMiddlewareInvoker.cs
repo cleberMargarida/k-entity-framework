@@ -2,17 +2,17 @@
 
 namespace K.EntityFrameworkCore.Middlewares;
 
-internal class ProducerMiddlewareInvoker<T> : Middleware<T>
+internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ProducerMiddlewareInvoker(
           SerializationMiddleware<T> serializationMiddleware
         , OutboxMiddleware<T> outboxMiddleware
-        , RetryMiddleware<T> retryMiddleware
-        , CircuitBreakerMiddleware<T> circuitBreakerMiddleware
-        , ThrottleMiddleware<T> throttleMiddleware
-        , BatchMiddleware<T> batchMiddleware
-        , ForgetMiddleware<T> forgetMiddleware
+        , ProducerRetryMiddleware<T> retryMiddleware
+        , ProducerCircuitBreakerMiddleware<T> circuitBreakerMiddleware
+        , ProducerThrottleMiddleware<T> throttleMiddleware
+        , ProducerBatchMiddleware<T> batchMiddleware
+        , ProducerForgetMiddleware<T> forgetMiddleware
         )
     {
         Use(serializationMiddleware);

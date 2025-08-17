@@ -129,7 +129,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
     {
-        modelBuilder.Entity<OutboxMessage>();
+        modelBuilder.Entity<OutboxMessage>().ToTable("outbox_messages");
 
         var options = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)

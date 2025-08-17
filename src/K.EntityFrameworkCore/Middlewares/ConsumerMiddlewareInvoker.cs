@@ -2,7 +2,7 @@
 
 namespace K.EntityFrameworkCore.Middlewares;
 
-internal class ConsumerMiddlewareInvoker<T> : Middleware<T>
+internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ConsumerMiddlewareInvoker(

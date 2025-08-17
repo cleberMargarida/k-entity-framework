@@ -3,6 +3,26 @@ using System.Linq.Expressions;
 
 namespace K.EntityFrameworkCore.MiddlewareOptions.Producer;
 
+/// <summary>
+/// Helper class to replace parameter expressions in expression trees.
+/// </summary>
+internal class ParameterReplacer : ExpressionVisitor
+{
+    private readonly ParameterExpression _oldParameter;
+    private readonly ParameterExpression _newParameter;
+
+    public ParameterReplacer(ParameterExpression oldParameter, ParameterExpression newParameter)
+    {
+        _oldParameter = oldParameter;
+        _newParameter = newParameter;
+    }
+
+    protected override Expression VisitParameter(ParameterExpression node)
+    {
+        return node == _oldParameter ? _newParameter : base.VisitParameter(node);
+    }
+}
+
 
 internal class ProducerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : MiddlewareOptions<T>
     where T : class
@@ -17,12 +37,20 @@ internal class ProducerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : Mi
     {
         set 
         {
+            if (value == null)
+            {
+                keyAccessor = null;
+                return;
+            }
+
             var parameter = Expression.Parameter(typeof(T), "entity");
 
             Expression propertyExpression;
             if (value is LambdaExpression lambda)
             {
-                propertyExpression = lambda.Body;
+                // Replace the lambda's parameter with our new parameter
+                var parameterReplacer = new ParameterReplacer(lambda.Parameters[0], parameter);
+                propertyExpression = parameterReplacer.Visit(lambda.Body);
             }
             else
             {
