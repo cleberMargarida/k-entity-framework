@@ -37,21 +37,3 @@ public class ProducerBatchMiddlewareOptions<T> : BatchMiddlewareOptions<T>
     where T : class
 {
 }
-
-/// <summary>
-/// Producer-specific configuration options for the AwaitForgetMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerAwaitForgetMiddlewareOptions<T> : AwaitForgetMiddlewareOptions<T>
-    where T : class
-{
-}
-
-/// <summary>
-/// Producer-specific configuration options for the FireForgetMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerFireForgetMiddlewareOptions<T> : FireForgetMiddlewareOptions<T>
-    where T : class
-{
-}

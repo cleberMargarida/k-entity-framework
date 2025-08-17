@@ -6,8 +6,8 @@ namespace K.EntityFrameworkCore.Middlewares;
 internal abstract class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : Middleware<T>(options)
     where T : class
 {
-    public override async ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        await base.InvokeAsync(message, cancellationToken);
+        return base.InvokeAsync(envelope, cancellationToken);
     }
 }

@@ -337,28 +337,32 @@ public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) 
 }
 
 /// <summary>
-/// Fluent builder for configuring producer AwaitForgetMiddleware options.
+/// Fluent builder for configuring producer ForgetMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerAwaitForgetBuilder<T>(ProducerAwaitForgetMiddlewareOptions<T> options) where T : class
+public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareOptions<T> options) where T : class
 {
     /// <summary>
-    /// Sets the timeout duration for awaiting message processing.
+    /// Sets the forget strategy to AwaitForget.
     /// </summary>
-    /// <param name="timeout">The timeout duration.</param>
+    /// <param name="timeout">
+    /// The timeout duration for awaiting message processing.
+    /// </param>
     /// <returns>The builder instance.</returns>
-    public ProducerAwaitForgetBuilder<T> WithTimeout(TimeSpan timeout)
+    public ProducerForgetBuilder<T> UseAwaitForget(TimeSpan? timeout = null)
     {
-        options.Timeout = timeout;
+        options.Strategy = ForgetStrategy.AwaitForget;
+        options.Timeout = timeout ?? TimeSpan.FromSeconds(30);
         return this;
     }
-}
 
-/// <summary>
-/// Fluent builder for configuring producer FireForgetMiddleware options.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerFireForgetBuilder<T>(ProducerFireForgetMiddlewareOptions<T> options) where T : class
-{
-    // ProducerFireForgetMiddlewareOptions<T> is currently empty, but we can add methods as needed
+    /// <summary>
+    /// Sets the forget strategy to FireForget.
+    /// </summary>
+    /// <returns>The builder instance.</returns>
+    public ProducerForgetBuilder<T> UseFireForget()
+    {
+        options.Strategy = ForgetStrategy.FireForget;
+        return this;
+    }
 }

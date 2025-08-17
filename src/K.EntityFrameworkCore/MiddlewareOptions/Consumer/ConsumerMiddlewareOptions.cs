@@ -1,5 +1,21 @@
 namespace K.EntityFrameworkCore.MiddlewareOptions.Consumer;
 
+public class ClientMiddlewareOptions<T> : MiddlewareOptions<T>
+    where T : class
+{
+    public string TopicName { get; set; }
+}
+
+public class ConsumerMiddlewareOptions<T>(ClientMiddlewareOptions<T> clientOptions) : ClientMiddlewareOptions<T>
+    where T : class
+{
+}
+
+public class ProducerMiddlewareOptions<T>(ClientMiddlewareOptions<T> clientOptions) : ClientMiddlewareOptions<T>
+    where T : class
+{
+}
+
 /// <summary>
 /// Consumer-specific configuration options for the RetryMiddleware.
 /// </summary>
@@ -32,24 +48,6 @@ public class ConsumerThrottleMiddlewareOptions<T> : ThrottleMiddlewareOptions<T>
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
 public class ConsumerBatchMiddlewareOptions<T> : BatchMiddlewareOptions<T>
-    where T : class
-{
-}
-
-/// <summary>
-/// Consumer-specific configuration options for the AwaitForgetMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ConsumerAwaitForgetMiddlewareOptions<T> : AwaitForgetMiddlewareOptions<T>
-    where T : class
-{
-}
-
-/// <summary>
-/// Consumer-specific configuration options for the FireForgetMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ConsumerFireForgetMiddlewareOptions<T> : FireForgetMiddlewareOptions<T>
     where T : class
 {
 }

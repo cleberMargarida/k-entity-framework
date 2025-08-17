@@ -314,42 +314,72 @@ public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareOptions<T> options) 
 }
 
 /// <summary>
-/// Fluent builder for configuring consumer AwaitForgetMiddleware options.
+/// Fluent builder for configuring consumer ForgetMiddleware options.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerAwaitForgetBuilder<T> where T : class
+public class ConsumerForgetBuilder<T> where T : class
 {
-    private readonly ConsumerAwaitForgetMiddlewareOptions<T> _options;
+    private readonly ConsumerForgetMiddlewareOptions<T> _options;
 
-    internal ConsumerAwaitForgetBuilder(ConsumerAwaitForgetMiddlewareOptions<T> options)
+    internal ConsumerForgetBuilder(ConsumerForgetMiddlewareOptions<T> options)
     {
         _options = options;
     }
 
     /// <summary>
+    /// Sets the forget strategy to AwaitForget.
+    /// </summary>
+    /// <returns>The builder instance.</returns>
+    public ConsumerForgetBuilder<T> UseAwaitForget()
+    {
+        _options.Strategy = ForgetStrategy.AwaitForget;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the forget strategy to FireForget.
+    /// </summary>
+    /// <returns>The builder instance.</returns>
+    public ConsumerForgetBuilder<T> UseFireForget()
+    {
+        _options.Strategy = ForgetStrategy.FireForget;
+        return this;
+    }
+
+    /// <summary>
     /// Sets the timeout duration for awaiting message processing.
+    /// Only applies when using AwaitForget strategy.
     /// </summary>
     /// <param name="timeout">The timeout duration.</param>
     /// <returns>The builder instance.</returns>
-    public ConsumerAwaitForgetBuilder<T> WithTimeout(TimeSpan timeout)
+    public ConsumerForgetBuilder<T> WithTimeout(TimeSpan timeout)
     {
         _options.Timeout = timeout;
         return this;
     }
-}
 
-/// <summary>
-/// Fluent builder for configuring consumer FireForgetMiddleware options.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ConsumerFireForgetBuilder<T> where T : class
-{
-    private readonly ConsumerFireForgetMiddlewareOptions<T> _options;
-
-    internal ConsumerFireForgetBuilder(ConsumerFireForgetMiddlewareOptions<T> options)
+    /// <summary>
+    /// Configures the middleware for AwaitForget strategy with optional timeout.
+    /// </summary>
+    /// <param name="timeout">The timeout duration for awaiting processing.</param>
+    /// <returns>The builder instance.</returns>
+    public ConsumerForgetBuilder<T> WithAwaitForget(TimeSpan? timeout = null)
     {
-        _options = options;
+        _options.Strategy = ForgetStrategy.AwaitForget;
+        if (timeout.HasValue)
+        {
+            _options.Timeout = timeout.Value;
+        }
+        return this;
     }
 
-    // ConsumerFireForgetMiddlewareOptions<T> is currently empty, but we can add methods as needed
+    /// <summary>
+    /// Configures the middleware for FireForget strategy.
+    /// </summary>
+    /// <returns>The builder instance.</returns>
+    public ConsumerForgetBuilder<T> WithFireForget()
+    {
+        _options.Strategy = ForgetStrategy.FireForget;
+        return this;
+    }
 }

@@ -3,11 +3,17 @@
 /// <summary>
 /// Represents a consumer that processes messages asynchronously.
 /// </summary>
-public interface IConsumer<out T> : IAsyncEnumerator<T?>
+public interface IConsumer<out T>
     where T : class
 {
     /// <summary>
+    /// The current message for the particular partition offset.
+    /// </summary>
+    T? Current { get; }
+
+
+    /// <summary>
     /// Asynchronously processes the next message in the topic-partition.
     /// </summary>
-    new ValueTask<bool> MoveNextAsync();
+    ValueTask<bool> MoveNextAsync();
 }

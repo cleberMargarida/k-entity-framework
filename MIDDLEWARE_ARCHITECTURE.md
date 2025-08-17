@@ -341,7 +341,7 @@ public class CompressionMiddlewareOptions<T> : MiddlewareOptions<T>
 internal class CompressionMiddleware<T>(CompressionMiddlewareOptions<T> options) : Middleware<T>(options)
     where T : class
 {
-    public override async ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
+    public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         // Compress message if size exceeds threshold
         if (ShouldCompress(message))

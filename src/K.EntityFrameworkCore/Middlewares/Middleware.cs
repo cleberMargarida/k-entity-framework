@@ -23,7 +23,7 @@ internal abstract class Middleware<T>(MiddlewareOptions<T> options) : IMiddlewar
             middlewareStack.Push(middleware);
     }
 
-    public virtual ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
+    public virtual ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         return middlewareStack.Pop().InvokeAsync(envelope, cancellationToken);
     }

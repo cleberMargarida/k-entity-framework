@@ -175,39 +175,21 @@ namespace K.EntityFrameworkCore.Extensions
         }
 
         /// <summary>
-        /// Configures the fire-and-forget middleware for the producer.
+        /// Configures the forget middleware for the producer.
+        /// Supports both await-forget and fire-forget strategies.
         /// </summary>
-        /// <param name="configure">Action to configure the fire-and-forget middleware options.</param>
+        /// <param name="configure">Action to configure the forget middleware options.</param>
         /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> HasFireForget(Action<ProducerFireForgetBuilder<T>>? configure = null)
+        public ProducerBuilder<T> HasForget(Action<ProducerForgetBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<ProducerFireForgetMiddlewareOptions<T>>();
+                .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
 
-            // Enable the middleware by default when HasFireForget is called
+            // Enable the middleware by default when HasForget is called
             options.IsMiddlewareEnabled = true;
 
-            var builder = new ProducerFireForgetBuilder<T>(options);
-            configure?.Invoke(builder);
-            return this;
-        }
-
-        /// <summary>
-        /// Configures the await-and-forget middleware for the producer.
-        /// </summary>
-        /// <param name="configure">Action to configure the await-and-forget middleware options.</param>
-        /// <returns>The producer builder instance.</returns>
-        public ProducerBuilder<T> HasAwaitForget(Action<ProducerAwaitForgetBuilder<T>>? configure = null)
-        {
-            var options = ServiceProviderCache.Instance
-                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<ProducerAwaitForgetMiddlewareOptions<T>>();
-
-            // Enable the middleware by default when HasAwaitForget is called
-            options.IsMiddlewareEnabled = true;
-
-            var builder = new ProducerAwaitForgetBuilder<T>(options);
+            var builder = new ProducerForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
         }
@@ -338,41 +320,55 @@ namespace K.EntityFrameworkCore.Extensions
         }
 
         /// <summary>
-        /// Configures the await-and-forget middleware for the consumer.
+        /// Configures the forget middleware for the consumer.
+        /// Supports both await-forget and fire-forget strategies.
         /// </summary>
-        /// <param name="configure">Action to configure the await-and-forget middleware options.</param>
+        /// <param name="configure">Action to configure the forget middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> HasAwaitForget(Action<ConsumerAwaitForgetBuilder<T>>? configure = null)
+        public ConsumerBuilder<T> HasForget(Action<ConsumerForgetBuilder<T>>? configure = null)
         {
             var options = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<ConsumerAwaitForgetMiddlewareOptions<T>>();
+                .GetRequiredService<ConsumerForgetMiddlewareOptions<T>>();
 
-            // Enable the middleware by default when HasAwaitForget is called
+            // Enable the middleware by default when HasForget is called
             options.IsMiddlewareEnabled = true;
 
-            var builder = new ConsumerAwaitForgetBuilder<T>(options);
+            var builder = new ConsumerForgetBuilder<T>(options);
             configure?.Invoke(builder);
             return this;
         }
 
         /// <summary>
-        /// Configures the fire-and-forget middleware for the consumer.
+        /// Configures the await-and-forget middleware for the consumer.
+        /// This is a convenience method that sets up ForgetMiddleware with AwaitForget strategy.
         /// </summary>
-        /// <param name="configure">Action to configure the fire-and-forget middleware options.</param>
+        /// <param name="configure">Action to configure the forget middleware options.</param>
         /// <returns>The consumer builder instance.</returns>
-        public ConsumerBuilder<T> HasFireForget(Action<ConsumerFireForgetBuilder<T>>? configure = null)
+        [Obsolete("Use HasForget().WithAwaitForget() instead. This method will be removed in a future version.")]
+        public ConsumerBuilder<T> HasAwaitForget(Action<ConsumerForgetBuilder<T>>? configure = null)
         {
-            var options = ServiceProviderCache.Instance
-                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<ConsumerFireForgetMiddlewareOptions<T>>();
+            return HasForget(builder =>
+            {
+                builder.UseAwaitForget();
+                configure?.Invoke(builder);
+            });
+        }
 
-            // Enable the middleware by default when HasFireForget is called
-            options.IsMiddlewareEnabled = true;
-
-            var builder = new ConsumerFireForgetBuilder<T>(options);
-            configure?.Invoke(builder);
-            return this;
+        /// <summary>
+        /// Configures the fire-and-forget middleware for the consumer.
+        /// This is a convenience method that sets up ForgetMiddleware with FireForget strategy.
+        /// </summary>
+        /// <param name="configure">Action to configure the forget middleware options.</param>
+        /// <returns>The consumer builder instance.</returns>
+        [Obsolete("Use HasForget().WithFireForget() instead. This method will be removed in a future version.")]
+        public ConsumerBuilder<T> HasFireForget(Action<ConsumerForgetBuilder<T>>? configure = null)
+        {
+            return HasForget(builder =>
+            {
+                builder.UseFireForget();
+                configure?.Invoke(builder);
+            });
         }
     }
 }

@@ -41,11 +41,8 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ConsumerBatchMiddlewareOptions<>));
             services.AddScoped(typeof(ConsumerBatchMiddleware<>));
 
-            services.AddSingleton(typeof(ConsumerAwaitForgetMiddlewareOptions<>));
-            services.AddScoped(typeof(ConsumerAwaitForgetMiddleware<>));
-
-            services.AddSingleton(typeof(ConsumerFireForgetMiddlewareOptions<>));
-            services.AddScoped(typeof(ConsumerFireForgetMiddleware<>));
+            services.AddSingleton(typeof(ConsumerForgetMiddlewareOptions<>));
+            services.AddScoped(typeof(ConsumerForgetMiddleware<>));
 
             // Producer-specific middleware options and classes
             services.AddSingleton(typeof(ProducerRetryMiddlewareOptions<>));
@@ -60,15 +57,16 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ProducerBatchMiddlewareOptions<>));
             services.AddScoped(typeof(ProducerBatchMiddleware<>));
 
-            services.AddSingleton(typeof(ProducerAwaitForgetMiddlewareOptions<>));
-            services.AddScoped(typeof(ProducerAwaitForgetMiddleware<>));
-
-            services.AddSingleton(typeof(ProducerFireForgetMiddlewareOptions<>));
-            services.AddScoped(typeof(ProducerFireForgetMiddleware<>));
+            services.AddSingleton(typeof(ProducerForgetMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerForgetMiddleware<>));
 
             services.AddSingleton<Infrastructure<ClientConfig>>(_ => new(client));
+
+            // One consumer per scope
+            services.AddScoped<Infrastructure<IConsumer<Ignore, byte[]>>>(ConfluentConsumerFactory);
+
+            // One producer per process
             services.AddSingleton<Infrastructure<IProducer<byte[], byte[]>>>(ConfluentProducerFactory);
-            services.AddSingleton<Infrastructure<IConsumer<Ignore, byte[]>>>(ConfluentConsumerFactory);
         }
 
         private Infrastructure<IProducer<byte[], byte[]>> ConfluentProducerFactory(IServiceProvider provider)

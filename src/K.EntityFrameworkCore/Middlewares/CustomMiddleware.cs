@@ -6,8 +6,8 @@ internal class CustomMiddleware<T, TCustom>(TCustom middleware) : IMiddleware<T>
     where T : class
     where TCustom : IMiddleware<T>
 {
-    public async ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
+    public ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        await middleware.InvokeAsync(envelope, cancellationToken);
+        return middleware.InvokeAsync(envelope, cancellationToken);
     }
 }

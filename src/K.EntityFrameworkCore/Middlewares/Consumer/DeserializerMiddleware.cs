@@ -7,11 +7,12 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
     internal class DeserializerMiddleware<T>(SerializationOptions<T> options) : Middleware<T>
         where T : class
     {
-        public override ValueTask InvokeAsync(IEnvelope<T> envelope, CancellationToken cancellationToken = default)
+        public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {
-            if (envelope is ISerializedEnvelope<T> serializedEnvelope && serializedEnvelope.SerializedData != null)
+            byte[] serializedData = ((ISerializedEnvelope<T>)envelope).SerializedData;
+            if (serializedData.Length > 0)
             {
-                serializedEnvelope.Message = JsonSerializer.Deserialize<T>(serializedEnvelope.SerializedData, options.Options);
+                envelope.Message = JsonSerializer.Deserialize<T>(serializedData, options.Options);
             }
 
             return base.InvokeAsync(envelope, cancellationToken);

@@ -10,8 +10,7 @@ internal class ProducerMiddlewareInvoker<T> : Middleware<T>
         , CircuitBreakerMiddleware<T> circuitBreakerMiddleware
         , ThrottleMiddleware<T> throttleMiddleware
         , BatchMiddleware<T> batchMiddleware
-        , AwaitForgetMiddleware<T> awaitForgetMiddleware
-        , FireForgetMiddleware<T> fireForgetMiddleware
+        , ForgetMiddleware<T> forgetMiddleware
         )
     {
         //Use(serializerMiddleware);      // Serialize first
@@ -20,7 +19,6 @@ internal class ProducerMiddlewareInvoker<T> : Middleware<T>
         Use(circuitBreakerMiddleware);
         Use(throttleMiddleware);
         Use(batchMiddleware);
-        Use(awaitForgetMiddleware);
-        Use(fireForgetMiddleware);
+        Use(forgetMiddleware);
     }
 }

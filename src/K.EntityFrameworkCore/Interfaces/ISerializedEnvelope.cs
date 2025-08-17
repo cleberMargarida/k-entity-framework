@@ -17,5 +17,5 @@ internal interface ISerializedEnvelope<T> : IEnvelope<T> where T : class
     /// <summary>
     /// Gets the serialized data bytes.
     /// </summary>
-    byte[]? SerializedData { get; }
+    byte[] SerializedData { get; }
 }
