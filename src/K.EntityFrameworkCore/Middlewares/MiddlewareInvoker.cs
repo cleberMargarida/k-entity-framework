@@ -1,24 +1,29 @@
 ﻿using K.EntityFrameworkCore.Interfaces;
-using System.Collections.ObjectModel;
 
 namespace K.EntityFrameworkCore.Middlewares
 {
-    internal abstract class MiddlewareInvoker<T> : Middleware<T> 
+    internal abstract class MiddlewareInvoker<T> : Middleware<T>
         where T : class
     {
-        private readonly Collection<IMiddleware<T>> middlewareStack = [];
+        private IMiddleware<T>? tail;
 
-        protected void Use(IMiddleware<T> middleware)
+        protected void Use(IMiddleware<T> node)
         {
-            if (middleware.IsEnabled)
-                middlewareStack.Add(middleware);
-        }
-
-        public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
-        {
-            foreach (var middleware in middlewareStack)
+            if (!node.IsEnabled)
             {
-                await middleware.InvokeAsync(envelope, cancellationToken);
+                return;
+            }
+
+            IMiddleware<T> @this = this;
+            if (@this.Next is null)
+            {
+                @this.Next = node;
+                tail = node;
+            }
+            else
+            {
+                tail!.Next = node;
+                tail = node;
             }
         }
     }
