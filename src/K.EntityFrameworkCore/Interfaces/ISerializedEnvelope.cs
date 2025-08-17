@@ -12,10 +12,10 @@ internal interface ISerializedEnvelope<T> : IEnvelope<T> where T : class
     /// <summary>
     /// Gets metadata headers for the serialized message.
     /// </summary>
-    Dictionary<string, object>? Headers { get; }
+    Dictionary<string, object> Headers { get; }
 
     /// <summary>
     /// Gets the serialized data bytes.
     /// </summary>
-    byte[] SerializedData { get; }
+    byte[] SerializedData { get; set; }
 }

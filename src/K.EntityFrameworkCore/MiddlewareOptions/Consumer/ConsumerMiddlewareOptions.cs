@@ -1,19 +1,20 @@
+using Confluent.Kafka;
+using K.EntityFrameworkCore.Extensions;
+
 namespace K.EntityFrameworkCore.MiddlewareOptions.Consumer;
 
-public class ClientMiddlewareOptions<T> : MiddlewareOptions<T>
+internal class ConsumerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : MiddlewareOptions<T>
     where T : class
 {
-    public string TopicName { get; set; }
-}
+    private readonly ConsumerConfig consumerConfig = new(clientOptions.ClientConfig);
 
-public class ConsumerMiddlewareOptions<T>(ClientMiddlewareOptions<T> clientOptions) : ClientMiddlewareOptions<T>
-    where T : class
-{
-}
+    public string GroupId 
+    { 
+        get => consumerConfig.GroupId ??= AppDomain.CurrentDomain.FriendlyName; 
+        set => consumerConfig.GroupId = value; 
+    }
 
-public class ProducerMiddlewareOptions<T>(ClientMiddlewareOptions<T> clientOptions) : ClientMiddlewareOptions<T>
-    where T : class
-{
+    public IEnumerable<KeyValuePair<string, string>> ConsumerConfig => consumerConfig;
 }
 
 /// <summary>

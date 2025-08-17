@@ -61,7 +61,7 @@ namespace HelloWorld
             {
                 topic.HasName("order-created-topic");
 
-                topic.UseJsonSerializer(settings =>
+                topic.UseSystemTextJson(settings =>
                 {
                     settings.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });

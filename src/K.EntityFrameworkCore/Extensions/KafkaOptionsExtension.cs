@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using K.EntityFrameworkCore.MiddlewareOptions;
 using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
 using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using K.EntityFrameworkCore.Middlewares;
@@ -28,7 +29,12 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
 
+            services.AddSingleton(typeof(SerializationMiddlewareOptions<>));
+            services.AddSingleton(typeof(ClientOptions<>));
+
             // Consumer-specific middleware options and classes
+            services.AddScoped(typeof(DeserializationMiddleware<>));
+
             services.AddSingleton(typeof(ConsumerRetryMiddlewareOptions<>));
             services.AddScoped(typeof(ConsumerRetryMiddleware<>));
 
@@ -45,6 +51,11 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ConsumerForgetMiddleware<>));
 
             // Producer-specific middleware options and classes
+            services.AddSingleton(typeof(ProducerMiddlewareOptions<>));
+            services.AddScoped(typeof(ProducerMiddleware<>));
+
+            services.AddScoped(typeof(SerializationMiddleware<>));
+
             services.AddSingleton(typeof(ProducerRetryMiddlewareOptions<>));
             services.AddScoped(typeof(ProducerRetryMiddleware<>));
 
@@ -66,13 +77,13 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped<Infrastructure<IConsumer<Ignore, byte[]>>>(ConfluentConsumerFactory);
 
             // One producer per process
-            services.AddSingleton<Infrastructure<IProducer<byte[], byte[]>>>(ConfluentProducerFactory);
+            services.AddSingleton<Infrastructure<IProducer<string, byte[]>>>(ConfluentProducerFactory);
         }
 
-        private Infrastructure<IProducer<byte[], byte[]>> ConfluentProducerFactory(IServiceProvider provider)
+        private Infrastructure<IProducer<string, byte[]>> ConfluentProducerFactory(IServiceProvider provider)
         {
             var client = provider.GetRequiredService<Infrastructure<ClientConfig>>().Instance;
-            return new Infrastructure<IProducer<byte[], byte[]>>(new ProducerBuilder<byte[], byte[]>(client).Build());
+            return new Infrastructure<IProducer<string, byte[]>>(new ProducerBuilder<string, byte[]>(client).Build());
 
         }
 

@@ -1,11 +1,13 @@
-﻿namespace K.EntityFrameworkCore.Middlewares;
+﻿using K.EntityFrameworkCore.Middlewares.Producer;
+
+namespace K.EntityFrameworkCore.Middlewares;
 
 internal class ProducerMiddlewareInvoker<T> : Middleware<T>
     where T : class
 {
     public ProducerMiddlewareInvoker(
-          //SerializerMiddleware<T> serializerMiddleware,
-         OutboxMiddleware<T> outboxMiddleware
+          SerializationMiddleware<T> serializationMiddleware
+        , OutboxMiddleware<T> outboxMiddleware
         , RetryMiddleware<T> retryMiddleware
         , CircuitBreakerMiddleware<T> circuitBreakerMiddleware
         , ThrottleMiddleware<T> throttleMiddleware
@@ -13,7 +15,7 @@ internal class ProducerMiddlewareInvoker<T> : Middleware<T>
         , ForgetMiddleware<T> forgetMiddleware
         )
     {
-        //Use(serializerMiddleware);      // Serialize first
+        Use(serializationMiddleware);
         Use(outboxMiddleware);
         Use(retryMiddleware);
         Use(circuitBreakerMiddleware);
