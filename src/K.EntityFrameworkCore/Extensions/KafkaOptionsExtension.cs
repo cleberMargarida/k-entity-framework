@@ -26,7 +26,7 @@ namespace K.EntityFrameworkCore.Extensions
 
         public void ApplyServices(IServiceCollection services)
         {
-            services.AddScoped(typeof(EventProcessingQueue));
+            services.AddScoped(typeof(ScopedCommandRegistry));
 
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
