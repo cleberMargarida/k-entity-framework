@@ -14,7 +14,7 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// </summary>
     /// <param name="interval">The polling interval.</param>
     /// <returns>The builder instance.</returns>
-    public OutboxBuilder<T> WithPollingInterval(TimeSpan interval)
+    public OutboxBuilder<T> HasPollingInterval(TimeSpan interval)
     {
         options.PollingInterval = interval;
         return this;
@@ -26,7 +26,7 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// If immediate publishing fails, messages fall back to background processing.
     /// </summary>
     /// <returns>The builder instance.</returns>
-    public OutboxBuilder<T> UseImmediateWithFallback()
+    public OutboxBuilder<T> HasImmediateWithFallback()
     {
         options.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
         return this;

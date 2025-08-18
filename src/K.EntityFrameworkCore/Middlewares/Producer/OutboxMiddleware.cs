@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
-internal class OutboxMiddleware<T>(OutboxMiddlewareOptions<T> options, ICurrentDbContext dbContext) : Middleware<T>(options)
+internal class OutboxMiddleware<T>(OutboxMiddlewareOptions<T> outbox, ICurrentDbContext dbContext) : Middleware<T>(outbox)
     where T : class
 {
     private readonly DbContext context = dbContext.Context;
@@ -20,7 +20,7 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareOptions<T> options, ICurrentD
             h => h.Key,
             h => Convert.ToBase64String((byte[])h.Value));
 
-        OutboxMessage outbox = new()
+        OutboxMessage message = new()
         {
             Id = Guid.NewGuid(),
             EventType = typeof(T).AssemblyQualifiedName!,
@@ -28,8 +28,13 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareOptions<T> options, ICurrentD
             Headers = headers.Count > 0 ? JsonSerializer.Serialize(headers) : null,
         };
 
-        outboxMessages.Add(outbox);
+        outboxMessages.Add(message);
 
-        return base.InvokeAsync(envelope, cancellationToken);
+        return outbox.Strategy switch
+        {
+            OutboxPublishingStrategy.ImmediateWithFallback => base.InvokeAsync(envelope, cancellationToken),
+            OutboxPublishingStrategy.BackgroundOnly => ValueTask.CompletedTask,
+            _ => throw new NotSupportedException($"The outbox strategy '{outbox.Strategy}' is not supported.")
+        };
     }
 }

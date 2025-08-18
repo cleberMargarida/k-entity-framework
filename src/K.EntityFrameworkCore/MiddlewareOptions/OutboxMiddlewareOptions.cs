@@ -17,14 +17,7 @@ public class OutboxMiddlewareOptions<T> : MiddlewareOptions<T>
     /// Gets or sets the outbox publishing strategy.
     /// Default is ImmediateWithFallback.
     /// </summary>
-    public OutboxPublishingStrategy Strategy { get; set; } = OutboxPublishingStrategy.ImmediateWithFallback;
-
-    /// <summary>
-    /// Gets or sets the timeout for immediate publishing attempts.
-    /// Only applicable when Strategy is ImmediateWithFallback.
-    /// Default is 5 seconds.
-    /// </summary>
-    public TimeSpan ImmediatePublishTimeout { get; set; } = TimeSpan.FromSeconds(5);
+    public OutboxPublishingStrategy Strategy { get; set; } = OutboxPublishingStrategy.BackgroundOnly;
 
     /// <summary>
     /// Gets or sets the maximum age of messages before they are considered stale and removed.

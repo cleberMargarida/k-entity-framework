@@ -23,11 +23,8 @@ namespace K.EntityFrameworkCore.Extensions
     /// </summary>
     public static class ModelBuilderExtensions
     {
-        private static readonly ConcurrentDictionary<Type, bool> configuredTypes = new();
-
         /// <summary>
-        /// Configures a topic for the specified message type. This method ensures that each message type
-        /// is configured only once to avoid duplicate configuration.
+        /// Configures a topic for the specified message type.
         /// </summary>
         /// <typeparam name="T">The message type.</typeparam>
         /// <param name="modelBuilder">The model builder instance.</param>
@@ -35,17 +32,8 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The model builder instance.</returns>
         public static ModelBuilder Topic<T>(this ModelBuilder modelBuilder, Action<TopicTypeBuilder<T>> topic) where T : class
         {
-            if (!IsTypeConfigured<T>())
-            {
-                topic(new TopicTypeBuilder<T>(modelBuilder));
-            }
-
+            topic(new TopicTypeBuilder<T>(modelBuilder));
             return modelBuilder;
-        }
-
-        private static bool IsTypeConfigured<T>() where T : class
-        {
-            return !configuredTypes.TryAdd(typeof(T), true);
         }
     }
 
@@ -141,14 +129,25 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
                   .IsRequired();
         });
 
-        var options = ServiceProviderCache.Instance
+        var outboxOptions = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
             .GetRequiredService<OutboxMiddlewareOptions<T>>();
 
-        options.IsMiddlewareEnabled = true;
+        outboxOptions.IsMiddlewareEnabled = true;
 
-        var builder = new OutboxBuilder<T>(options);
+        var builder = new OutboxBuilder<T>(outboxOptions);
         configure?.Invoke(builder);
+
+        if (outboxOptions.Strategy is OutboxPublishingStrategy.ImmediateWithFallback)
+        {
+            // Ensure that forget middleware is enabled when using ImmediateWithFallback strategy
+            var forgetOptions = ServiceProviderCache.Instance
+            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+            .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
+
+            forgetOptions.IsMiddlewareEnabled = true;
+        }
+
         return this;
     }
 

@@ -2,13 +2,14 @@
 using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<MyDbContext>(optionsBuilder => 
 {
-    optionsBuilder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True");
+    optionsBuilder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World");
     optionsBuilder.UseKafkaExtensibility(client =>
     {
         client.BootstrapServers = "localhost:9092"; // Adjust to your Kafka server
@@ -23,6 +24,9 @@ app.Start();
 var scope = app.Services.CreateScope();
 
 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+
+dbContext.Database.EnsureDeleted();
+dbContext.Database.EnsureCreated();
 
 // here you're intending to mark the entity to be persisted.
 dbContext.Orders.Add(new Order { Status = "New" });
@@ -70,7 +74,11 @@ namespace HelloWorld
                 topic.HasProducer(producer => 
                 {
                     producer.HasKey(o => o.OrderId);
-                    producer.HasOutbox();
+                    producer.HasOutbox(outbox => 
+                    {
+                        outbox.HasPollingInterval(TimeSpan.FromSeconds(5));
+                        outbox.HasImmediateWithFallback();
+                    });
                 });
 
                 topic.HasConsumer(consumer => 
