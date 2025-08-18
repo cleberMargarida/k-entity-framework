@@ -24,7 +24,7 @@ internal class ParameterReplacer : ExpressionVisitor
 }
 
 
-internal class ProducerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : MiddlewareOptions<T>
+internal class ProducerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : MiddlewareOptions<T>(true)
     where T : class
 {
     private Func<T, string>? keyAccessor;

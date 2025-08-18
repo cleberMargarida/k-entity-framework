@@ -13,6 +13,7 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         , ProducerThrottleMiddleware<T> throttleMiddleware
         , ProducerBatchMiddleware<T> batchMiddleware
         , ProducerForgetMiddleware<T> forgetMiddleware
+        , ProducerMiddleware<T> producerMiddleware
         )
     {
         Use(serializationMiddleware);
@@ -22,5 +23,6 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         Use(throttleMiddleware);
         Use(batchMiddleware);
         Use(forgetMiddleware);
+        Use(producerMiddleware);
     }
 }

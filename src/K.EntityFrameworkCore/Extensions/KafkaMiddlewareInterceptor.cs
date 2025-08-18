@@ -1,4 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Middlewares;
+using System.Collections.Concurrent;
+using System.Linq.Expressions;
+using System.Reflection;
+using Confluent.Kafka;
 
 namespace K.EntityFrameworkCore.Extensions
 {
@@ -9,11 +19,23 @@ namespace K.EntityFrameworkCore.Extensions
             return base.SavingChanges(eventData, result);
         }
 
-        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
-            // Here you can intercept the saving changes event asynchronously
-            // and perform any custom logic before the changes are saved to the database.
-            return new ValueTask<InterceptionResult<int>>(result);
+            var dbContext = eventData.Context;
+            if (dbContext == null)
+            {
+                return await base.SavingChangesAsync(eventData, result, cancellationToken);
+            }
+
+            IServiceProvider serviceProvider = dbContext.GetInfrastructure();
+
+            var queue = serviceProvider.GetRequiredService<EventProcessingQueue>();
+            while (queue.Dequeue(out var operationDelegate))
+            {
+                await operationDelegate(serviceProvider, cancellationToken);
+            }
+
+            return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }
     }
 }

@@ -12,24 +12,24 @@
         public Guid Id { get; set; }
 
         /// <summary>
+        /// The sequence in which this message was generated.
+        /// </summary>
+        public long SequenceNumber { get; set; }
+
+        /// <summary>
         /// The type or name of the event/message.
         /// </summary>
         public string EventType { get; set; } = default!;
 
         /// <summary>
-        /// Identifier of the entity or aggregate this event belongs to.
+        /// The message headers.
         /// </summary>
-        public string AggregateId { get; set; } = default!;
+        public string? Headers { get; set; } = default!;
 
         /// <summary>
-        /// The serialized event payload (usually JSON).
+        /// The serialized event payload.
         /// </summary>
-        public string Payload { get; set; } = default!;
-
-        /// <summary>
-        /// When the event occurred (domain time).
-        /// </summary>
-        public DateTime OccurredOn { get; set; }
+        public byte[] Payload { get; set; } = default!;
 
         /// <summary>
         /// Whether the message has been processed/published.
@@ -45,10 +45,5 @@
         /// Number of attempts to publish this message.
         /// </summary>
         public int Retries { get; set; }
-
-        /// <summary>
-        /// Stores the last error message if processing failed.
-        /// </summary>
-        public string? LastError { get; set; }
     }
 }

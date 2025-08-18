@@ -7,7 +7,6 @@ namespace K.EntityFrameworkCore.MiddlewareOptions;
 public class OutboxMiddlewareOptions<T> : MiddlewareOptions<T>
     where T : class
 {
-
     /// <summary>
     /// Gets or sets the interval for polling and publishing outbox messages.
     /// Default is 5 seconds.
@@ -21,31 +20,11 @@ public class OutboxMiddlewareOptions<T> : MiddlewareOptions<T>
     public OutboxPublishingStrategy Strategy { get; set; } = OutboxPublishingStrategy.ImmediateWithFallback;
 
     /// <summary>
-    /// Gets or sets the maximum number of retry attempts for immediate publishing.
-    /// Only applicable when Strategy is ImmediateWithFallback.
-    /// Default is 3.
-    /// </summary>
-    public int MaxImmediateRetryAttempts { get; set; } = 3;
-
-    /// <summary>
     /// Gets or sets the timeout for immediate publishing attempts.
     /// Only applicable when Strategy is ImmediateWithFallback.
     /// Default is 5 seconds.
     /// </summary>
     public TimeSpan ImmediatePublishTimeout { get; set; } = TimeSpan.FromSeconds(5);
-
-    /// <summary>
-    /// Gets or sets the maximum number of messages to process in a single background batch.
-    /// Only applicable when Strategy is BackgroundOnly.
-    /// Default is 100.
-    /// </summary>
-    public int BackgroundBatchSize { get; set; } = 100;
-
-    /// <summary>
-    /// Gets or sets whether to remove successfully published messages immediately.
-    /// Default is true.
-    /// </summary>
-    public bool RemoveOnSuccess { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the maximum age of messages before they are considered stale and removed.

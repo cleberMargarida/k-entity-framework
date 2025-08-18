@@ -3,6 +3,7 @@
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
 /// Represents a mutable envelope that holds a message of type <typeparamref name="T"/> along with its serialized data and headers.
@@ -15,10 +16,16 @@ public class Envelope<T>(T? message)
     , ISerializedEnvelope<T>
     where T : class
 {
+    private Envelope()
+        : this(null)
+    {
+    }
+
     private byte[] serializedData = [0];
     private readonly Dictionary<string, object> headers = [];
 
     /// <inheritdoc/>
+    [NotMapped]
     public T? Message
     {
         get => message;
@@ -26,9 +33,11 @@ public class Envelope<T>(T? message)
     }
 
     /// <inheritdoc/>
+    [NotMapped]
     Dictionary<string, object> ISerializedEnvelope<T>.Headers => headers;
 
     /// <inheritdoc/>
+    [NotMapped]
     byte[] ISerializedEnvelope<T>.SerializedData
     {
         get => serializedData;

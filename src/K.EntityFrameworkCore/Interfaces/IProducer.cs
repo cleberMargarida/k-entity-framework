@@ -9,5 +9,5 @@ public interface IProducer<T>
     /// <summary>
     /// Publishes a domain event to the Kafka topic.
     /// </summary>
-    void Publish(in T domainEvent);
+    void Publish(T message);
 }

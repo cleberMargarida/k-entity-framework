@@ -1,4 +1,5 @@
-﻿using Confluent.Kafka.Admin;
+﻿using Confluent.Kafka;
+using Confluent.Kafka.Admin;
 using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
@@ -129,13 +130,21 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
     {
-        modelBuilder.Entity<OutboxMessage>().ToTable("outbox_messages");
+        modelBuilder.Entity<OutboxMessage>(outbox =>
+        {
+            outbox.ToTable("outbox_messages");
+
+            outbox.HasKey(x => x.Id);
+
+            outbox.Property(outbox => outbox.SequenceNumber)
+                  .ValueGeneratedOnAdd()
+                  .IsRequired();
+        });
 
         var options = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
             .GetRequiredService<OutboxMiddlewareOptions<T>>();
 
-        // Enable the middleware by default when HasOutbox is called
         options.IsMiddlewareEnabled = true;
 
         var builder = new OutboxBuilder<T>(options);
