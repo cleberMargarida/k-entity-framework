@@ -118,9 +118,19 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
     {
+        var outboxOptions = ServiceProviderCache.Instance
+            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+            .GetRequiredService<OutboxMiddlewareOptions<T>>();
+
+        outboxOptions.IsMiddlewareEnabled = true;
+
+        var builder = new OutboxBuilder<T>(outboxOptions);
+
+        configure?.Invoke(builder);
+
         modelBuilder.Entity<OutboxMessage>(outbox =>
         {
-            outbox.ToTable("outbox_messages");
+            outbox.ToTable("OutboxMessages");
 
             outbox.HasKey(x => x.Id);
 
@@ -129,21 +139,12 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
                   .IsRequired();
         });
 
-        var outboxOptions = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<OutboxMiddlewareOptions<T>>();
-
-        outboxOptions.IsMiddlewareEnabled = true;
-
-        var builder = new OutboxBuilder<T>(outboxOptions);
-        configure?.Invoke(builder);
-
         if (outboxOptions.Strategy is OutboxPublishingStrategy.ImmediateWithFallback)
         {
             // Ensure that forget middleware is enabled when using ImmediateWithFallback strategy
             var forgetOptions = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
+                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+                .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
 
             forgetOptions.IsMiddlewareEnabled = true;
         }
