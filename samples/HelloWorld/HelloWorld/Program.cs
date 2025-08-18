@@ -2,24 +2,36 @@
 using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<MyDbContext>(optionsBuilder => 
-{
-    optionsBuilder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World");
-    optionsBuilder.UseKafkaExtensibility(client =>
+builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
+
+    // Configure EF Core to use SQL Server
+    .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
+
+    // Enable Kafka extensibility for EF Core (publishing/consuming integration)
+    .UseKafkaExtensibility(client =>
     {
-        client.BootstrapServers = "localhost:9092"; // Adjust to your Kafka server
+        client.BootstrapServers = "localhost:9092";
         //...
+    }))
+
+    // Add and configure the outbox worker (used when topics are outbox-enabled)
+    .AddOutboxKafkaWorker<MyDbContext>(outbox =>
+    {
+        outbox.WithMaxMessagesPerPoll(100)
+              .WithPollingInterval(1000)
+              .UseSingleNode();
     });
-});
+
 
 using var app = builder.Build();
 
 app.Start();
+
+Console.ReadLine();
 
 var scope = app.Services.CreateScope();
 
@@ -36,6 +48,8 @@ dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, Status = "Created"
 
 // here you're saving the changes to the database and publishing the event.
 await dbContext.SaveChangesAsync();
+
+Console.ReadLine();
 
 // here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
 while (await dbContext.OrderEvents.MoveNextAsync())
@@ -62,7 +76,7 @@ namespace HelloWorld
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Topic<OrderCreated>(topic => 
+            modelBuilder.Topic<OrderCreated>(topic =>
             {
                 topic.HasName("order-created-topic");
 
@@ -71,17 +85,16 @@ namespace HelloWorld
                     settings.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
 
-                topic.HasProducer(producer => 
+                topic.HasProducer(producer =>
                 {
                     producer.HasKey(o => o.OrderId);
-                    producer.HasOutbox(outbox => 
+                    producer.HasOutbox(outbox =>
                     {
-                        outbox.HasPollingInterval(TimeSpan.FromSeconds(5));
-                        outbox.HasImmediateWithFallback();
+                        outbox.UseBackgroundOnly();
                     });
                 });
 
-                topic.HasConsumer(consumer => 
+                topic.HasConsumer(consumer =>
                 {
                     consumer.GroupId("");
                 });

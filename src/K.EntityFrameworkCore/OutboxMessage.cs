@@ -4,7 +4,7 @@
     /// Represents a message stored in the outbox table
     /// for reliable event publishing.
     /// </summary>
-    internal class OutboxMessage
+    public class OutboxMessage
     {
         /// <summary>
         /// Unique identifier of the outbox message.
@@ -17,9 +17,19 @@
         public long SequenceNumber { get; set; }
 
         /// <summary>
+        /// The bucket this message belongs to for partitioning.
+        /// </summary>
+        public string? AggregateId { get; set; }
+
+        /// <summary>
         /// The type or name of the event/message.
         /// </summary>
         public string EventType { get; set; } = default!;
+        
+        /// <summary>
+        /// The type or name of the message at runtime.
+        /// </summary>
+        public string RuntimeType { get; set; } = default!;
 
         /// <summary>
         /// The message headers.

@@ -8,22 +8,10 @@ public class OutboxMiddlewareOptions<T> : MiddlewareOptions<T>
     where T : class
 {
     /// <summary>
-    /// Gets or sets the interval for polling and publishing outbox messages.
-    /// Default is 5 seconds.
-    /// </summary>
-    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
-
-    /// <summary>
     /// Gets or sets the outbox publishing strategy.
     /// Default is ImmediateWithFallback.
     /// </summary>
     public OutboxPublishingStrategy Strategy { get; set; } = OutboxPublishingStrategy.BackgroundOnly;
-
-    /// <summary>
-    /// Gets or sets the maximum age of messages before they are considered stale and removed.
-    /// Default is 7 days.
-    /// </summary>
-    public TimeSpan MessageRetentionPeriod { get; set; } = TimeSpan.FromDays(7);
 }
 
 /// <summary>

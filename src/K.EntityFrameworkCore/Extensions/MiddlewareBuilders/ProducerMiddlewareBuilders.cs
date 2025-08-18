@@ -10,23 +10,12 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : class
 {
     /// <summary>
-    /// Sets the polling interval for publishing outbox messages.
-    /// </summary>
-    /// <param name="interval">The polling interval.</param>
-    /// <returns>The builder instance.</returns>
-    public OutboxBuilder<T> HasPollingInterval(TimeSpan interval)
-    {
-        options.PollingInterval = interval;
-        return this;
-    }
-
-    /// <summary>
     /// Configures immediate publishing strategy with fallback to background processing.
     /// Messages are published immediately after saving. If successful, they are removed.
     /// If immediate publishing fails, messages fall back to background processing.
     /// </summary>
     /// <returns>The builder instance.</returns>
-    public OutboxBuilder<T> HasImmediateWithFallback()
+    public OutboxBuilder<T> UseImmediateWithFallback()
     {
         options.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
         return this;

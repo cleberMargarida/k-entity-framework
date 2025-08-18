@@ -7,12 +7,14 @@ namespace K.EntityFrameworkCore.Middlewares;
 /// </summary>
 internal interface ISerializedEnvelope<T> : IEnvelope<T> where T : class
 {
+    public string? Key { get; set; }
+
     new public T? Message { set; }
 
     /// <summary>
     /// Gets metadata headers for the serialized message.
     /// </summary>
-    Dictionary<string, object> Headers { get; }
+    Dictionary<string, object>? Headers { get; set; }
 
     /// <summary>
     /// Gets the serialized data bytes.

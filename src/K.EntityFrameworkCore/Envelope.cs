@@ -21,8 +21,9 @@ public class Envelope<T>(T? message)
     {
     }
 
-    private byte[] serializedData = [0];
-    private readonly Dictionary<string, object> headers = [];
+    private string? key;
+    private byte[] serializedData = [0];//TODO instantiate?
+    private Dictionary<string, object>? headers;
 
     /// <inheritdoc/>
     [NotMapped]
@@ -34,7 +35,11 @@ public class Envelope<T>(T? message)
 
     /// <inheritdoc/>
     [NotMapped]
-    Dictionary<string, object> ISerializedEnvelope<T>.Headers => headers;
+    Dictionary<string, object>? ISerializedEnvelope<T>.Headers 
+    { 
+        get => headers; 
+        set => headers = value; 
+    }
 
     /// <inheritdoc/>
     [NotMapped]
@@ -43,4 +48,6 @@ public class Envelope<T>(T? message)
         get => serializedData;
         set => serializedData = value;
     }
+
+    string? ISerializedEnvelope<T>.Key { get => key; set => key = value; }
 }

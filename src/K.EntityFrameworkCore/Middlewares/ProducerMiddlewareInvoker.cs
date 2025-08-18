@@ -26,3 +26,12 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         Use(producerMiddleware);
     }
 }
+
+internal class OutboxProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
+    where T : class
+{
+    public OutboxProducerMiddlewareInvoker(
+        )
+    {
+    }
+}

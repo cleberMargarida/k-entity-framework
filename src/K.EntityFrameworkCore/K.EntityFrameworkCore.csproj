@@ -31,12 +31,14 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="[8,)" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="[8,)" />
 		<PackageReference Include="System.Text.Json" Version="[8,)" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[8,)" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="[9,)" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="[9,)" />
 		<PackageReference Include="System.Text.Json" Version="[9,)" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[9,)" />
 	</ItemGroup>
 
 	<ItemGroup>
