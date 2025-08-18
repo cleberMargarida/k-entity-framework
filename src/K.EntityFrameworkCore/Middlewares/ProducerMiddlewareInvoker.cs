@@ -6,7 +6,7 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ProducerMiddlewareInvoker(
-          SerializationMiddleware<T> serializationMiddleware
+          SerializerMiddleware<T> serializationMiddleware
         , OutboxMiddleware<T> outboxMiddleware
         , ProducerRetryMiddleware<T> retryMiddleware
         , ProducerCircuitBreakerMiddleware<T> circuitBreakerMiddleware

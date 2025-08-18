@@ -57,7 +57,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ProducerMiddlewareOptions<>));
             services.AddScoped(typeof(ProducerMiddleware<>));
 
-            services.AddScoped(typeof(SerializationMiddleware<>));
+            services.AddScoped(typeof(SerializerMiddleware<>));
 
             services.AddSingleton(typeof(ProducerRetryMiddlewareOptions<>));
             services.AddScoped(typeof(ProducerRetryMiddleware<>));

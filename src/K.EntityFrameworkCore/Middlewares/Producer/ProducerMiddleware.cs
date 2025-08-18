@@ -11,22 +11,28 @@ namespace K.EntityFrameworkCore.Middlewares.Producer
 
         public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {
-            await producer.ProduceAsync(options.TopicName, new()
+            ISerializedEnvelope<T> envelopeSerialized = envelope;
+
+            Headers headers = AddHeaders(envelopeSerialized);
+            string key = options.GetKey(envelope.Message!)!;
+
+            Message<string, byte[]> confluentMessage = new() 
             {
-                Headers = AddHeaders(envelope),
-                Key = options.GetKey(envelope.Message!)!,
-                Value = ((ISerializedEnvelope<T>)envelope).SerializedData,
-            }, cancellationToken);
+                Headers = headers, 
+                Key = key, 
+                Value = envelopeSerialized.SerializedData, 
+            };
+
+            await producer.ProduceAsync(options.TopicName, confluentMessage, cancellationToken);
 
             await base.InvokeAsync(envelope, cancellationToken);
         }
 
-        private static Headers AddHeaders(Envelope<T> envelope)
+        private static Headers AddHeaders(ISerializedEnvelope<T> envelope)
         {
             Headers headers = [];
-            foreach (var item in ((ISerializedEnvelope<T>)envelope).Headers)
+            foreach (var item in envelope.Headers)
             {
-                //TODO make sure that the serializer middleware does serialize headers if they are not serialized
                 headers.Add(new(item.Key, (byte[])item.Value));
             }
 

@@ -56,16 +56,13 @@ public static class DbContextExtensions
         where T : class
     {
         var serviceProvider = dbContext.GetInfrastructure();
+        
         var eventProcessingQueue = serviceProvider.GetRequiredService<EventProcessingQueue>();
-        eventProcessingQueue.Enqueue((
-            IServiceProvider serviceProvider,
-            CancellationToken cancellationToken) =>
+        
+        eventProcessingQueue.Enqueue((IServiceProvider serviceProvider, CancellationToken cancellationToken) =>
         {
-            var producerMiddlewareInvoker = serviceProvider
-                .GetRequiredService<ProducerMiddlewareInvoker<T>>();
-
-            return producerMiddlewareInvoker
-                .InvokeAsync(new Envelope<T>(message), cancellationToken);
+            var producerMiddlewareInvoker = serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>();
+            return producerMiddlewareInvoker.InvokeAsync(new Envelope<T>(message), cancellationToken);
         });
     }
 }

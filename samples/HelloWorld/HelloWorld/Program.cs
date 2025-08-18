@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<MyDbContext>(optionsBuilder => 
 {
+    optionsBuilder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True");
     optionsBuilder.UseKafkaExtensibility(client =>
     {
         client.BootstrapServers = "localhost:9092"; // Adjust to your Kafka server
