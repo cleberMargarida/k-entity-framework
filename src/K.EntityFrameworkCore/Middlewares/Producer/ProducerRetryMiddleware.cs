@@ -9,8 +9,4 @@ namespace K.EntityFrameworkCore.Middlewares.Producer;
 internal class ProducerRetryMiddleware<T>(ProducerRetryMiddlewareOptions<T> options) : RetryMiddleware<T>(options)
     where T : class
 {
-    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
-    {
-        return base.InvokeAsync(envelope, cancellationToken);
-    }
 }
