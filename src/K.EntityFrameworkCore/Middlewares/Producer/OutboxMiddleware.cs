@@ -240,7 +240,7 @@ internal sealed class OutboxPollingWorker<TDbContext> : BackgroundService
         {
             var query = coordination.ApplyScope(outboxMessages);
             var batch = (await query.Take(maxMessagesPerPoll).ToListAsync(stoppingToken)).Select(DeferedExecution).ToArray();
-            Task.WaitAll(batch, stoppingToken);
+            _ = Task.WhenAll(batch);
         }
     }
 
@@ -253,9 +253,8 @@ internal sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     internal Task DeferedExecution<T>(OutboxMessage outboxMessage)
         where T : class
     {
-        IServiceProvider serviceProvider = context.GetInfrastructure();
         Envelope<T> envelope = outboxMessage.ToEnvelope<T>();
-
+        IServiceProvider serviceProvider = context.GetInfrastructure();
         return serviceProvider.GetRequiredService<OutboxProducerMiddlewareInvoker<T>>().InvokeAsync(envelope).AsTask();
     }
 
