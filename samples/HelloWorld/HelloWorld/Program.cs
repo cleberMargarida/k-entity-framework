@@ -19,12 +19,16 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
     }))
 
     // Add and configure the outbox worker (used when topics are outbox-enabled)
-    .AddOutboxKafkaWorker<MyDbContext>(outbox =>
-    {
-        outbox.WithMaxMessagesPerPoll(100)
-              .WithPollingInterval(1000)
-              .UseSingleNode();
-    });
+    .AddOutboxKafkaWorker<MyDbContext>(outbox => outbox
+
+    // Configure the worker to poll 100 messages per poll
+    .WithMaxMessagesPerPoll(100)
+
+    // Configure the worker to poll every 1000 milliseconds (1 second)
+    .WithPollingInterval(1000)
+
+    // Configure the worker to use a single node
+    .UseSingleNode());
 
 
 using var app = builder.Build();

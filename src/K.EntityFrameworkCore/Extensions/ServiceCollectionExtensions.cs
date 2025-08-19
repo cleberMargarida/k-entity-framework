@@ -13,7 +13,6 @@ namespace K.EntityFrameworkCore.Extensions
         /// <typeparam name="DbContext">The type of the Entity Framework Core <see cref="Microsoft.EntityFrameworkCore.DbContext"/> used for outbox storage.</typeparam>
         /// <param name="services">The service collection to add the worker to.</param>
         /// <param name="configureWorker">
-        /// An optional delegate to configure <see cref="OutboxPollingWorkerSettings"/> such as polling interval and batch size.
         /// </param>
         /// <returns>The same <see cref="IServiceCollection"/> instance for method chaining.</returns>
         public static IServiceCollection AddOutboxKafkaWorker<DbContext>(

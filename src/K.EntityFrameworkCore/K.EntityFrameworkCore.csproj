@@ -48,6 +48,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\K.EntityFrameworkCore.CodeGen\K.EntityFrameworkCore.CodeGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Folder Include="Serialization\" />
 	</ItemGroup>
 </Project>

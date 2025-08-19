@@ -264,14 +264,11 @@ internal sealed class OutboxPollingWorker<TDbContext> : BackgroundService
 
     private Task DeferedExecution(OutboxMessage outboxMessage)
     {
-        var eventType = Type.GetType(outboxMessage.EventType, true)!;
-        return (DeferedExecutionMethod.MakeGenericMethod(eventType).Invoke(this, [outboxMessage]) as Task)!;
+        return Task.CompletedTask;
+        //return this.ProcessOutboxMessageAsync(outboxMessage);
     }
 
-    [field: AllowNull]
-    static MethodInfo DeferedExecutionMethod => field ??= typeof(OutboxPollingWorker<TDbContext>).GetMethod(nameof(DeferedExecution), genericParameterCount: 1, bindingAttr: BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(OutboxMessage)], null)!;
-
-    private Task DeferedExecution<T>(OutboxMessage outboxMessage)
+    internal Task DeferedExecution<T>(OutboxMessage outboxMessage)
         where T : class
     {
         IServiceProvider serviceProvider = context.GetInfrastructure();
