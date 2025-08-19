@@ -23,7 +23,7 @@ public static class DbContextExtensions
 
         var commandRegistry = serviceProvider.GetRequiredService<ScopedCommandRegistry>();
 
-        commandRegistry.Add(new PublishCommand<T>(message).ExecuteAsync);
+        commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);
     }
 }
 
@@ -45,7 +45,7 @@ internal class ScopedCommandRegistry
     }
 }
 
-internal readonly struct PublishCommand<T>(T message)
+internal readonly struct ProducerMiddlewareInvokeCommand<T>(T message)
     where T : class
 {
     public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)

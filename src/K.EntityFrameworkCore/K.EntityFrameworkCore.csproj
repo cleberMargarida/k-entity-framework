@@ -44,11 +44,8 @@
 	<ItemGroup>
 		<!-- Confluent Kafka target framework -->
 		<PackageReference Include="Confluent.Kafka" Version="2.10.1" />
-		<PackageReference Include="Nerdbank.GitVersioning" Version="[3.6.141,)" />
-	</ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\K.EntityFrameworkCore.CodeGen\K.EntityFrameworkCore.CodeGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<PackageReference Include="Nerdbank.GitVersioning" Version="[3.6.141,)" />
 	</ItemGroup>
 
 	<ItemGroup>

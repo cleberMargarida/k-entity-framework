@@ -18,7 +18,7 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
         //...
     }))
 
-    // Add and configure the outbox worker (used when topics are outbox-enabled)
+    // Add the outbox worker (used when topics are outbox-enabled)
     .AddOutboxKafkaWorker<MyDbContext>(outbox => outbox
 
     // Configure the worker to poll 100 messages per poll

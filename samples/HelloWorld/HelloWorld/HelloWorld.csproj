@@ -30,4 +30,8 @@
 	  <ProjectReference Include="..\..\..\src\K.EntityFrameworkCore\K.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\K.EntityFrameworkCore.CodeGen\K.EntityFrameworkCore.CodeGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
 </Project>

@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using static K.EntityFrameworkCore.Middlewares.Producer.OutboxPollingWorker<TDbContext>;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
@@ -202,20 +203,25 @@ public sealed class OutboxWorkerBuilder<TDbContext>
 /// Background worker that polls the outbox and publishes messages.
 /// </summary>
 /// <typeparam name="TDbContext">The EF Core DbContext type.</typeparam>
-internal sealed class OutboxPollingWorker<TDbContext> : BackgroundService
+public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     where TDbContext : DbContext
 {
     private readonly IServiceScope scope = default!;
     private readonly TDbContext context;
     private readonly OutboxPollingWorkerSettings<TDbContext> settings;
+    private readonly IMiddlewareSpecifier<TDbContext>? middlewareSpecifier;
 
-    public OutboxPollingWorker(IServiceProvider applicationServiceProvider, IOptions<OutboxPollingWorkerSettings<TDbContext>> settings) : this(applicationServiceProvider.CreateScope(), settings)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OutboxPollingWorker{TDbContext}"/> class.
+    /// </summary>
+    public OutboxPollingWorker(IServiceProvider applicationServiceProvider, IOptions<OutboxPollingWorkerSettings<TDbContext>> settings, IMiddlewareSpecifier<TDbContext>? middlewareSpecifier = null) : this(applicationServiceProvider.CreateScope(), settings)
     {
+        this.middlewareSpecifier = middlewareSpecifier;
     }
 
     private OutboxPollingWorker(IServiceScope serviceScope, IOptions<OutboxPollingWorkerSettings<TDbContext>> settings) : this(serviceScope.ServiceProvider.GetRequiredService<TDbContext>(), settings)
     {
-        scope = serviceScope;
+        this.scope = serviceScope;
     }
 
     private OutboxPollingWorker(TDbContext context, IOptions<OutboxPollingWorkerSettings<TDbContext>> settings)
@@ -246,16 +252,28 @@ internal sealed class OutboxPollingWorker<TDbContext> : BackgroundService
 
     private Task DeferedExecution(OutboxMessage outboxMessage)
     {
-        return Task.CompletedTask;
-        //return this.ProcessOutboxMessageAsync(outboxMessage);
+        return middlewareSpecifier?.DeferedExecution(outboxMessage).Invoke(context.GetInfrastructure()/*TODO share instance*/, CancellationToken.None).AsTask();
     }
 
-    internal Task DeferedExecution<T>(OutboxMessage outboxMessage)
+    /// <summary>
+    /// Processes an outbox message by invoking the producer middleware for deferred execution.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="outboxMessage"></param>
+    /// <returns></returns>
+    public static ScopedCommand DeferedExecution<T>(OutboxMessage outboxMessage)
         where T : class
     {
-        Envelope<T> envelope = outboxMessage.ToEnvelope<T>();
-        IServiceProvider serviceProvider = context.GetInfrastructure();
-        return serviceProvider.GetRequiredService<OutboxProducerMiddlewareInvoker<T>>().InvokeAsync(envelope).AsTask();
+        return new MiddlewareInvokeCommand<T>(outboxMessage).ExecuteAsync;
+    }
+
+    readonly struct MiddlewareInvokeCommand<T>(OutboxMessage outboxMessage)
+        where T : class
+    {
+        public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        {
+            return serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>().InvokeAsync(outboxMessage.ToEnvelope<T>(), cancellationToken);
+        }
     }
 
     /// <summary>
