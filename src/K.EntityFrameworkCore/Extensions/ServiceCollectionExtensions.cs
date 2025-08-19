@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace K.EntityFrameworkCore.Extensions
 {
+    /// <summary>
+    /// Extension methods for <see cref="IServiceCollection"/> to add outbox Kafka worker services.
+    /// </summary>
     public static class ServiceCollectionExtensions
     {
         /// <summary>
@@ -24,6 +27,17 @@ namespace K.EntityFrameworkCore.Extensions
             configureWorker?.Invoke(builder);
             services.TryAddSingleton(builder);
             services.AddHostedService<OutboxPollingWorker<DbContext>>();
+
+            // reflection but only once to register the source generated code, avoiding more reflection
+            var middlewareSpecifier = System.Reflection.Assembly.GetEntryAssembly()?
+                .GetTypes()
+                .SingleOrDefault(t => t.IsAssignableTo(typeof(IMiddlewareSpecifier<DbContext>)));
+
+            if (middlewareSpecifier != null)
+            {
+                services.TryAddSingleton(typeof(IMiddlewareSpecifier<DbContext>), middlewareSpecifier);
+            }
+
             return services;
         }
     }
@@ -41,10 +55,10 @@ namespace K.EntityFrameworkCore.Extensions
         /// <remarks>
         /// Default is <c>1000</c> milliseconds (1 second).
         /// </remarks>
-        public int PollingIntervalMilliseconds 
+        public int PollingIntervalMilliseconds
         {
-            get => PollingInterval.Milliseconds; 
-            set => PollingInterval = TimeSpan.FromMilliseconds(value); 
+            get => PollingInterval.Milliseconds;
+            set => PollingInterval = TimeSpan.FromMilliseconds(value);
         }
 
         /// <summary>

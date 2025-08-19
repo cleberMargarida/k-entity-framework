@@ -31,6 +31,12 @@ namespace K.EntityFrameworkCore.Middlewares.Producer
         private static Headers AddHeaders(ISerializedEnvelope<T> envelope)
         {
             Headers headers = [];
+
+            if (envelope.Headers == null)
+            {
+                return headers;
+            }
+
             foreach (var item in envelope.Headers)
             {
                 headers.Add(new(item.Key, (byte[])item.Value));

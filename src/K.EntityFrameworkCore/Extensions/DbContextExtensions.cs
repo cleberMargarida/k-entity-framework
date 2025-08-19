@@ -29,19 +29,17 @@ public static class DbContextExtensions
 
 internal class ScopedCommandRegistry
 {
-    private readonly List<ScopedCommand> commands = new(3);
+    private readonly Queue<ScopedCommand> commands = new(3);
 
     public void Add(ScopedCommand command)
     {
-        commands.Add(command);
+        commands.Enqueue(command);
     }
 
     public async ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default)
     {
-        foreach (var command in commands)
-        {
+        while (commands.TryDequeue(out var command))
             await command.Invoke(serviceProvider, cancellationToken);
-        }
     }
 }
 

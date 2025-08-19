@@ -30,7 +30,6 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
     // Configure the worker to use a single node
     .UseSingleNode());
 
-
 using var app = builder.Build();
 
 app.Start();

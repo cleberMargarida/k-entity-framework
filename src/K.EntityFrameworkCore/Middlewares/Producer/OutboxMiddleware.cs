@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.MiddlewareOptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -7,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using static K.EntityFrameworkCore.Middlewares.Producer.OutboxPollingWorker<TDbContext>;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
@@ -186,10 +186,6 @@ public sealed class OutboxWorkerBuilder<TDbContext>
     /// Configures Kafka-backed sharding using precomputed buckets on the outbox entity.
     /// Only the owned buckets will be queried from the database.
     /// </summary>
-    /// <param name="virtualBucketCount">The total number of virtual buckets.</param>
-    /// A delegate that resolves the set of owned buckets for this worker.
-    /// The delegate can read environment, config, or Kafka assignment and returns the bucket ids.
-    /// </param>
     public OutboxWorkerBuilder<TDbContext> WorkBalance(
         //int virtualBucketCount
         )
