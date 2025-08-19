@@ -1,26 +1,20 @@
-﻿using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.MiddlewareOptions;
-using System.Text.Json;
 
-namespace K.EntityFrameworkCore.Middlewares.Consumer
+namespace K.EntityFrameworkCore.Middlewares.Consumer;
+
+/// <summary>
+/// Middleware that handles deserialization based on context.
+/// </summary>
+/// <typeparam name="T">The message type.</typeparam>
+[ScopedService]
+internal class DeserializerMiddleware<T>(SerializationMiddlewareOptions<T> options) : Middleware<T>(options)
+    where T : class
 {
-    /// <summary>
-    /// Legacy deserializer middleware. Use SerializationMiddleware instead.
-    /// </summary>
-    /// <typeparam name="T">The message type.</typeparam>
-    [Obsolete("Use SerializationMiddleware<T> instead. This class will be removed in a future version.")]
-    internal class DeserializerMiddleware<T>(SerializationMiddlewareOptions<T> options) : Middleware<T>
-        where T : class
+    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
-        {
-            byte[] serializedData = ((ISerializedEnvelope<T>)envelope).SerializedData;
-            if (serializedData.Length > 0)
-            {
-                //envelope.Message = JsonSerializer.Deserialize<T>(serializedData, options.SystemTextJsonOptions);
-            }
-
-            return base.InvokeAsync(envelope, cancellationToken);
-        }
+        //TODO deserialize runtime type
+        options.Deserializer.DeserializeMessage(envelope);
+        return base.InvokeAsync(envelope, cancellationToken);
     }
 }

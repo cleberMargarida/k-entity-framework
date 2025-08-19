@@ -36,7 +36,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ClientOptions<>));
 
             // Consumer-specific middleware options and classes
-            services.AddScoped(typeof(DeserializationMiddleware<>));
+            services.AddScoped(typeof(DeserializerMiddleware<>));
             services.AddSingleton(typeof(ConsumerMiddlewareOptions<>));
 
             services.AddSingleton(typeof(ConsumerRetryMiddlewareOptions<>));

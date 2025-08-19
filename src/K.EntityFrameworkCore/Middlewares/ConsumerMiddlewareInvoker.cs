@@ -6,7 +6,7 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ConsumerMiddlewareInvoker(
-          DeserializationMiddleware<T> serializationMiddleware
+          DeserializerMiddleware<T> serializationMiddleware
         , InboxMiddleware<T> inboxMiddleware
         , RetryMiddleware<T> retryMiddleware
         , CircuitBreakerMiddleware<T> circuitBreakerMiddleware

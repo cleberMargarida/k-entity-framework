@@ -1,4 +1,5 @@
 ﻿using K.EntityFrameworkCore.Middlewares.Producer;
+using System.Runtime.Intrinsics.X86;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
@@ -31,6 +32,9 @@ internal class OutboxProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public OutboxProducerMiddlewareInvoker(
+        /*
+         registry custom middlewares for outbox
+         */
         )
     {
     }

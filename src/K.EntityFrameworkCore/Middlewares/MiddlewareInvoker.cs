@@ -7,11 +7,11 @@ namespace K.EntityFrameworkCore.Middlewares
     {
         private IMiddleware<T>? tail;
 
-        protected void Use(IMiddleware<T> node)
+        protected bool Use(IMiddleware<T> node)
         {
             if (!node.IsEnabled)
             {
-                return;
+                return false;
             }
 
             IMiddleware<T> @this = this;
@@ -25,6 +25,8 @@ namespace K.EntityFrameworkCore.Middlewares
                 tail!.Next = node;
                 tail = node;
             }
+
+            return true;
         }
     }
 }
