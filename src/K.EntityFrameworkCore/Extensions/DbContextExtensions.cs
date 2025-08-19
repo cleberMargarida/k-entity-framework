@@ -50,7 +50,7 @@ internal readonly struct PublishCommand<T>(T message)
 {
     public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
-        return serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>().InvokeAsync(new Envelope<T>(message), cancellationToken);
+        return serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>().InvokeAsync(message.Seal(), cancellationToken);
     }
 }
 

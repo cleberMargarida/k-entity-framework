@@ -13,10 +13,7 @@ internal class DeserializationMiddleware<T>(SerializationMiddlewareOptions<T> op
 {
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        var serializedData = ((ISerializedEnvelope<T>)envelope).SerializedData;
-
-        envelope.Message = options.DeserializerInstance.Deserialize(serializedData);
-
+        options.Deserializer.DeserializeMessage(envelope);
         return base.InvokeAsync(envelope, cancellationToken);
     }
 }

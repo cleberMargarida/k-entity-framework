@@ -7,9 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using System.Text.Json;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
@@ -20,23 +17,9 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareOptions<T> outbox, ICurrentDb
 
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        ISerializedEnvelope<T> envelopeSerialized = envelope;
-
         DbSet<OutboxMessage> outboxMessages = context.Set<OutboxMessage>();
 
-        Dictionary<string, string>? headers = envelopeSerialized.Headers?.ToDictionary(
-            h => h.Key,
-            h => Convert.ToBase64String((byte[])h.Value));
-
-        OutboxMessage message = new()
-        {
-            Id = Guid.NewGuid(),
-            EventType = typeof(T).AssemblyQualifiedName!,
-            RuntimeType = envelope.Message!.GetType().AssemblyQualifiedName!,
-            Payload = envelopeSerialized.SerializedData,
-            Headers = headers?.Count > 0 ? JsonSerializer.Serialize(headers) : null,
-            AggregateId = envelopeSerialized.Key,
-        };
+        OutboxMessage message = envelope.ToOutboxMessage();
 
         outboxMessages.Add(message);
 
@@ -108,7 +91,6 @@ internal sealed class ExclusiveNodeCoordination<TDbContext>(TDbContext context) 
 /// by <see cref="OutboxMessage.AggregateId"/> using a SQL-translatable <c>IN</c> predicate.
 /// Bucket ownership is coordinated via Kafka heartbeats (implementation hidden).
 /// </summary>
-/// <typeparam name="TOutbox">The outbox entity type.</typeparam>
 /// <remarks>
 /// Initializes the strategy.
 /// </remarks>
@@ -272,27 +254,9 @@ internal sealed class OutboxPollingWorker<TDbContext> : BackgroundService
         where T : class
     {
         IServiceProvider serviceProvider = context.GetInfrastructure();
-        Envelope<T> envelope = new(null);
-
-        ISerializedEnvelope<T> serializedEnvelope = envelope;
-
-        serializedEnvelope.Key = outboxMessage.AggregateId;
-        serializedEnvelope.SerializedData = outboxMessage.Payload;
-        DeserializeHeaders(outboxMessage, serializedEnvelope);
+        Envelope<T> envelope = outboxMessage.ToEnvelope<T>();
 
         return serviceProvider.GetRequiredService<OutboxProducerMiddlewareInvoker<T>>().InvokeAsync(envelope).AsTask();
-    }
-
-    private static void DeserializeHeaders<T>(OutboxMessage outboxMessage, ISerializedEnvelope<T> serializedEnvelope) 
-        where T : class
-    {
-        Dictionary<string, string>? headers = outboxMessage.Headers is null
-            ? null
-            : JsonSerializer.Deserialize<Dictionary<string, string>>(outboxMessage.Headers)!;
-
-        serializedEnvelope.Headers = headers?.ToDictionary(
-            h => h.Key,
-            h => (object)Convert.FromBase64String(h.Value));
     }
 
     /// <summary>

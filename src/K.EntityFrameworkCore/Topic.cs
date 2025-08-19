@@ -7,12 +7,11 @@ namespace K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares;
-using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
 /// Represents a topic in the Kafka message broker that can be used for both producing and consuming messages.
 /// </summary>
-public partial class Topic<T>(DbContext dbContext)
+public sealed class Topic<T>(DbContext dbContext)
     : IProducer<T>
     , IConsumer<T>
     where T : class
@@ -35,13 +34,19 @@ public partial class Topic<T>(DbContext dbContext)
     /// <inheritdoc/>
     public async ValueTask<bool> MoveNextAsync()
     {
-        var envelope = SealEnvelop(null);
+        var envelope = Seal(default(T));
         await consumerMiddlewareInvoker.Value.InvokeAsync(envelope);
         return Unseal(envelope);
     }
 
-    private bool Unseal(Envelope<T> envelope) => envelope.Message is not null && (current = envelope.Message) != null;
+    private static Envelope<T> Seal(T? message)
+    {
+        return EnvelopeExtensions.Seal(message);
+    }
 
-    private static Envelope<T> SealEnvelop(T? message) => new(message);
+    private bool Unseal(Envelope<T> envelope)
+    {
+        return envelope.HasMessage() && (current = envelope.Unseal()) != null;
+    }
 }
 

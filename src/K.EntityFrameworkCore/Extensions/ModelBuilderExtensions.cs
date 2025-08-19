@@ -78,8 +78,8 @@ namespace K.EntityFrameworkCore.Extensions
 
             TSerializer serializer = new();
             configure?.Invoke(serializer.Options);
-            serializationOptions.DeserializerInstance = serializer;
-            serializationOptions.SerializerInstance = serializer;
+            serializationOptions.Deserializer = serializer;
+            serializationOptions.Serializer = serializer;
 
             return this;
         }

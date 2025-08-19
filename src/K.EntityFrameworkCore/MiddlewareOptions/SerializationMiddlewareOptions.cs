@@ -13,8 +13,8 @@ internal class SerializationMiddlewareOptions<T>() : MiddlewareOptions<T>(isMidd
 {
     private static readonly SystemTextJsonSerializer<T> defaultSerializer = new();
 
-    public IMessageSerializer<T> SerializerInstance { get; set; } = defaultSerializer;
-    public IMessageDeserializer<T> DeserializerInstance { get; set; } = defaultSerializer;
+    public IMessageSerializer<T> Serializer { get; set; } = defaultSerializer;
+    public IMessageDeserializer<T> Deserializer { get; set; } = defaultSerializer;
 }
 
 internal class SystemTextJsonSerializer<T> 
