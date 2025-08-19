@@ -99,15 +99,6 @@ public class ProducerCircuitBreakerMiddlewareOptions<T> : CircuitBreakerMiddlewa
 }
 
 /// <summary>
-/// Producer-specific configuration options for the ThrottleMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerThrottleMiddlewareOptions<T> : ThrottleMiddlewareOptions<T>
-    where T : class
-{
-}
-
-/// <summary>
 /// Producer-specific configuration options for the BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>

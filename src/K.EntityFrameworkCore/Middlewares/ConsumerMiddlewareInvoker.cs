@@ -10,7 +10,6 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         , InboxMiddleware<T> inboxMiddleware
         , RetryMiddleware<T> retryMiddleware
         , CircuitBreakerMiddleware<T> circuitBreakerMiddleware
-        , ThrottleMiddleware<T> throttleMiddleware
         , BatchMiddleware<T> batchMiddleware
         , ForgetMiddleware<T> forgetMiddleware
         )
@@ -19,7 +18,6 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         Use(inboxMiddleware);
         Use(retryMiddleware);
         Use(circuitBreakerMiddleware);
-        Use(throttleMiddleware);
         Use(batchMiddleware);
         Use(forgetMiddleware);
     }

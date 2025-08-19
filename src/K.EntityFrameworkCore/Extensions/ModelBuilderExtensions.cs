@@ -191,25 +191,6 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     }
 
     /// <summary>
-    /// Configures the throttle middleware for the producer.
-    /// </summary>
-    /// <param name="configure">Action to configure the throttle middleware options.</param>
-    /// <returns>The producer builder instance.</returns>
-    public ProducerBuilder<T> HasThrottle(Action<ProducerThrottleBuilder<T>>? configure = null)
-    {
-        var options = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerThrottleMiddlewareOptions<T>>();
-
-        // Enable the middleware by default when HasThrottle is called
-        options.IsMiddlewareEnabled = true;
-
-        var builder = new ProducerThrottleBuilder<T>(options);
-        configure?.Invoke(builder);
-        return this;
-    }
-
-    /// <summary>
     /// Configures the forget middleware for the producer.
     /// Supports both await-forget and fire-forget strategies.
     /// </summary>
@@ -318,25 +299,6 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         options.IsMiddlewareEnabled = true;
 
         var builder = new ConsumerCircuitBreakerBuilder<T>(options);
-        configure?.Invoke(builder);
-        return this;
-    }
-
-    /// <summary>
-    /// Configures the throttle middleware for the consumer.
-    /// </summary>
-    /// <param name="configure">Action to configure the throttle middleware options.</param>
-    /// <returns>The consumer builder instance.</returns>
-    public ConsumerBuilder<T> HasThrottle(Action<ConsumerThrottleBuilder<T>>? configure = null)
-    {
-        var options = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerThrottleMiddlewareOptions<T>>();
-
-        // Enable the middleware by default when HasThrottle is called
-        options.IsMiddlewareEnabled = true;
-
-        var builder = new ConsumerThrottleBuilder<T>(options);
         configure?.Invoke(builder);
         return this;
     }

@@ -36,15 +36,6 @@ public class ConsumerCircuitBreakerMiddlewareOptions<T> : CircuitBreakerMiddlewa
 }
 
 /// <summary>
-/// Consumer-specific configuration options for the ThrottleMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ConsumerThrottleMiddlewareOptions<T> : ThrottleMiddlewareOptions<T>
-    where T : class
-{
-}
-
-/// <summary>
 /// Consumer-specific configuration options for the BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>

@@ -45,9 +45,6 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ConsumerCircuitBreakerMiddlewareOptions<>));
             services.AddScoped(typeof(ConsumerCircuitBreakerMiddleware<>));
 
-            services.AddSingleton(typeof(ConsumerThrottleMiddlewareOptions<>));
-            services.AddScoped(typeof(ConsumerThrottleMiddleware<>));
-
             services.AddSingleton(typeof(ConsumerBatchMiddlewareOptions<>));
             services.AddScoped(typeof(ConsumerBatchMiddleware<>));
 
@@ -65,9 +62,6 @@ namespace K.EntityFrameworkCore.Extensions
 
             services.AddSingleton(typeof(ProducerCircuitBreakerMiddlewareOptions<>));
             services.AddScoped(typeof(ProducerCircuitBreakerMiddleware<>));
-
-            services.AddSingleton(typeof(ProducerThrottleMiddlewareOptions<>));
-            services.AddScoped(typeof(ProducerThrottleMiddleware<>));
 
             services.AddSingleton(typeof(ProducerBatchMiddlewareOptions<>));
             services.AddScoped(typeof(ProducerBatchMiddleware<>));
