@@ -1,4 +1,4 @@
-﻿using K.EntityFrameworkCore.Middlewares.Producer;
+﻿using K.EntityFrameworkCore.Middlewares.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

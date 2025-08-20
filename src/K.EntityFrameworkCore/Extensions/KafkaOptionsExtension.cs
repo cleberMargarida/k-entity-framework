@@ -3,11 +3,16 @@ global using IBatchProducer = Confluent.Kafka.IProducer<string, byte[]>;
 
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares;
-using K.EntityFrameworkCore.Middlewares.Producer;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using K.EntityFrameworkCore.Middlewares.Batch;
+using K.EntityFrameworkCore.Middlewares.CircuitBreaker;
+using K.EntityFrameworkCore.Middlewares.Forget;
+using K.EntityFrameworkCore.Middlewares.Retry;
+using K.EntityFrameworkCore.Middlewares.Outbox;
+using K.EntityFrameworkCore.Middlewares.Serialization;
+using K.EntityFrameworkCore.Middlewares.Core;
 
 
 namespace K.EntityFrameworkCore.Extensions

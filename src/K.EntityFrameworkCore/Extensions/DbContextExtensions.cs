@@ -1,4 +1,4 @@
-﻿using K.EntityFrameworkCore.Middlewares;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;

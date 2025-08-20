@@ -1,4 +1,7 @@
-using K.EntityFrameworkCore.Middlewares;
+using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Forget;
+using K.EntityFrameworkCore.Middlewares.Outbox;
+using K.EntityFrameworkCore.Middlewares.Retry;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 

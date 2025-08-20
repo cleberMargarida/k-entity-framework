@@ -1,7 +1,6 @@
 ﻿namespace K.EntityFrameworkCore;
 
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Collections.Generic;
 using System.ComponentModel;

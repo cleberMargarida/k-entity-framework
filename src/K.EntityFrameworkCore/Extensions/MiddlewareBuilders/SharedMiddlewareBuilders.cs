@@ -1,4 +1,4 @@
-using K.EntityFrameworkCore.Middlewares;
+using K.EntityFrameworkCore.Middlewares.CircuitBreaker;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 

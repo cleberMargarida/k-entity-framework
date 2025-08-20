@@ -1,6 +1,4 @@
-using K.EntityFrameworkCore.Interfaces;
-
-namespace K.EntityFrameworkCore.Middlewares;
+namespace K.EntityFrameworkCore.Interfaces;
 
 /// <summary>
 /// Interface for envelopes that contain serialized data.

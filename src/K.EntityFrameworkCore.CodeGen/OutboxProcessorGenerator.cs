@@ -133,7 +133,7 @@ namespace K.EntityFrameworkCore.CodeGen
             sb.AppendLine($"#nullable enable");
             sb.AppendLine($"using K.EntityFrameworkCore;");
             sb.AppendLine($"using K.EntityFrameworkCore.Extensions;");
-            sb.AppendLine($"using K.EntityFrameworkCore.Middlewares.Producer;");
+            sb.AppendLine($"using K.EntityFrameworkCore.Middlewares.Outbox;");
             sb.AppendLine();
             sb.AppendLine($"namespace {namespaceName}");
             sb.AppendLine($"{{");
