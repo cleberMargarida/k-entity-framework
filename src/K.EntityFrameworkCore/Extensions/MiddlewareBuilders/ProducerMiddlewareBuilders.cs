@@ -44,7 +44,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="maxAttempts">The maximum number of retry attempts.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithMaxAttempts(int maxAttempts)
+    public ProducerRetryBuilder<T> UseMaxAttempts(int maxAttempts)
     {
         options.MaxRetryAttempts = maxAttempts;
         return this;
@@ -55,7 +55,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="delay">The base delay.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithBaseDelay(TimeSpan delay)
+    public ProducerRetryBuilder<T> UseBaseDelay(TimeSpan delay)
     {
         options.BaseDelay = delay;
         return this;
@@ -66,7 +66,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="maxDelay">The maximum delay.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithMaxDelay(TimeSpan maxDelay)
+    public ProducerRetryBuilder<T> UseMaxDelay(TimeSpan maxDelay)
     {
         options.MaxDelay = maxDelay;
         return this;
@@ -77,7 +77,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="strategy">The backoff strategy.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithBackoffStrategy(RetryBackoffStrategy strategy)
+    public ProducerRetryBuilder<T> UseBackoffStrategy(RetryBackoffStrategy strategy)
     {
         options.BackoffStrategy = strategy;
         return this;
@@ -88,7 +88,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="multiplier">The backoff multiplier.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithBackoffMultiplier(double multiplier)
+    public ProducerRetryBuilder<T> UseBackoffMultiplier(double multiplier)
     {
         options.BackoffMultiplier = multiplier;
         return this;
@@ -99,7 +99,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="useJitter">Whether to use jitter.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithJitter(bool useJitter = true)
+    public ProducerRetryBuilder<T> UseJitter(bool useJitter = true)
     {
         options.UseJitter = useJitter;
         return this;
@@ -110,7 +110,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="exceptionTypes">The exception types to retry on.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithRetriableExceptions(params Type[] exceptionTypes)
+    public ProducerRetryBuilder<T> UseRetriableExceptions(params Type[] exceptionTypes)
     {
         options.RetriableExceptionTypes = exceptionTypes;
         return this;
@@ -121,7 +121,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="predicate">The retry predicate.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> WithRetryPredicate(Func<Exception, bool> predicate)
+    public ProducerRetryBuilder<T> UseRetryPredicate(Func<Exception, bool> predicate)
     {
         options.ShouldRetryPredicate = predicate;
         return this;
@@ -139,7 +139,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// </summary>
     /// <param name="threshold">The failure threshold.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerCircuitBreakerBuilder<T> WithFailureThreshold(int threshold)
+    public ProducerCircuitBreakerBuilder<T> UseFailureThreshold(int threshold)
     {
         options.FailureThreshold = threshold;
         return this;
@@ -150,7 +150,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// </summary>
     /// <param name="timeout">The open timeout.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerCircuitBreakerBuilder<T> WithOpenTimeout(TimeSpan timeout)
+    public ProducerCircuitBreakerBuilder<T> UseOpenTimeout(TimeSpan timeout)
     {
         options.OpenTimeout = timeout;
         return this;
@@ -161,7 +161,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// </summary>
     /// <param name="duration">The sampling duration.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerCircuitBreakerBuilder<T> WithSamplingDuration(TimeSpan duration)
+    public ProducerCircuitBreakerBuilder<T> UseSamplingDuration(TimeSpan duration)
     {
         options.SamplingDuration = duration;
         return this;
@@ -172,7 +172,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// </summary>
     /// <param name="throughput">The minimum throughput.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerCircuitBreakerBuilder<T> WithMinimumThroughput(int throughput)
+    public ProducerCircuitBreakerBuilder<T> UseMinimumThroughput(int throughput)
     {
         options.MinimumThroughput = throughput;
         return this;
@@ -183,7 +183,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// </summary>
     /// <param name="exceptionTypes">The exception types that trigger circuit breaking.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerCircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
+    public ProducerCircuitBreakerBuilder<T> UseBreakOnExceptions(params Type[] exceptionTypes)
     {
         options.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
@@ -201,7 +201,7 @@ public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="batchSize">The batch size.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerBatchBuilder<T> WithBatchSize(int batchSize)
+    public ProducerBatchBuilder<T> UseBatchSize(int batchSize)
     {
         options.BatchSize = batchSize;
         return this;
@@ -212,7 +212,7 @@ public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) 
     /// </summary>
     /// <param name="timeout">The batch timeout.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerBatchBuilder<T> WithBatchTimeout(TimeSpan timeout)
+    public ProducerBatchBuilder<T> UseBatchTimeout(TimeSpan timeout)
     {
         options.BatchTimeout = timeout;
         return this;

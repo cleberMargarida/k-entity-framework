@@ -1,4 +1,8 @@
-﻿using Confluent.Kafka;
+﻿global using IProducer = Confluent.Kafka.IProducer<string, byte[]>;
+global using IBatchProducer = Confluent.Kafka.IProducer<string, byte[]>;
+
+using Confluent.Kafka;
+using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.MiddlewareOptions;
 using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
 using K.EntityFrameworkCore.MiddlewareOptions.Producer;
@@ -7,18 +11,23 @@ using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Producer;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+
 
 namespace K.EntityFrameworkCore.Extensions
 {
     internal class KafkaOptionsExtension : IDbContextOptionsExtension
     {
+        // TODO dictionary of context types to options
         internal static IDbContextOptions? CachedOptions;
 
         private readonly ClientConfig client;
+        private readonly Type contextType;
 
-        public KafkaOptionsExtension(ClientConfig client)
+        public KafkaOptionsExtension(ClientConfig client, Type contextType)
         {
             this.client = client;
+            this.contextType = contextType;
             Info = new KafkaOptionsExtensionInfo(this);
         }
 
@@ -30,7 +39,6 @@ namespace K.EntityFrameworkCore.Extensions
 
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
-            services.AddScoped(typeof(OutboxProducerMiddlewareInvoker<>));
 
             services.AddSingleton(typeof(SerializationMiddlewareOptions<>));
             services.AddSingleton(typeof(ClientOptions<>));
@@ -72,26 +80,58 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(OutboxMiddlewareOptions<>));
             services.AddScoped(typeof(OutboxMiddleware<>));
 
-            services.AddSingleton<Infrastructure<ClientConfig>>(_ => new(client));
+            services.AddSingleton<ClientConfig>(_ => new(client));
 
             // One consumer per scope
-            services.AddScoped<Infrastructure<IConsumer<Ignore, byte[]>>>(ConfluentConsumerFactory);
+            services.AddScoped<IConsumer<Ignore, byte[]>>(ConsumerFactory);
 
             // One producer per process
-            services.AddSingleton<Infrastructure<IProducer<string, byte[]>>>(ConfluentProducerFactory);
+            services.AddSingleton<IProducer>(ProducerFactory);
+
+            //TODO: move to source generator is okay reflection here?
+            foreach (var item in contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(prop => 
+                    prop.PropertyType.IsGenericType &&
+                    prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
+                .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
+            {
+                services.AddKeyedSingleton<IBatchProducer>(item, ProducerFactory);
+            }
         }
 
-        private Infrastructure<IProducer<string, byte[]>> ConfluentProducerFactory(IServiceProvider provider)
+        private IProducer ProducerFactory(IServiceProvider provider, object? key)
         {
-            var client = provider.GetRequiredService<Infrastructure<ClientConfig>>().Instance;
-            return new Infrastructure<IProducer<string, byte[]>>(new ProducerBuilder<string, byte[]>(client).Build());
+            Type type = (Type)key!;
 
+            var batchOptions = (IBatchMiddlewareOptions)provider.GetRequiredService(typeof(ProducerBatchMiddlewareOptions<>).MakeGenericType(type));
+
+            var client = provider.GetRequiredService<ClientConfig>();
+            var producerConfig = new ProducerConfig(client)
+            {
+                BatchSize = batchOptions.BatchSize,
+                MessageTimeoutMs = batchOptions.BatchTimeoutMilliseconds,
+            };
+
+            return ProducerFactory(producerConfig);
         }
 
-        private Infrastructure<IConsumer<Ignore, byte[]>> ConfluentConsumerFactory(IServiceProvider provider)
+        private IProducer ProducerFactory(IServiceProvider provider)
         {
-            var client = provider.GetRequiredService<Infrastructure<ClientConfig>>().Instance;
-            return new Infrastructure<IConsumer<Ignore, byte[]>>(new ConsumerBuilder<Ignore, byte[]>(client).Build());
+            var client = provider.GetRequiredService<ClientConfig>();
+            var producerConfig = new ProducerConfig(client);
+            return ProducerFactory(producerConfig);
+        }
+
+        private static IProducer ProducerFactory(ClientConfig client)
+        {
+            return new ProducerBuilder<string, byte[]>(client)
+                .SetLogHandler((_,_) => { }).Build();
+        }
+
+        private IConsumer<Ignore, byte[]> ConsumerFactory(IServiceProvider provider)
+        {
+            var client = provider.GetRequiredService<ClientConfig>();
+            return new ConsumerBuilder<Ignore, byte[]>(client).Build();
         }
 
         public void Validate(IDbContextOptions options)

@@ -1,4 +1,8 @@
-﻿namespace K.EntityFrameworkCore
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+
+namespace K.EntityFrameworkCore
 {
     /// <summary>
     /// Represents a message stored in the outbox table
@@ -25,7 +29,10 @@
         /// The type or name of the event/message.
         /// </summary>
         public string EventType { get; set; } = default!;
-        
+
+        [JsonIgnore, NotMapped]
+        internal Type? Type { get; set; }
+
         /// <summary>
         /// The type or name of the message at runtime.
         /// </summary>
@@ -44,7 +51,7 @@
         /// <summary>
         /// Whether the message has been processed/published.
         /// </summary>
-        public bool Processed { get; set; }
+        public bool IsSucceeded { get; set; }
 
         /// <summary>
         /// When the message was processed/published (if applicable).

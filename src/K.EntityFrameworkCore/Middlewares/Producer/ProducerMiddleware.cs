@@ -4,11 +4,9 @@ using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer
 {
-    internal class ProducerMiddleware<T>(Infrastructure<IProducer<string, byte[]>> producer, ProducerMiddlewareOptions<T> options) : Middleware<T>(options)
+    internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareOptions<T> options) : Middleware<T>(options)
         where T : class
     {
-        private readonly IProducer<string, byte[]> producer = producer.Instance;
-
         public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {
             ISerializedEnvelope<T> envelopeSerialized = envelope;

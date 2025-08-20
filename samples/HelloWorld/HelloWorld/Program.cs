@@ -25,7 +25,7 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
     .WithMaxMessagesPerPoll(100)
 
     // Configure the worker to poll every 1000 milliseconds (1 second)
-    .WithPollingInterval(1000)
+    .WithPollingInterval(4_000)
 
     // Configure the worker to use a single node
     .UseSingleNode());
@@ -97,7 +97,7 @@ namespace HelloWorld
                     });
                     producer.HasBatch(batching =>
                     {
-                        batching.WithBatchTimeout(TimeSpan.FromSeconds(10));
+                        batching.UseBatchTimeout(TimeSpan.FromSeconds(2));
                     });
                 });
 

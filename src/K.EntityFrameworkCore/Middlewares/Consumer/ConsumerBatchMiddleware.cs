@@ -10,8 +10,4 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer;
 internal class ConsumerBatchMiddleware<T>(ConsumerBatchMiddlewareOptions<T> options) : BatchMiddleware<T>(options)
     where T : class
 {
-    protected override Task InvokeAsync(ICollection<Envelope<T>> batchToSend, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

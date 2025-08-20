@@ -22,7 +22,7 @@ namespace K.EntityFrameworkCore.Extensions
             var clientInstance = new ClientConfig();
             client.Invoke(clientInstance);
             IDbContextOptionsBuilderInfrastructure infrastructure = optionsBuilder;
-            infrastructure.AddOrUpdateExtension(new KafkaOptionsExtension(clientInstance));
+            infrastructure.AddOrUpdateExtension(new KafkaOptionsExtension(clientInstance, optionsBuilder.Options.ContextType));
             optionsBuilder.AddInterceptors(new KafkaMiddlewareInterceptor());
             optionsBuilder.ReplaceService<IDbSetInitializer, DbSetInitializerExt>();
             return optionsBuilder;

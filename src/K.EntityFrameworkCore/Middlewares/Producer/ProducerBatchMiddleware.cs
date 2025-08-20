@@ -1,6 +1,8 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.MiddlewareOptions.Producer;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
@@ -8,55 +10,46 @@ namespace K.EntityFrameworkCore.Middlewares.Producer;
 /// Producer-specific batch middleware that inherits from the base BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-internal class ProducerBatchMiddleware<T>(
-      Infrastructure<IProducer<string, byte[]>> producer
-    , ProducerBatchMiddlewareOptions<T> options
-    , ProducerMiddlewareOptions<T> producerOptions)
+internal class ProducerBatchMiddleware<T>(ProducerBatchMiddlewareOptions<T> options, ProducerMiddlewareOptions<T> producerOptions, IServiceProvider serviceProvider)
     : BatchMiddleware<T>(options) where T : class
 {
-    private readonly IProducer<string, byte[]> producer = producer.Instance;
-
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
+        Type type = typeof(T);
+        var reference = envelope.GetInfrastructure();
+        var options = serviceProvider.GetRequiredService<ProducerMiddlewareOptions<T>>();
+
+        Message<string, byte[]> message;
+        if (!reference.TryGetTarget(out OutboxMessage? outboxMessage) && outboxMessage != null)
+        {
+            //TODO: avoid box -> unbox -> box -> unbox -> box
+            message = new Message<string, byte[]>
+            {
+                //Headers = ,
+                Key = outboxMessage.AggregateId!,
+                Value = outboxMessage.Payload,
+            };
+        }
+        else
+        {
+            var serializedEnvelope = envelope as ISerializedEnvelope<T>;
+            message = new Message<string, byte[]>
+            {
+                //Headers = ,
+                Key = producerOptions.GetKey(envelope.Message!)!,
+                Value = serializedEnvelope.SerializedData
+            };
+        }
+
+        var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(type);
+
+        producer.Produce(message.Key, message, HandleDeliveryReport);
+
         return base.InvokeAsync(envelope, cancellationToken);
     }
 
-    protected override Task InvokeAsync(ICollection<Envelope<T>> batchToSend, CancellationToken cancellationToken)
+    private void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
     {
-        foreach (var envelope in batchToSend)
-        {
-            ISerializedEnvelope<T> envelopeSerialized = envelope;
-
-            Headers headers = AddHeaders(envelopeSerialized);
-            string key = producerOptions.GetKey(envelope.Message!)!;
-
-            Message<string, byte[]> confluentMessage = new()
-            {
-                Headers = headers,
-                Key = key,
-                Value = envelopeSerialized.SerializedData,
-            };
-
-            producer.Produce(producerOptions.TopicName, confluentMessage);
-        }
-
-        return Task.Run(() => producer.Flush(cancellationToken), cancellationToken);
-    }
-
-    private static Headers AddHeaders(ISerializedEnvelope<T> envelope)
-    {
-        Headers headers = [];
-
-        if (envelope.Headers == null)
-        {
-            return headers;
-        }
-
-        foreach (var item in envelope.Headers)
-        {
-            headers.Add(new(item.Key, (byte[])item.Value));
-        }
-
-        return headers;
+        throw new NotImplementedException();
     }
 }

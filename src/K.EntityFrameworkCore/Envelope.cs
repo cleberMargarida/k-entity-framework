@@ -2,9 +2,11 @@
 
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 /// <summary>
@@ -16,6 +18,7 @@ using System.Text.Json;
 public class Envelope<T>(T? message)
     : IEnvelope<T>
     , ISerializedEnvelope<T>
+    , IInfrastructure<WeakReference<OutboxMessage?>>
     where T : class
 {
     private Envelope()
@@ -37,10 +40,10 @@ public class Envelope<T>(T? message)
 
     /// <inheritdoc/>
     [NotMapped]
-    Dictionary<string, object>? ISerializedEnvelope<T>.Headers 
-    { 
-        get => headers; 
-        set => headers = value; 
+    Dictionary<string, object>? ISerializedEnvelope<T>.Headers
+    {
+        get => headers;
+        set => headers = value;
     }
 
     /// <inheritdoc/>
@@ -52,6 +55,10 @@ public class Envelope<T>(T? message)
     }
 
     string? ISerializedEnvelope<T>.Key { get => key; set => key = value; }
+
+    /// <inheritdoc/>
+    [field: AllowNull]
+    WeakReference<OutboxMessage?> IInfrastructure<WeakReference<OutboxMessage?>>.Instance => field ??= new WeakReference<OutboxMessage?>(null);
 }
 
 
