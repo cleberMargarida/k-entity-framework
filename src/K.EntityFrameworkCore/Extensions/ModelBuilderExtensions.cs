@@ -122,7 +122,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
             .GetRequiredService<OutboxMiddlewareOptions<T>>();
 
-        outboxOptions.IsMiddlewareEnabled = true;
+        outboxOptions.EnableMiddleware();
 
         var builder = new OutboxBuilder<T>(outboxOptions);
 
@@ -146,8 +146,15 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
                 .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
 
-            forgetOptions.IsMiddlewareEnabled = true;
+            forgetOptions.EnableMiddleware();
         }
+
+        // Ensure that batch middleware is enabled when using any outbox
+        var batchOptions = ServiceProviderCache.Instance
+            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+            .GetRequiredService<ProducerBatchMiddlewareOptions<T>>();
+
+        batchOptions.EnableMiddleware();
 
         return this;
     }

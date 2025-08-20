@@ -268,7 +268,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            return serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>().InvokeAsync(outboxMessage.ToEnvelope<T>(), cancellationToken);
+            return serviceProvider.GetRequiredService<OutboxProducerMiddlewareInvoker<T>>().InvokeAsync(outboxMessage.ToEnvelope<T>(), cancellationToken);
         }
     }
 

@@ -1,5 +1,4 @@
 ﻿using K.EntityFrameworkCore.Middlewares.Producer;
-using System.Runtime.Intrinsics.X86;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
@@ -25,15 +24,17 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         Use(producerMiddleware);
     }
 }
-
 internal class OutboxProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public OutboxProducerMiddlewareInvoker(
-        /*
-         registry custom middlewares for outbox
-         */
+          ProducerRetryMiddleware<T> retryMiddleware
+        , ProducerCircuitBreakerMiddleware<T> circuitBreakerMiddleware
+        , ProducerBatchMiddleware<T> batchMiddleware
         )
     {
+        Use(retryMiddleware);
+        Use(circuitBreakerMiddleware);
+        Use(batchMiddleware);
     }
 }

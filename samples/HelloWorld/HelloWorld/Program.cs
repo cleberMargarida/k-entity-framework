@@ -95,6 +95,10 @@ namespace HelloWorld
                     {
                         outbox.UseBackgroundOnly();
                     });
+                    producer.HasBatch(batching =>
+                    {
+                        batching.WithBatchTimeout(TimeSpan.FromSeconds(10));
+                    });
                 });
 
                 topic.HasConsumer(consumer =>

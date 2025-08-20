@@ -27,4 +27,9 @@ public class MiddlewareOptions<T>(bool isMiddlewareEnabled) : OptionsBase<T>
     /// Default is false.
     /// </summary>
     public bool IsMiddlewareEnabled { get; set; } = isMiddlewareEnabled;
+
+    /// <summary>
+    /// Enables the middleware.
+    /// </summary>
+    public void EnableMiddleware() => IsMiddlewareEnabled = true;
 }
