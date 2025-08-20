@@ -1,24 +1,24 @@
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Base class for all options used.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class OptionsBase<T>
+public class SettingsBase<T>
 {
 }
 
 /// <summary>
-/// Base class for all middleware configuration options.
+/// Base class for all middleware configuration settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class MiddlewareOptions<T>(bool isMiddlewareEnabled) : OptionsBase<T>
+public class MiddlewareSettings<T>(bool isMiddlewareEnabled) : SettingsBase<T>
     where T : class
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="MiddlewareOptions{T}"/> class with the specified middleware enabled state.
+    /// Initializes a new instance of the <see cref="MiddlewareSettings{T}"/> class with the specified middleware enabled state.
     /// </summary>
-    public MiddlewareOptions() : this(false)
+    public MiddlewareSettings() : this(false)
     {
     }
 

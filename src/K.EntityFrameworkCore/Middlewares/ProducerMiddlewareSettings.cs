@@ -1,7 +1,7 @@
 using Confluent.Kafka;
 using System.Linq.Expressions;
 
-namespace K.EntityFrameworkCore.MiddlewareOptions.Producer;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Helper class to replace parameter expressions in expression trees.
@@ -24,18 +24,18 @@ internal class ParameterReplacer : ExpressionVisitor
 }
 
 
-internal class ProducerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : MiddlewareOptions<T>(true)
+internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) : MiddlewareSettings<T>(true)
     where T : class
 {
     private Func<T, string>? keyAccessor;
 
-    private readonly ProducerConfig producerConfig = new(clientOptions.ClientConfig);
+    private readonly ProducerConfig producerConfig = new(clientSettings.ClientConfig);
     public IEnumerable<KeyValuePair<string, string>> ProducerConfig => producerConfig;
-    public string TopicName => clientOptions.TopicName;
+    public string TopicName => clientSettings.TopicName;
 
-    public Expression KeyPropertyAccessor 
+    public Expression KeyPropertyAccessor
     {
-        set 
+        set
         {
             if (value == null)
             {
@@ -84,7 +84,7 @@ internal class ProducerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : Mi
 /// Producer-specific configuration options for the RetryMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerRetryMiddlewareOptions<T> : RetryMiddlewareOptions<T>
+public class ProducerRetryMiddlewareSettings<T> : RetryMiddlewareSettings<T>
     where T : class
 {
 }
@@ -93,7 +93,7 @@ public class ProducerRetryMiddlewareOptions<T> : RetryMiddlewareOptions<T>
 /// Producer-specific configuration options for the CircuitBreakerMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerCircuitBreakerMiddlewareOptions<T> : CircuitBreakerMiddlewareOptions<T>
+public class ProducerCircuitBreakerMiddlewareSettings<T> : CircuitBreakerMiddlewareSettings<T>
     where T : class
 {
 }
@@ -102,7 +102,7 @@ public class ProducerCircuitBreakerMiddlewareOptions<T> : CircuitBreakerMiddlewa
 /// Producer-specific configuration options for the BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerBatchMiddlewareOptions<T> : BatchMiddlewareOptions<T>
+public class ProducerBatchMiddlewareSettings<T> : BatchMiddlewareSettings<T>
     where T : class
 {
 }

@@ -1,8 +1,6 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.MiddlewareOptions;
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +12,7 @@ using System.Diagnostics;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
-internal class OutboxMiddleware<T>(OutboxMiddlewareOptions<T> outbox, ICurrentDbContext dbContext) : Middleware<T>(outbox)
+internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentDbContext dbContext) : Middleware<T>(outbox)
     where T : class
 {
     private readonly DbContext context = dbContext.Context;
@@ -318,7 +316,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
 
             var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(type);
 
-            var options = serviceProvider.GetRequiredService<ProducerMiddlewareOptions<T>>();
+            var options = serviceProvider.GetRequiredService<ProducerMiddlewareSettings<T>>();
 
             //TODO: avoid box -> unbox -> box -> unbox -> box
             producer.Produce(outboxMessage.AggregateId, new Message<string, byte[]>

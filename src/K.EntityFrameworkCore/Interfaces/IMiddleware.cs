@@ -13,7 +13,7 @@ public interface IMiddleware<T> where T : class
     ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a value indicating whether this middleware is enabled based on the options.
+    /// Gets a value indicating whether this middleware is enabled based on the settings.
     /// </summary>
     bool IsEnabled => false;
 

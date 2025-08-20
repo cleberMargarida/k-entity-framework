@@ -1,14 +1,14 @@
 using K.EntityFrameworkCore.Interfaces;
 using System.Text.Json;
 
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Shared serialization options for a specific message type.
 /// Uses compile-time type as strategy identifier - no strings needed.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-internal class SerializationMiddlewareOptions<T>() : MiddlewareOptions<T>(isMiddlewareEnabled: true)
+internal class SerializationMiddlewareSettings<T>() : MiddlewareSettings<T>(isMiddlewareEnabled: true)
     where T : class
 {
     private static readonly SystemTextJsonSerializer<T> defaultSerializer = new();
@@ -17,7 +17,7 @@ internal class SerializationMiddlewareOptions<T>() : MiddlewareOptions<T>(isMidd
     public IMessageDeserializer<T> Deserializer { get; set; } = defaultSerializer;
 }
 
-internal class SystemTextJsonSerializer<T> 
+internal class SystemTextJsonSerializer<T>
     : IMessageSerializer<T, JsonSerializerOptions>
     , IMessageDeserializer<T, JsonSerializerOptions>
     where T : class
@@ -31,6 +31,6 @@ internal class SystemTextJsonSerializer<T>
 
     public byte[] Serialize(in T message)
     {
-        return JsonSerializer.SerializeToUtf8Bytes<T>(message, Options);
+        return JsonSerializer.SerializeToUtf8Bytes(message, Options);
     }
 }

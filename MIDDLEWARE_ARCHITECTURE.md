@@ -62,12 +62,12 @@ modelBuilder.Topic<OrderCreated>(topic => { ... });
 ### 2. Configuration Hierarchy
 ```csharp
 // Base options with enablement control
-public class MiddlewareOptions<T> { 
+public class MiddlewareSettings<T> { 
     public bool IsMiddlewareEnabled { get; set; } = false; 
 }
 
 // Specific options inherit behavior
-public class OutboxMiddlewareOptions<T> : MiddlewareOptions<T> { ... }
+public class OutboxMiddlewareSettings<T> : MiddlewareSettings<T> { ... }
 ```
 
 ### 3. Auto-Enablement Pattern
@@ -75,8 +75,8 @@ public class OutboxMiddlewareOptions<T> : MiddlewareOptions<T> { ... }
 // ProducerBuilder.HasOutbox()
 public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
 {
-    var options = ServiceProviderCache.GetRequiredService<OutboxMiddlewareOptions<T>>();
-    options.IsMiddlewareEnabled = true;  // ← Auto-enabled when configured
+    var options = ServiceProviderCache.GetRequiredService<OutboxMiddlewareSettings<T>>();
+    settings.IsMiddlewareEnabled = true;  // ← Auto-enabled when configured
     configure?.Invoke(new OutboxBuilder<T>(options));
     return this;
 }
@@ -84,9 +84,9 @@ public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
 
 ### 4. Middleware Base Class
 ```csharp
-internal abstract class Middleware<T>(MiddlewareOptions<T> options) : IMiddleware<T>
+internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddleware<T>
 {
-    public bool IsEnabled => options.IsMiddlewareEnabled;
+    public bool IsEnabled => settings.IsMiddlewareEnabled;
     private readonly Stack<IMiddleware<T>> middlewareStack = new();
     
     protected void Use(IMiddleware<T> middleware)
@@ -278,9 +278,9 @@ graph TD
         B --> C[HasOutbox]
         B --> D[HasRetry]
         B --> E[HasCircuitBreaker]
-        C --> F[OutboxOptions.IsEnabled = true]
-        D --> G[RetryOptions.IsEnabled = true]
-        E --> H[CircuitBreakerOptions.IsEnabled = true]
+        C --> F[Outboxsettings.IsEnabled = true]
+        D --> G[Retrysettings.IsEnabled = true]
+        E --> H[CircuitBreakersettings.IsEnabled = true]
     end
     
     subgraph "Runtime Phase"
@@ -313,8 +313,8 @@ Follow this pattern to add a new middleware (using `CompressionMiddleware` as ex
 
 #### 1. Create Options Class
 ```csharp
-// MiddlewareOptions/CompressionMiddlewareOptions.cs
-public class CompressionMiddlewareOptions<T> : MiddlewareOptions<T>
+// MiddlewareSettings/CompressionMiddlewareSettings.cs
+public class CompressionMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {
     /// <summary>
@@ -338,7 +338,7 @@ public class CompressionMiddlewareOptions<T> : MiddlewareOptions<T>
 ```csharp
 // Middlewares/CompressionMiddleware.cs
 [ScopedService]
-internal class CompressionMiddleware<T>(CompressionMiddlewareOptions<T> options) : Middleware<T>(options)
+internal class CompressionMiddleware<T>(CompressionMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
@@ -354,31 +354,31 @@ internal class CompressionMiddleware<T>(CompressionMiddlewareOptions<T> options)
     }
     
     private bool ShouldCompress(IEnvelope<T> envelope) => 
-        GetMessageSize(message) > options.MinSizeBytes;
+        GetMessageSize(message) > settings.MinSizeBytes;
 }
 ```
 
 #### 3. Create Configuration Builder
 ```csharp
 // Extensions/MiddlewareBuilders/CompressionBuilder.cs
-public class CompressionBuilder<T>(CompressionMiddlewareOptions<T> options)
+public class CompressionBuilder<T>(CompressionMiddlewareSettings<T> settings)
     where T : class
 {
     public CompressionBuilder<T> WithAlgorithm(CompressionAlgorithm algorithm)
     {
-        options.Algorithm = algorithm;
+        settings.Algorithm = algorithm;
         return this;
     }
     
     public CompressionBuilder<T> WithLevel(CompressionLevel level)
     {
-        options.Level = level;
+        settings.Level = level;
         return this;
     }
     
     public CompressionBuilder<T> WithMinSize(int sizeBytes)
     {
-        options.MinSizeBytes = sizeBytes;
+        settings.MinSizeBytes = sizeBytes;
         return this;
     }
 }
@@ -389,12 +389,12 @@ public class CompressionBuilder<T>(CompressionMiddlewareOptions<T> options)
 // Extensions/ModelBuilderExtensions.cs - ProducerBuilder<T> class
 public ProducerBuilder<T> HasCompression(Action<CompressionBuilder<T>>? configure = null)
 {
-    var options = ServiceProviderCache.Instance
+    var settings = ServiceProviderCache.Instance
         .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-        .GetRequiredService<CompressionMiddlewareOptions<T>>();
+        .GetRequiredService<CompressionMiddlewareSettings<T>>();
 
     // Auto-enable middleware
-    options.IsMiddlewareEnabled = true;
+    settings.IsMiddlewareEnabled = true;
 
     var builder = new CompressionBuilder<T>(options);
     configure?.Invoke(builder);
@@ -430,7 +430,7 @@ public ProducerMiddlewareInvoker(
 #### 6. Register in DI Container
 ```csharp
 // During startup configuration
-services.AddScoped<CompressionMiddlewareOptions<T>>();
+services.AddScoped<CompressionMiddlewareSettings<T>>();
 services.AddScoped<CompressionMiddleware<T>>();
 ```
 
@@ -448,7 +448,7 @@ modelBuilder.Topic<OrderCreated>(topic =>
 ```
 
 ### Key Points
-- **Inheritance**: Always inherit from `MiddlewareOptions<T>` and `Middleware<T>`
+- **Inheritance**: Always inherit from `MiddlewareSettings<T>` and `Middleware<T>`
 - **Auto-enablement**: Set `IsMiddlewareEnabled = true` in `HasXXX()` method
 - **Pipeline order**: Position in invoker constructor determines execution order
 - **Type safety**: Generic `<T>` ensures compile-time message type validation
@@ -463,8 +463,8 @@ producer.HasOutbox(outbox => {
 
 **What happens:**
 1. `ProducerBuilder<T>.HasOutbox()` is called
-2. `ServiceProviderCache` retrieves or creates `OutboxMiddlewareOptions<T>` instance
-3. **Automatic enablement**: `options.IsMiddlewareEnabled = true` is set immediately
+2. `ServiceProviderCache` retrieves or creates `OutboxMiddlewareSettings<T>` instance
+3. **Automatic enablement**: `settings.IsMiddlewareEnabled = true` is set immediately
 4. Specific builder (`OutboxBuilder<T>`) is created with the options instance
 5. User configuration lambda is applied to the builder
 6. Options are updated with user-specified values
@@ -547,7 +547,7 @@ await middlewareInvoker.InvokeAsync(envelope, cancellationToken);
 
 #### Example: Retry Middleware
 1. Catches exceptions from downstream middlewares
-2. Implements exponential backoff based on `RetryMiddlewareOptions<T>`
+2. Implements exponential backoff based on `RetryMiddlewareSettings<T>`
 3. Respects `MaxRetryAttempts` configuration
 4. Re-throws exception after max attempts exceeded
 

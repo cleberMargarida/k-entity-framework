@@ -1,9 +1,6 @@
-﻿using K.EntityFrameworkCore.MiddlewareOptions;
-using Microsoft.Extensions.Logging;
+﻿namespace K.EntityFrameworkCore.Middlewares;
 
-namespace K.EntityFrameworkCore.Middlewares;
-
-internal abstract class BatchMiddleware<T>(BatchMiddlewareOptions<T> options) : Middleware<T>(options)
+internal abstract class BatchMiddleware<T>(BatchMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
 }

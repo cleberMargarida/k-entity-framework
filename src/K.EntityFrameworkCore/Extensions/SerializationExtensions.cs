@@ -14,7 +14,7 @@
 //    /// </summary>
 //    /// <typeparam name="TSerializer">The serializer implementation type (must be generic like MySerializer&lt;&gt;).</typeparam>
 //    /// <typeparam name="TOptions">The options type that uniquely identifies this strategy.</typeparam>
-//    /// <param name="defaultOptionsFactory">Factory to create default options.</param>
+//    /// <param name="defaultOptionsFactory">Factory to create default settings.</param>
 //    /// <example>
 //    /// <code>
 //    /// SerializationExtensions.RegisterStrategy&lt;MyCustomSerializer&lt;&gt;, MyCustomOptions&gt;(

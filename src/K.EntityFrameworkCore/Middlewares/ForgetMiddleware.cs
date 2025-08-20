@@ -1,5 +1,3 @@
-using K.EntityFrameworkCore.MiddlewareOptions;
-
 namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
@@ -7,14 +5,14 @@ namespace K.EntityFrameworkCore.Middlewares;
 /// Supports both await-forget (wait with timeout) and fire-forget (immediate return) modes.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-internal abstract class ForgetMiddleware<T>(ForgetMiddlewareOptions<T> options) : Middleware<T>(options)
+internal abstract class ForgetMiddleware<T>(ForgetMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
-    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default) => options.Strategy switch
+    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default) => settings.Strategy switch
     {
         ForgetStrategy.AwaitForget => AwaitForgetProcessing(envelope, cancellationToken),
         ForgetStrategy.FireForget => FireForgetProcessing(envelope, cancellationToken),
-        _ => throw new InvalidOperationException($"Unknown forget strategy: {options.Strategy}"),
+        _ => throw new InvalidOperationException($"Unknown forget strategy: {settings.Strategy}"),
     };
 
     private ValueTask AwaitForgetProcessing(Envelope<T> envelope, CancellationToken cancellationToken)
@@ -22,7 +20,7 @@ internal abstract class ForgetMiddleware<T>(ForgetMiddlewareOptions<T> options) 
         return new ValueTask(
             Task.WhenAny(
                 base.InvokeAsync(envelope, cancellationToken).AsTask(),
-                Task.Delay(options.Timeout, cancellationToken)));
+                Task.Delay(settings.Timeout, cancellationToken)));
     }
 
     private ValueTask FireForgetProcessing(Envelope<T> envelope, CancellationToken cancellationToken)

@@ -1,10 +1,10 @@
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Configuration options for the RetryMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class RetryMiddlewareOptions<T> : MiddlewareOptions<T>
+public class RetryMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {
     /// <summary>

@@ -1,9 +1,9 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
-internal class ClientOptions<T>(ClientConfig clientConfig) : MiddlewareOptions<T>
+internal class ClientSettings<T>(ClientConfig clientConfig) : MiddlewareSettings<T>
     where T : class
 {
     public virtual ClientConfig ClientConfig => clientConfig;

@@ -25,7 +25,7 @@ namespace K.EntityFrameworkCore.Interfaces
         where TOptions : class, new()
     {
         /// <summary>
-        /// Gets the serializer options.
+        /// Gets the serializer settings.
         /// </summary>
         TOptions Options { get; }
     }
@@ -55,7 +55,7 @@ namespace K.EntityFrameworkCore.Interfaces
         where TOptions : class, new()
     {
         /// <summary>
-        /// Gets the deserializer options.
+        /// Gets the deserializer settings.
         /// </summary>
         TOptions Options { get; }
     }

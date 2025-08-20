@@ -1,10 +1,9 @@
 ﻿using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.MiddlewareOptions;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
 [ScopedService]
-internal abstract class CircuitBreakerMiddleware<T>(CircuitBreakerMiddlewareOptions<T> options) : Middleware<T>(options)
+internal abstract class CircuitBreakerMiddleware<T>(CircuitBreakerMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
     private static readonly CircuitBreakerState circuitState = new();
@@ -58,9 +57,9 @@ internal abstract class CircuitBreakerMiddleware<T>(CircuitBreakerMiddlewareOpti
 
     private bool ShouldCountAsFailure(Exception exception)
     {
-        if (options.ExceptionTypesToBreakOn != null && options.ExceptionTypesToBreakOn.Length > 0)
+        if (settings.ExceptionTypesToBreakOn != null && settings.ExceptionTypesToBreakOn.Length > 0)
         {
-            return options.ExceptionTypesToBreakOn.Any(type => type.IsAssignableFrom(exception.GetType()));
+            return settings.ExceptionTypesToBreakOn.Any(type => type.IsAssignableFrom(exception.GetType()));
         }
 
         return true;
@@ -87,7 +86,7 @@ internal abstract class CircuitBreakerMiddleware<T>(CircuitBreakerMiddlewareOpti
 
             if (ShouldTripCircuit())
             {
-                circuitState.TransitionToOpen(options.OpenTimeout);
+                circuitState.TransitionToOpen(settings.OpenTimeout);
             }
         }
     }
@@ -95,16 +94,16 @@ internal abstract class CircuitBreakerMiddleware<T>(CircuitBreakerMiddlewareOpti
     private bool ShouldTripCircuit()
     {
         var now = DateTime.UtcNow;
-        var windowStart = now - options.SamplingDuration;
+        var windowStart = now - settings.SamplingDuration;
 
         var (failureCount, totalCount) = circuitState.GetStatisticsInWindow(windowStart);
 
-        if (totalCount < options.MinimumThroughput)
+        if (totalCount < settings.MinimumThroughput)
         {
             return false;
         }
 
-        return failureCount >= options.FailureThreshold;
+        return failureCount >= settings.FailureThreshold;
     }
 }
 

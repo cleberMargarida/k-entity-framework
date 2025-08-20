@@ -1,4 +1,4 @@
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Defines the execution strategy for forget middleware.

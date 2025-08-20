@@ -4,9 +4,7 @@ using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.MiddlewareOptions;
-using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
+using K.EntityFrameworkCore.Middlewares;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,20 +64,20 @@ namespace K.EntityFrameworkCore.Extensions
         /// Configures the topic to use a specific serialization strategy identified by options type.
         /// </summary>
         /// <typeparam name="TOptions">The options type that identifies the serialization strategy.</typeparam>
-        /// <param name="configure">Optional action to configure the strategy-specific options.</param>
+        /// <param name="configure">Optional action to configure the strategy-specific settings.</param>
         /// <returns>The topic type builder instance.</returns>
         public TopicTypeBuilder<T> UseSerializer<TSerializer, TOptions>(Action<TOptions>? configure = null)
             where TOptions : class, new()
             where TSerializer : class, IMessageSerializer<T, TOptions>, IMessageDeserializer<T>, new()
         {
-            var serializationOptions = ServiceProviderCache.Instance
+            var settings = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<SerializationMiddlewareOptions<T>>();
+                .GetRequiredService<SerializationMiddlewareSettings<T>>();
 
             TSerializer serializer = new();
             configure?.Invoke(serializer.Options);
-            serializationOptions.Deserializer = serializer;
-            serializationOptions.Serializer = serializer;
+            settings.Deserializer = serializer;
+            settings.Serializer = serializer;
 
             return this;
         }
@@ -88,7 +86,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// Configures the topic to use System.Text.Json for serialization.
         /// This is a convenience method for the built-in JsonSerializerOptions strategy.
         /// </summary>
-        /// <param name="configure">Action to configure System.Text.Json options.</param>
+        /// <param name="configure">Action to configure System.Text.Json settings.</param>
         /// <returns>The topic type builder instance.</returns>
         public TopicTypeBuilder<T> UseSystemTextJson(Action<JsonSerializerOptions>? configure = null)
         {
@@ -102,11 +100,11 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 {
     public ProducerBuilder<T> HasKey<TProp>(Expression<Func<T, TProp>> keyPropertyAccessor)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerMiddlewareOptions<T>>();
+            .GetRequiredService<ProducerMiddlewareSettings<T>>();
 
-        options.KeyPropertyAccessor = keyPropertyAccessor;
+        settings.KeyPropertyAccessor = keyPropertyAccessor;
 
         return this;
     }
@@ -114,17 +112,17 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the outbox middleware for the producer.
     /// </summary>
-    /// <param name="configure">Action to configure the outbox middleware options.</param>
+    /// <param name="configure">Action to configure the outbox middleware settings.</param>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
     {
-        var outboxOptions = ServiceProviderCache.Instance
+        var outboxSettings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<OutboxMiddlewareOptions<T>>();
+            .GetRequiredService<OutboxMiddlewareSettings<T>>();
 
-        outboxOptions.EnableMiddleware();
+        outboxSettings.EnableMiddleware();
 
-        var builder = new OutboxBuilder<T>(outboxOptions);
+        var builder = new OutboxBuilder<T>(outboxSettings);
 
         configure?.Invoke(builder);
 
@@ -141,22 +139,22 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
                   .IsRequired();
         });
 
-        if (outboxOptions.Strategy is OutboxPublishingStrategy.ImmediateWithFallback)
+        if (outboxSettings.Strategy is OutboxPublishingStrategy.ImmediateWithFallback)
         {
             // Ensure that forget middleware is enabled when using ImmediateWithFallback strategy
-            var forgetOptions = ServiceProviderCache.Instance
+            var forgetSettings = ServiceProviderCache.Instance
                 .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
+                .GetRequiredService<ProducerForgetMiddlewareSettings<T>>();
 
-            forgetOptions.EnableMiddleware();
+            forgetSettings.EnableMiddleware();
         }
 
         // Ensure that batch middleware is enabled when using any outbox
-        var batchOptions = ServiceProviderCache.Instance
+        var batchSettings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerBatchMiddlewareOptions<T>>();
+            .GetRequiredService<ProducerBatchMiddlewareSettings<T>>();
 
-        batchOptions.EnableMiddleware();
+        batchSettings.EnableMiddleware();
 
         return this;
     }
@@ -164,18 +162,18 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the retry middleware for the producer.
     /// </summary>
-    /// <param name="configure">Action to configure the retry middleware options.</param>
+    /// <param name="configure">Action to configure the retry middleware settings.</param>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasRetry(Action<ProducerRetryBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerRetryMiddlewareOptions<T>>();
+            .GetRequiredService<ProducerRetryMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasRetry is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ProducerRetryBuilder<T>(options);
+        var builder = new ProducerRetryBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -183,18 +181,18 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the circuit breaker middleware for the producer.
     /// </summary>
-    /// <param name="configure">Action to configure the circuit breaker middleware options.</param>
+    /// <param name="configure">Action to configure the circuit breaker middleware settings.</param>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasCircuitBreaker(Action<ProducerCircuitBreakerBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerCircuitBreakerMiddlewareOptions<T>>();
+            .GetRequiredService<ProducerCircuitBreakerMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasCircuitBreaker is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ProducerCircuitBreakerBuilder<T>(options);
+        var builder = new ProducerCircuitBreakerBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -203,18 +201,18 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// Configures the forget middleware for the producer.
     /// Supports both await-forget and fire-forget strategies.
     /// </summary>
-    /// <param name="configure">Action to configure the forget middleware options.</param>
+    /// <param name="configure">Action to configure the forget middleware settings.</param>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasForget(Action<ProducerForgetBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerForgetMiddlewareOptions<T>>();
+            .GetRequiredService<ProducerForgetMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasForget is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ProducerForgetBuilder<T>(options);
+        var builder = new ProducerForgetBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -222,18 +220,18 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the batch middleware for the producer.
     /// </summary>
-    /// <param name="configure">Action to configure the batch middleware options.</param>
+    /// <param name="configure">Action to configure the batch middleware settings.</param>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasBatch(Action<ProducerBatchBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerBatchMiddlewareOptions<T>>();
+            .GetRequiredService<ProducerBatchMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasBatch is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ProducerBatchBuilder<T>(options);
+        var builder = new ProducerBatchBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -244,11 +242,11 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
 {
     public ConsumerBuilder<T> GroupId(string value)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerMiddlewareOptions<T>>();
+            .GetRequiredService<ConsumerMiddlewareSettings<T>>();
 
-        options.GroupId = value;
+        settings.GroupId = value;
 
         return this;
     }
@@ -256,20 +254,20 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the inbox middleware for the consumer.
     /// </summary>
-    /// <param name="configure">Action to configure the inbox middleware options.</param>
+    /// <param name="configure">Action to configure the inbox middleware settings.</param>
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasInbox(Action<InboxBuilder<T>>? configure = null)
     {
         modelBuilder.Entity<InboxMessage>();
 
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<InboxMiddlewareOptions<T>>();
+            .GetRequiredService<InboxMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasInbox is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new InboxBuilder<T>(options);
+        var builder = new InboxBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -277,18 +275,18 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the retry middleware for the consumer.
     /// </summary>
-    /// <param name="configure">Action to configure the retry middleware options.</param>
+    /// <param name="configure">Action to configure the retry middleware settings.</param>
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasRetry(Action<ConsumerRetryBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerRetryMiddlewareOptions<T>>();
+            .GetRequiredService<ConsumerRetryMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasRetry is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ConsumerRetryBuilder<T>(options);
+        var builder = new ConsumerRetryBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -296,18 +294,18 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the circuit breaker middleware for the consumer.
     /// </summary>
-    /// <param name="configure">Action to configure the circuit breaker middleware options.</param>
+    /// <param name="configure">Action to configure the circuit breaker middleware settings.</param>
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasCircuitBreaker(Action<ConsumerCircuitBreakerBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerCircuitBreakerMiddlewareOptions<T>>();
+            .GetRequiredService<ConsumerCircuitBreakerMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasCircuitBreaker is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ConsumerCircuitBreakerBuilder<T>(options);
+        var builder = new ConsumerCircuitBreakerBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -315,18 +313,18 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <summary>
     /// Configures the batch middleware for the consumer.
     /// </summary>
-    /// <param name="configure">Action to configure the batch middleware options.</param>
+    /// <param name="configure">Action to configure the batch middleware settings.</param>
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasBatch(Action<ConsumerBatchBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerBatchMiddlewareOptions<T>>();
+            .GetRequiredService<ConsumerBatchMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasBatch is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ConsumerBatchBuilder<T>(options);
+        var builder = new ConsumerBatchBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
@@ -335,18 +333,18 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// Configures the forget middleware for the consumer.
     /// Supports both await-forget and fire-forget strategies.
     /// </summary>
-    /// <param name="configure">Action to configure the forget middleware options.</param>
+    /// <param name="configure">Action to configure the forget middleware settings.</param>
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasForget(Action<ConsumerForgetBuilder<T>>? configure = null)
     {
-        var options = ServiceProviderCache.Instance
+        var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerForgetMiddlewareOptions<T>>();
+            .GetRequiredService<ConsumerForgetMiddlewareSettings<T>>();
 
         // Enable the middleware by default when HasForget is called
-        options.IsMiddlewareEnabled = true;
+        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ConsumerForgetBuilder<T>(options);
+        var builder = new ConsumerForgetBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }

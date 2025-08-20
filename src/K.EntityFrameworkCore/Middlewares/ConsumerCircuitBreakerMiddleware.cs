@@ -1,6 +1,4 @@
-using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
-
-namespace K.EntityFrameworkCore.Middlewares.Consumer;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Consumer-specific circuit breaker middleware that inherits from the base CircuitBreakerMiddleware.
@@ -8,7 +6,7 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer;
 /// and exception filtering specifically for consumer scenarios.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-internal class ConsumerCircuitBreakerMiddleware<T>(ConsumerCircuitBreakerMiddlewareOptions<T> options) : CircuitBreakerMiddleware<T>(options)
+internal class ConsumerCircuitBreakerMiddleware<T>(ConsumerCircuitBreakerMiddlewareSettings<T> settings) : CircuitBreakerMiddleware<T>(settings)
     where T : class
 {
 }

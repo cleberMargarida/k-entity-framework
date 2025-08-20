@@ -1,8 +1,6 @@
-﻿using K.EntityFrameworkCore.MiddlewareOptions;
+﻿namespace K.EntityFrameworkCore.Middlewares;
 
-namespace K.EntityFrameworkCore.Middlewares;
-
-internal abstract class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : Middleware<T>(options)
+internal abstract class RetryMiddleware<T>(RetryMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
     private static readonly Random random = new();
@@ -11,18 +9,18 @@ internal abstract class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : 
     {
         Exception? lastException = null;
         
-        for (int attempt = 0; attempt <= options.MaxRetryAttempts; attempt++)
+        for (int attempt = 0; attempt <= settings.MaxRetryAttempts; attempt++)
         {
             try
             {
                 await base.InvokeAsync(envelope, cancellationToken);
                 return;
             }
-            catch (Exception ex) when (attempt < options.MaxRetryAttempts && ShouldRetry(ex))
+            catch (Exception ex) when (attempt < settings.MaxRetryAttempts && ShouldRetry(ex))
             {
                 lastException = ex;
                 
-                if (attempt < options.MaxRetryAttempts)
+                if (attempt < settings.MaxRetryAttempts)
                 {
                     var delay = CalculateDelay(attempt + 1);
                     await Task.Delay(delay, cancellationToken);
@@ -38,14 +36,14 @@ internal abstract class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : 
 
     private bool ShouldRetry(Exception exception)
     {
-        if (options.ShouldRetryPredicate != null)
+        if (settings.ShouldRetryPredicate != null)
         {
-            return options.ShouldRetryPredicate(exception);
+            return settings.ShouldRetryPredicate(exception);
         }
 
-        if (options.RetriableExceptionTypes != null && options.RetriableExceptionTypes.Length > 0)
+        if (settings.RetriableExceptionTypes != null && settings.RetriableExceptionTypes.Length > 0)
         {
-            return options.RetriableExceptionTypes.Contains(exception.GetType());
+            return settings.RetriableExceptionTypes.Contains(exception.GetType());
         }
 
         return true;
@@ -53,21 +51,21 @@ internal abstract class RetryMiddleware<T>(RetryMiddlewareOptions<T> options) : 
 
     private TimeSpan CalculateDelay(int attemptNumber)
     {
-        TimeSpan delay = options.BackoffStrategy switch
+        TimeSpan delay = settings.BackoffStrategy switch
         {
-            RetryBackoffStrategy.Fixed => options.BaseDelay,
-            RetryBackoffStrategy.Linear => TimeSpan.FromMilliseconds(options.BaseDelay.TotalMilliseconds * attemptNumber),
+            RetryBackoffStrategy.Fixed => settings.BaseDelay,
+            RetryBackoffStrategy.Linear => TimeSpan.FromMilliseconds(settings.BaseDelay.TotalMilliseconds * attemptNumber),
             RetryBackoffStrategy.Exponential => TimeSpan.FromMilliseconds(
-                options.BaseDelay.TotalMilliseconds * Math.Pow(options.BackoffMultiplier, attemptNumber - 1)),
-            _ => options.BaseDelay
+                settings.BaseDelay.TotalMilliseconds * Math.Pow(settings.BackoffMultiplier, attemptNumber - 1)),
+            _ => settings.BaseDelay
         };
 
-        if (delay > options.MaxDelay)
+        if (delay > settings.MaxDelay)
         {
-            delay = options.MaxDelay;
+            delay = settings.MaxDelay;
         }
 
-        if (options.UseJitter)
+        if (settings.UseJitter)
         {
             // Add random jitter up to 20% of the delay
             var jitterAmount = delay.TotalMilliseconds * 0.2 * random.NextDouble();

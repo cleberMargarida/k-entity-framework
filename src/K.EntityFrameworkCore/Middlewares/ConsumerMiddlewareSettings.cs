@@ -1,17 +1,17 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 
-namespace K.EntityFrameworkCore.MiddlewareOptions.Consumer;
+namespace K.EntityFrameworkCore.Middlewares;
 
-internal class ConsumerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : MiddlewareOptions<T>
+internal class ConsumerMiddlewareSettings<T>(ClientSettings<T> clientSettings) : MiddlewareSettings<T>
     where T : class
 {
-    private readonly ConsumerConfig consumerConfig = new(clientOptions.ClientConfig);
+    private readonly ConsumerConfig consumerConfig = new(clientSettings.ClientConfig);
 
-    public string GroupId 
-    { 
-        get => consumerConfig.GroupId ??= AppDomain.CurrentDomain.FriendlyName; 
-        set => consumerConfig.GroupId = value; 
+    public string GroupId
+    {
+        get => consumerConfig.GroupId ??= AppDomain.CurrentDomain.FriendlyName;
+        set => consumerConfig.GroupId = value;
     }
 
     public IEnumerable<KeyValuePair<string, string>> ConsumerConfig => consumerConfig;
@@ -21,7 +21,7 @@ internal class ConsumerMiddlewareOptions<T>(ClientOptions<T> clientOptions) : Mi
 /// Consumer-specific configuration options for the RetryMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerRetryMiddlewareOptions<T> : RetryMiddlewareOptions<T>
+public class ConsumerRetryMiddlewareSettings<T> : RetryMiddlewareSettings<T>
     where T : class
 {
 }
@@ -30,7 +30,7 @@ public class ConsumerRetryMiddlewareOptions<T> : RetryMiddlewareOptions<T>
 /// Consumer-specific configuration options for the CircuitBreakerMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerCircuitBreakerMiddlewareOptions<T> : CircuitBreakerMiddlewareOptions<T>
+public class ConsumerCircuitBreakerMiddlewareSettings<T> : CircuitBreakerMiddlewareSettings<T>
     where T : class
 {
 }
@@ -39,7 +39,7 @@ public class ConsumerCircuitBreakerMiddlewareOptions<T> : CircuitBreakerMiddlewa
 /// Consumer-specific configuration options for the BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerBatchMiddlewareOptions<T> : BatchMiddlewareOptions<T>
+public class ConsumerBatchMiddlewareSettings<T> : BatchMiddlewareSettings<T>
     where T : class
 {
 }

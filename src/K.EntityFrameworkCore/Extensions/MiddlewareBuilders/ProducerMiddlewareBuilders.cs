@@ -1,13 +1,12 @@
-using K.EntityFrameworkCore.MiddlewareOptions;
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
+using K.EntityFrameworkCore.Middlewares;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 
 /// <summary>
-/// Fluent builder for configuring OutboxMiddleware options.
+/// Fluent builder for configuring OutboxMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : class
+public class OutboxBuilder<T>(OutboxMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Configures immediate publishing strategy with fallback to background processing.
@@ -17,7 +16,7 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseImmediateWithFallback()
     {
-        options.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
+        settings.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
         return this;
     }
 
@@ -28,16 +27,16 @@ public class OutboxBuilder<T>(OutboxMiddlewareOptions<T> options) where T : clas
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseBackgroundOnly()
     {
-        options.Strategy = OutboxPublishingStrategy.BackgroundOnly;
+        settings.Strategy = OutboxPublishingStrategy.BackgroundOnly;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring producer RetryMiddleware options.
+/// Fluent builder for configuring producer RetryMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) where T : class
+public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the maximum number of retry attempts.
@@ -46,7 +45,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseMaxAttempts(int maxAttempts)
     {
-        options.MaxRetryAttempts = maxAttempts;
+        settings.MaxRetryAttempts = maxAttempts;
         return this;
     }
 
@@ -57,7 +56,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseBaseDelay(TimeSpan delay)
     {
-        options.BaseDelay = delay;
+        settings.BaseDelay = delay;
         return this;
     }
 
@@ -68,7 +67,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseMaxDelay(TimeSpan maxDelay)
     {
-        options.MaxDelay = maxDelay;
+        settings.MaxDelay = maxDelay;
         return this;
     }
 
@@ -79,7 +78,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseBackoffStrategy(RetryBackoffStrategy strategy)
     {
-        options.BackoffStrategy = strategy;
+        settings.BackoffStrategy = strategy;
         return this;
     }
 
@@ -90,7 +89,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseBackoffMultiplier(double multiplier)
     {
-        options.BackoffMultiplier = multiplier;
+        settings.BackoffMultiplier = multiplier;
         return this;
     }
 
@@ -101,7 +100,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseJitter(bool useJitter = true)
     {
-        options.UseJitter = useJitter;
+        settings.UseJitter = useJitter;
         return this;
     }
 
@@ -112,7 +111,7 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseRetriableExceptions(params Type[] exceptionTypes)
     {
-        options.RetriableExceptionTypes = exceptionTypes;
+        settings.RetriableExceptionTypes = exceptionTypes;
         return this;
     }
 
@@ -123,16 +122,16 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerRetryBuilder<T> UseRetryPredicate(Func<Exception, bool> predicate)
     {
-        options.ShouldRetryPredicate = predicate;
+        settings.ShouldRetryPredicate = predicate;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring producer CircuitBreakerMiddleware options.
+/// Fluent builder for configuring producer CircuitBreakerMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOptions<T> options) where T : class
+public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the number of consecutive failures required to trip the circuit breaker.
@@ -141,7 +140,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> UseFailureThreshold(int threshold)
     {
-        options.FailureThreshold = threshold;
+        settings.FailureThreshold = threshold;
         return this;
     }
 
@@ -152,7 +151,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> UseOpenTimeout(TimeSpan timeout)
     {
-        options.OpenTimeout = timeout;
+        settings.OpenTimeout = timeout;
         return this;
     }
 
@@ -163,7 +162,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> UseSamplingDuration(TimeSpan duration)
     {
-        options.SamplingDuration = duration;
+        settings.SamplingDuration = duration;
         return this;
     }
 
@@ -174,7 +173,7 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> UseMinimumThroughput(int throughput)
     {
-        options.MinimumThroughput = throughput;
+        settings.MinimumThroughput = throughput;
         return this;
     }
 
@@ -185,16 +184,16 @@ public class ProducerCircuitBreakerBuilder<T>(ProducerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ProducerCircuitBreakerBuilder<T> UseBreakOnExceptions(params Type[] exceptionTypes)
     {
-        options.ExceptionTypesToBreakOn = exceptionTypes;
+        settings.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring producer BatchMiddleware options.
+/// Fluent builder for configuring producer BatchMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) where T : class
+public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the maximum number of messages to batch together.
@@ -203,7 +202,7 @@ public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerBatchBuilder<T> UseBatchSize(int batchSize)
     {
-        options.BatchSize = batchSize;
+        settings.BatchSize = batchSize;
         return this;
     }
 
@@ -214,16 +213,16 @@ public class ProducerBatchBuilder<T>(ProducerBatchMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ProducerBatchBuilder<T> UseBatchTimeout(TimeSpan timeout)
     {
-        options.BatchTimeout = timeout;
+        settings.BatchTimeout = timeout;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring producer ForgetMiddleware options.
+/// Fluent builder for configuring producer ForgetMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareOptions<T> options) where T : class
+public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the forget strategy to AwaitForget.
@@ -234,8 +233,8 @@ public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public ProducerForgetBuilder<T> UseAwaitForget(TimeSpan? timeout = null)
     {
-        options.Strategy = ForgetStrategy.AwaitForget;
-        options.Timeout = timeout ?? TimeSpan.FromSeconds(30);
+        settings.Strategy = ForgetStrategy.AwaitForget;
+        settings.Timeout = timeout ?? TimeSpan.FromSeconds(30);
         return this;
     }
 
@@ -245,7 +244,7 @@ public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public ProducerForgetBuilder<T> UseFireForget()
     {
-        options.Strategy = ForgetStrategy.FireForget;
+        settings.Strategy = ForgetStrategy.FireForget;
         return this;
     }
 }

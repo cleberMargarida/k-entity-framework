@@ -1,10 +1,10 @@
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Configuration options for the ForgetMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ForgetMiddlewareOptions<T> : MiddlewareOptions<T>
+public class ForgetMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {
     /// <summary>

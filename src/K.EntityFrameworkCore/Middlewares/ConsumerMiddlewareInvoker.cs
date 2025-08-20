@@ -1,6 +1,4 @@
-﻿using K.EntityFrameworkCore.Middlewares.Consumer;
-
-namespace K.EntityFrameworkCore.Middlewares;
+﻿namespace K.EntityFrameworkCore.Middlewares;
 
 internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class

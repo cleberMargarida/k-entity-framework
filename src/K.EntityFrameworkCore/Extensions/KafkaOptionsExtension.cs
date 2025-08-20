@@ -3,11 +3,7 @@ global using IBatchProducer = Confluent.Kafka.IProducer<string, byte[]>;
 
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.MiddlewareOptions;
-using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using K.EntityFrameworkCore.Middlewares;
-using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Producer;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,44 +36,44 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
 
-            services.AddSingleton(typeof(SerializationMiddlewareOptions<>));
-            services.AddSingleton(typeof(ClientOptions<>));
+            services.AddSingleton(typeof(SerializationMiddlewareSettings<>));
+            services.AddSingleton(typeof(ClientSettings<>));
 
             // Consumer-specific middleware options and classes
             services.AddScoped(typeof(DeserializerMiddleware<>));
-            services.AddSingleton(typeof(ConsumerMiddlewareOptions<>));
+            services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
 
-            services.AddSingleton(typeof(ConsumerRetryMiddlewareOptions<>));
+            services.AddSingleton(typeof(ConsumerRetryMiddlewareSettings<>));
             services.AddScoped(typeof(ConsumerRetryMiddleware<>));
 
-            services.AddSingleton(typeof(ConsumerCircuitBreakerMiddlewareOptions<>));
+            services.AddSingleton(typeof(ConsumerCircuitBreakerMiddlewareSettings<>));
             services.AddScoped(typeof(ConsumerCircuitBreakerMiddleware<>));
 
-            services.AddSingleton(typeof(ConsumerBatchMiddlewareOptions<>));
+            services.AddSingleton(typeof(ConsumerBatchMiddlewareSettings<>));
             services.AddScoped(typeof(ConsumerBatchMiddleware<>));
 
-            services.AddSingleton(typeof(ConsumerForgetMiddlewareOptions<>));
+            services.AddSingleton(typeof(ConsumerForgetMiddlewareSettings<>));
             services.AddScoped(typeof(ConsumerForgetMiddleware<>));
 
             // Producer-specific middleware options and classes
-            services.AddSingleton(typeof(ProducerMiddlewareOptions<>));
+            services.AddSingleton(typeof(ProducerMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerMiddleware<>));
 
             services.AddScoped(typeof(SerializerMiddleware<>));
 
-            services.AddSingleton(typeof(ProducerRetryMiddlewareOptions<>));
+            services.AddSingleton(typeof(ProducerRetryMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerRetryMiddleware<>));
 
-            services.AddSingleton(typeof(ProducerCircuitBreakerMiddlewareOptions<>));
+            services.AddSingleton(typeof(ProducerCircuitBreakerMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerCircuitBreakerMiddleware<>));
 
-            services.AddSingleton(typeof(ProducerBatchMiddlewareOptions<>));
+            services.AddSingleton(typeof(ProducerBatchMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerBatchMiddleware<>));
 
-            services.AddSingleton(typeof(ProducerForgetMiddlewareOptions<>));
+            services.AddSingleton(typeof(ProducerForgetMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerForgetMiddleware<>));
 
-            services.AddSingleton(typeof(OutboxMiddlewareOptions<>));
+            services.AddSingleton(typeof(OutboxMiddlewareSettings<>));
             services.AddScoped(typeof(OutboxMiddleware<>));
 
             services.AddSingleton<ClientConfig>(_ => new(client));
@@ -103,13 +99,13 @@ namespace K.EntityFrameworkCore.Extensions
         {
             Type type = (Type)key!;
 
-            var batchOptions = (IBatchMiddlewareOptions)provider.GetRequiredService(typeof(ProducerBatchMiddlewareOptions<>).MakeGenericType(type));
+            var batchSettings = (IBatchMiddlewareSettings)provider.GetRequiredService(typeof(ProducerBatchMiddlewareSettings<>).MakeGenericType(type));
 
             var client = provider.GetRequiredService<ClientConfig>();
             var producerConfig = new ProducerConfig(client)
             {
-                BatchSize = batchOptions.BatchSize,
-                MessageTimeoutMs = batchOptions.BatchTimeoutMilliseconds,
+                BatchSize = batchSettings.BatchSize,
+                MessageTimeoutMs = batchSettings.BatchTimeoutMilliseconds,
             };
 
             return ProducerFactory(producerConfig);
@@ -125,7 +121,7 @@ namespace K.EntityFrameworkCore.Extensions
         private static IProducer ProducerFactory(ClientConfig client)
         {
             return new ProducerBuilder<string, byte[]>(client)
-                .SetLogHandler((_,_) => { }).Build();
+                .SetLogHandler((_,_) => { }).Build();//TODO handle kafka logs
         }
 
         private IConsumer<Ignore, byte[]> ConsumerFactory(IServiceProvider provider)

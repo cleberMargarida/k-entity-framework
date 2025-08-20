@@ -1,6 +1,5 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,14 +9,14 @@ namespace K.EntityFrameworkCore.Middlewares.Producer;
 /// Producer-specific batch middleware that inherits from the base BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-internal class ProducerBatchMiddleware<T>(ProducerBatchMiddlewareOptions<T> options, ProducerMiddlewareOptions<T> producerOptions, IServiceProvider serviceProvider)
-    : BatchMiddleware<T>(options) where T : class
+internal class ProducerBatchMiddleware<T>(ProducerBatchMiddlewareSettings<T> settings, ProducerMiddlewareSettings<T> producerSettings, IServiceProvider serviceProvider)
+    : BatchMiddleware<T>(settings) where T : class
 {
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         Type type = typeof(T);
         var reference = envelope.GetInfrastructure();
-        var options = serviceProvider.GetRequiredService<ProducerMiddlewareOptions<T>>();
+        var options = serviceProvider.GetRequiredService<ProducerMiddlewareSettings<T>>();
 
         Message<string, byte[]> message;
         if (!reference.TryGetTarget(out OutboxMessage? outboxMessage) && outboxMessage != null)
@@ -36,7 +35,7 @@ internal class ProducerBatchMiddleware<T>(ProducerBatchMiddlewareOptions<T> opti
             message = new Message<string, byte[]>
             {
                 //Headers = ,
-                Key = producerOptions.GetKey(envelope.Message!)!,
+                Key = producerSettings.GetKey(envelope.Message!)!,
                 Value = serializedEnvelope.SerializedData
             };
         }

@@ -1,21 +1,20 @@
 ﻿using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.MiddlewareOptions;
 
 namespace K.EntityFrameworkCore.Middlewares;
 
 [ScopedService]
-internal abstract class Middleware<T>(MiddlewareOptions<T> options) : IMiddleware<T>
+internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddleware<T>
     where T : class
 {
     private IMiddleware<T>? next;
 
-    protected Middleware() : this(new MiddlewareOptions<T>()) { }
+    protected Middleware() : this(new MiddlewareSettings<T>()) { }
 
     /// <summary>
-    /// Gets a value indicating whether this middleware is enabled based on the options.
+    /// Gets a value indicating whether this middleware is enabled based on the settings.
     /// </summary>
-    public bool IsEnabled => options.IsMiddlewareEnabled;
+    public bool IsEnabled => settings.IsMiddlewareEnabled;
 
     IMiddleware<T>? IMiddleware<T>.Next 
     { 

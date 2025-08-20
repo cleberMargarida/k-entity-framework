@@ -1,12 +1,12 @@
-using K.EntityFrameworkCore.MiddlewareOptions;
+using K.EntityFrameworkCore.Middlewares;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 
 /// <summary>
-/// Fluent builder for configuring CircuitBreakerMiddleware options.
+/// Fluent builder for configuring CircuitBreakerMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options) 
+public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareSettings<T> settings) 
     where T : class
 {
     /// <summary>
@@ -16,7 +16,7 @@ public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithFailureThreshold(int threshold)
     {
-        options.FailureThreshold = threshold;
+        settings.FailureThreshold = threshold;
         return this;
     }
 
@@ -27,7 +27,7 @@ public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithOpenTimeout(TimeSpan timeout)
     {
-        options.OpenTimeout = timeout;
+        settings.OpenTimeout = timeout;
         return this;
     }
 
@@ -38,7 +38,7 @@ public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithSamplingDuration(TimeSpan duration)
     {
-        options.SamplingDuration = duration;
+        settings.SamplingDuration = duration;
         return this;
     }
 
@@ -49,7 +49,7 @@ public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithMinimumThroughput(int throughput)
     {
-        options.MinimumThroughput = throughput;
+        settings.MinimumThroughput = throughput;
         return this;
     }
 
@@ -60,7 +60,7 @@ public class CircuitBreakerBuilder<T>(CircuitBreakerMiddlewareOptions<T> options
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
     {
-        options.ExceptionTypesToBreakOn = exceptionTypes;
+        settings.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
     }
 }

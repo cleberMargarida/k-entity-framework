@@ -1,10 +1,9 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer
 {
-    internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareOptions<T> options) : Middleware<T>(options)
+    internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareSettings<T> settings) : Middleware<T>(settings)
         where T : class
     {
         public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
@@ -12,7 +11,7 @@ namespace K.EntityFrameworkCore.Middlewares.Producer
             ISerializedEnvelope<T> envelopeSerialized = envelope;
 
             Headers headers = AddHeaders(envelopeSerialized);
-            string key = options.GetKey(envelope.Message!)!;
+            string key = settings.GetKey(envelope.Message!)!;
 
             Message<string, byte[]> confluentMessage = new() 
             {
@@ -21,7 +20,7 @@ namespace K.EntityFrameworkCore.Middlewares.Producer
                 Value = envelopeSerialized.SerializedData, 
             };
 
-            await producer.ProduceAsync(options.TopicName, confluentMessage, cancellationToken);
+            await producer.ProduceAsync(settings.TopicName, confluentMessage, cancellationToken);
 
             await base.InvokeAsync(envelope, cancellationToken);
         }

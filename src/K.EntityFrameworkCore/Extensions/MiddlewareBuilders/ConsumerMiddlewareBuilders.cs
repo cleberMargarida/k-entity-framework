@@ -1,13 +1,12 @@
-using K.EntityFrameworkCore.MiddlewareOptions;
-using K.EntityFrameworkCore.MiddlewareOptions.Consumer;
+using K.EntityFrameworkCore.Middlewares;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 
 /// <summary>
-/// Fluent builder for configuring InboxMiddleware options.
+/// Fluent builder for configuring InboxMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class InboxBuilder<T>(InboxMiddlewareOptions<T> options) where T : class
+public class InboxBuilder<T>(InboxMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the timeout for duplicate message detection.
@@ -16,16 +15,16 @@ public class InboxBuilder<T>(InboxMiddlewareOptions<T> options) where T : class
     /// <returns>The builder instance.</returns>
     public InboxBuilder<T> WithDuplicateDetectionTimeout(TimeSpan timeout)
     {
-        options.DuplicateDetectionTimeout = timeout;
+        settings.DuplicateDetectionTimeout = timeout;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring consumer RetryMiddleware options.
+/// Fluent builder for configuring consumer RetryMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) where T : class
+public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the maximum number of retry attempts.
@@ -34,7 +33,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithMaxAttempts(int maxAttempts)
     {
-        options.MaxRetryAttempts = maxAttempts;
+        settings.MaxRetryAttempts = maxAttempts;
         return this;
     }
 
@@ -45,7 +44,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithBaseDelay(TimeSpan delay)
     {
-        options.BaseDelay = delay;
+        settings.BaseDelay = delay;
         return this;
     }
 
@@ -56,7 +55,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithMaxDelay(TimeSpan maxDelay)
     {
-        options.MaxDelay = maxDelay;
+        settings.MaxDelay = maxDelay;
         return this;
     }
 
@@ -67,7 +66,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithBackoffStrategy(RetryBackoffStrategy strategy)
     {
-        options.BackoffStrategy = strategy;
+        settings.BackoffStrategy = strategy;
         return this;
     }
 
@@ -78,7 +77,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithBackoffMultiplier(double multiplier)
     {
-        options.BackoffMultiplier = multiplier;
+        settings.BackoffMultiplier = multiplier;
         return this;
     }
 
@@ -89,7 +88,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithJitter(bool useJitter = true)
     {
-        options.UseJitter = useJitter;
+        settings.UseJitter = useJitter;
         return this;
     }
 
@@ -100,7 +99,7 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithRetriableExceptions(params Type[] exceptionTypes)
     {
-        options.RetriableExceptionTypes = exceptionTypes;
+        settings.RetriableExceptionTypes = exceptionTypes;
         return this;
     }
 
@@ -111,16 +110,16 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerRetryBuilder<T> WithRetryPredicate(Func<Exception, bool> predicate)
     {
-        options.ShouldRetryPredicate = predicate;
+        settings.ShouldRetryPredicate = predicate;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring consumer CircuitBreakerMiddleware options.
+/// Fluent builder for configuring consumer CircuitBreakerMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOptions<T> options) where T : class
+public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the number of consecutive failures required to trip the circuit breaker.
@@ -129,7 +128,7 @@ public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithFailureThreshold(int threshold)
     {
-        options.FailureThreshold = threshold;
+        settings.FailureThreshold = threshold;
         return this;
     }
 
@@ -140,7 +139,7 @@ public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithOpenTimeout(TimeSpan timeout)
     {
-        options.OpenTimeout = timeout;
+        settings.OpenTimeout = timeout;
         return this;
     }
 
@@ -151,7 +150,7 @@ public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithSamplingDuration(TimeSpan duration)
     {
-        options.SamplingDuration = duration;
+        settings.SamplingDuration = duration;
         return this;
     }
 
@@ -162,7 +161,7 @@ public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithMinimumThroughput(int throughput)
     {
-        options.MinimumThroughput = throughput;
+        settings.MinimumThroughput = throughput;
         return this;
     }
 
@@ -173,16 +172,16 @@ public class ConsumerCircuitBreakerBuilder<T>(ConsumerCircuitBreakerMiddlewareOp
     /// <returns>The builder instance.</returns>
     public ConsumerCircuitBreakerBuilder<T> WithBreakOnExceptions(params Type[] exceptionTypes)
     {
-        options.ExceptionTypesToBreakOn = exceptionTypes;
+        settings.ExceptionTypesToBreakOn = exceptionTypes;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring consumer BatchMiddleware options.
+/// Fluent builder for configuring consumer BatchMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareOptions<T> options) where T : class
+public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareSettings<T> settings) where T : class
 {
     /// <summary>
     /// Sets the maximum number of messages to batch together.
@@ -191,7 +190,7 @@ public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerBatchBuilder<T> WithBatchSize(int batchSize)
     {
-        options.BatchSize = batchSize;
+        settings.BatchSize = batchSize;
         return this;
     }
 
@@ -202,31 +201,24 @@ public class ConsumerBatchBuilder<T>(ConsumerBatchMiddlewareOptions<T> options) 
     /// <returns>The builder instance.</returns>
     public ConsumerBatchBuilder<T> WithBatchTimeout(TimeSpan timeout)
     {
-        options.BatchTimeout = timeout;
+        settings.BatchTimeout = timeout;
         return this;
     }
 }
 
 /// <summary>
-/// Fluent builder for configuring consumer ForgetMiddleware options.
+/// Fluent builder for configuring consumer ForgetMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ConsumerForgetBuilder<T> where T : class
+public class ConsumerForgetBuilder<T>(ConsumerForgetMiddlewareSettings<T> settings) where T : class
 {
-    private readonly ConsumerForgetMiddlewareOptions<T> _options;
-
-    internal ConsumerForgetBuilder(ConsumerForgetMiddlewareOptions<T> options)
-    {
-        _options = options;
-    }
-
     /// <summary>
     /// Sets the forget strategy to AwaitForget.
     /// </summary>
     /// <returns>The builder instance.</returns>
     public ConsumerForgetBuilder<T> UseAwaitForget()
     {
-        _options.Strategy = ForgetStrategy.AwaitForget;
+        settings.Strategy = ForgetStrategy.AwaitForget;
         return this;
     }
 
@@ -236,7 +228,7 @@ public class ConsumerForgetBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerForgetBuilder<T> UseFireForget()
     {
-        _options.Strategy = ForgetStrategy.FireForget;
+        settings.Strategy = ForgetStrategy.FireForget;
         return this;
     }
 
@@ -248,7 +240,7 @@ public class ConsumerForgetBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerForgetBuilder<T> WithTimeout(TimeSpan timeout)
     {
-        _options.Timeout = timeout;
+        settings.Timeout = timeout;
         return this;
     }
 
@@ -259,10 +251,10 @@ public class ConsumerForgetBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerForgetBuilder<T> WithAwaitForget(TimeSpan? timeout = null)
     {
-        _options.Strategy = ForgetStrategy.AwaitForget;
+        settings.Strategy = ForgetStrategy.AwaitForget;
         if (timeout.HasValue)
         {
-            _options.Timeout = timeout.Value;
+            settings.Timeout = timeout.Value;
         }
         return this;
     }
@@ -273,7 +265,7 @@ public class ConsumerForgetBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ConsumerForgetBuilder<T> WithFireForget()
     {
-        _options.Strategy = ForgetStrategy.FireForget;
+        settings.Strategy = ForgetStrategy.FireForget;
         return this;
     }
 }

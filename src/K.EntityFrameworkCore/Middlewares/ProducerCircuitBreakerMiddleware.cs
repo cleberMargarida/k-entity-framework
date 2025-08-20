@@ -1,5 +1,3 @@
-using K.EntityFrameworkCore.MiddlewareOptions.Producer;
-
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
 /// <summary>
@@ -8,7 +6,7 @@ namespace K.EntityFrameworkCore.Middlewares.Producer;
 /// and exception filtering specifically for producer scenarios.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-internal class ProducerCircuitBreakerMiddleware<T>(ProducerCircuitBreakerMiddlewareOptions<T> options) : CircuitBreakerMiddleware<T>(options)
+internal class ProducerCircuitBreakerMiddleware<T>(ProducerCircuitBreakerMiddlewareSettings<T> settings) : CircuitBreakerMiddleware<T>(settings)
     where T : class
 {
 }

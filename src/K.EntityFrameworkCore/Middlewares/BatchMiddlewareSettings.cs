@@ -1,9 +1,9 @@
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Configuration options for the BatchMiddleware.
 /// </summary>
-public interface IBatchMiddlewareOptions
+public interface IBatchMiddlewareSettings
 {
     /// <summary>
     /// Gets or sets the maximum number of messages to batch together.
@@ -27,7 +27,7 @@ public interface IBatchMiddlewareOptions
 /// Configuration options for the BatchMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class BatchMiddlewareOptions<T> : MiddlewareOptions<T>, IBatchMiddlewareOptions 
+public class BatchMiddlewareSettings<T> : MiddlewareSettings<T>, IBatchMiddlewareSettings
     where T : class
 {
     /// <summary>

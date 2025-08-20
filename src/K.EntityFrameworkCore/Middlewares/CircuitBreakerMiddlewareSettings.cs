@@ -1,10 +1,10 @@
-namespace K.EntityFrameworkCore.MiddlewareOptions;
+namespace K.EntityFrameworkCore.Middlewares;
 
 /// <summary>
 /// Configuration options for the CircuitBreakerMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class CircuitBreakerMiddlewareOptions<T> : MiddlewareOptions<T>
+public class CircuitBreakerMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {
     /// <summary>
