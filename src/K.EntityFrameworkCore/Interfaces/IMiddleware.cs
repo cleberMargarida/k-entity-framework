@@ -17,5 +17,10 @@ public interface IMiddleware<T> where T : class
     /// </summary>
     bool IsEnabled => false;
 
+    /// <summary>
+    /// Gets a value indicating whether this middleware is disabled based on the settings.
+    /// </summary>
+    bool IsDisabled => !IsEnabled;
+
     internal IMiddleware<T>? Next { get; set; }
 }

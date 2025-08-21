@@ -1,8 +1,6 @@
 using Confluent.Kafka;
-using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Batch;
@@ -12,45 +10,36 @@ namespace K.EntityFrameworkCore.Middlewares.Batch;
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
 internal class ProducerBatchMiddleware<T>(ProducerBatchMiddlewareSettings<T> settings, ProducerMiddlewareSettings<T> producerSettings, IServiceProvider serviceProvider)
-    : BatchMiddleware<T>(settings) where T : class
+    : BatchMiddleware<T>(settings)
+    , IMiddleware<T>
+    , IEndMiddleware 
+    where T : class
 {
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        Type type = typeof(T);
-        var reference = envelope.GetInfrastructure();
-        var options = serviceProvider.GetRequiredService<ProducerMiddlewareSettings<T>>();
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        Message<string, byte[]> message;
-        if (!reference.TryGetTarget(out OutboxMessage? outboxMessage) && outboxMessage != null)
-        {
-            //TODO: avoid box -> unbox -> box -> unbox -> box
-            message = new Message<string, byte[]>
-            {
-                //Headers = ,
-                Key = outboxMessage.AggregateId!,
-                Value = outboxMessage.Payload,
-            };
-        }
-        else
-        {
-            var serializedEnvelope = envelope as ISerializedEnvelope<T>;
-            message = new Message<string, byte[]>
-            {
-                //Headers = ,
-                Key = producerSettings.GetKey(envelope.Message!)!,
-                Value = serializedEnvelope.SerializedData
-            };
-        }
+        cancellationToken.Register(tcs.SetResult);
 
-        var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(type);
+        Message<string, byte[]> message = new()
+        {
+            Headers = envelope.GetHeaders(),
+            Key = producerSettings.GetKey(envelope.Message!)!,
+            Value = envelope.GetSerializedData(),
+        };
+
+        var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(typeof(T));
 
         producer.Produce(message.Key, message, HandleDeliveryReport);
 
-        return base.InvokeAsync(envelope, cancellationToken);
-    }
+        return new ValueTask(tcs.Task);
 
-    private void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
-    {
-        throw new NotImplementedException();
+        void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
+        {
+            if (report.Error.IsError)
+                tcs.SetException(new KafkaException(report.Error));
+            else
+                tcs.SetResult();
+        }
     }
 }

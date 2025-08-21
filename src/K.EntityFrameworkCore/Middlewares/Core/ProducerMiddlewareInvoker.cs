@@ -15,8 +15,8 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         , OutboxMiddleware<T> outboxMiddleware
         , ProducerRetryMiddleware<T> retryMiddleware
         , ProducerCircuitBreakerMiddleware<T> circuitBreakerMiddleware
-        , ProducerBatchMiddleware<T> batchMiddleware
         , ProducerForgetMiddleware<T> forgetMiddleware
+        , ProducerBatchMiddleware<T> batchMiddleware
         , ProducerMiddleware<T> producerMiddleware
         )
     {
@@ -24,22 +24,8 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         Use(outboxMiddleware);
         Use(retryMiddleware);
         Use(circuitBreakerMiddleware);
-        Use(batchMiddleware);
         Use(forgetMiddleware);
-        Use(producerMiddleware);
-    }
-}
-internal class OutboxProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
-    where T : class
-{
-    public OutboxProducerMiddlewareInvoker(
-          ProducerRetryMiddleware<T> retryMiddleware
-        , ProducerCircuitBreakerMiddleware<T> circuitBreakerMiddleware
-        , ProducerBatchMiddleware<T> batchMiddleware
-        )
-    {
-        Use(retryMiddleware);
-        Use(circuitBreakerMiddleware);
         Use(batchMiddleware);
+        Use(producerMiddleware);
     }
 }

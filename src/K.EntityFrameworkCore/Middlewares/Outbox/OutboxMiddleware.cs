@@ -13,7 +13,7 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentD
     {
         DbSet<OutboxMessage> outboxMessages = context.Set<OutboxMessage>();
 
-        OutboxMessage message = envelope.ToOutboxMessage();
+        OutboxMessage message = envelope.AsOutboxMessage();
 
         outboxMessages.Add(message);
 

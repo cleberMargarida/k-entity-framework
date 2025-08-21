@@ -1,4 +1,6 @@
 using K.EntityFrameworkCore.Middlewares.Core;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 

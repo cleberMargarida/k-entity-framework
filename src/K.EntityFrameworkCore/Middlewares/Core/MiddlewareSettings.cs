@@ -32,4 +32,9 @@ public class MiddlewareSettings<T>(bool isMiddlewareEnabled) : SettingsBase<T>
     /// Enables the middleware.
     /// </summary>
     public void EnableMiddleware() => IsMiddlewareEnabled = true;
+    
+    /// <summary>
+    /// Enables the middleware.
+    /// </summary>
+    public void DisableMiddleware() => IsMiddlewareEnabled = false;
 }

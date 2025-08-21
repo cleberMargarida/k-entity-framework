@@ -38,6 +38,8 @@ namespace K.EntityFrameworkCore.Extensions
         {
             services.AddScoped<ScopedCommandRegistry>();
 
+            services.AddSingleton(typeof(OutboxProducerMiddleware<>));
+            services.AddSingleton(typeof(OutboxProducerMiddleware<>));
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
 

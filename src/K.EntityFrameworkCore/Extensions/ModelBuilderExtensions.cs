@@ -237,6 +237,14 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 
         var builder = new ProducerBatchBuilder<T>(settings);
         configure?.Invoke(builder);
+
+        var producerMiddlewareSettings = ServiceProviderCache.Instance
+           .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+           .GetRequiredService<ProducerMiddlewareSettings<T>>();
+
+        // Ensure when batch is enabled single is not
+        producerMiddlewareSettings.DisableMiddleware();
+
         return this;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Confluent.Kafka;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
@@ -52,7 +53,7 @@ namespace K.EntityFrameworkCore
         /// Whether the message has been processed/published.
         /// </summary>
         public bool IsSuccessfullyProcessed { get; set; }
-        
+
         /// <summary>
         /// When the message was processed/published (if applicable).
         /// </summary>
@@ -62,5 +63,9 @@ namespace K.EntityFrameworkCore
         /// Number of attempts to publish this message.
         /// </summary>
         public int Retries { get; set; }
+
+        [field: JsonIgnore, NotMapped, AllowNull]
+        // Weak reference for Envelope of T
+        internal WeakReference<object> WeakReference { get => field ??= new(null!); }
     }
 }

@@ -74,19 +74,17 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
         {
             var query = coordination.ApplyScope(outboxMessages);
             var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
-            var deferedExecutions = new Task[outboxMessageArray.Length];
+            var outboxFinishedTasks = new Task[outboxMessageArray.Length];
             var outboxMessageTypes = new HashSet<Type?>();
 
             for (int i = 0; i < outboxMessageArray.Length; i++)
             {
                 OutboxMessage? o = outboxMessageArray[i];
-                deferedExecutions[i] = ExecuteOutboxMessageAsync(o, dbContextServiceProvider, stoppingToken);
+                outboxFinishedTasks[i] = ExecuteOutboxMessageAsync(o, dbContextServiceProvider, stoppingToken);
                 outboxMessageTypes.Add(o.TypeLoaded);
             }
 
-            await Task.WhenAll(deferedExecutions);
-
-            var topicFlushments = outboxMessageTypes
+            var publicationTasks = outboxMessageTypes
                 .Select(type =>
                     Task.Factory.StartNew(
                         () => dbContextServiceProvider.GetRequiredKeyedService<IBatchProducer>(type).Flush(stoppingToken)
@@ -95,7 +93,8 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
                         , TaskScheduler.Default))
                 .ToArray();
 
-            await Task.WhenAll(topicFlushments);
+            await Task.WhenAll(publicationTasks);
+            await Task.WhenAll(outboxFinishedTasks);
             await context.SaveChangesAsync(stoppingToken);
         }
     }
@@ -104,6 +103,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     {
         ScopedCommand? command = CreateScopedCommandWithAutoGenerator(outboxMessage) ??
                                  CreateScopedCommandWithClr(outboxMessage);
+
         return command.Invoke(dbContextServiceProvider, stoppingToken).AsTask();
     }
 
@@ -122,7 +122,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     private static Func<OutboxMessage, ScopedCommand> LoadDeferedExecutionMethod(string assemblyQualifiedName)
     {
         logger.LogWarning("Source generator not found for type '{MessageType}'. Falling back to CLR reflection strategy. " +
-                              "Consider adding package 'K.EntityFrameworkCore.CodeGen' for better performance.", outboxMessage.Type);
+                          "Consider adding package 'K.EntityFrameworkCore.CodeGen' for better performance.", assemblyQualifiedName);
 
         var messageParam = Expression.Parameter(typeof(OutboxMessage), "outboxMessage");
 
@@ -147,42 +147,21 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
         return new MiddlewareInvokeCommand<T>(outboxMessage).ExecuteAsync;
     }
 
-    readonly struct MiddlewareInvokeCommand<T>(OutboxMessage outboxMessage)
+    readonly struct MiddlewareInvokeCommand<T>
         where T : class
     {
-        public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        private readonly OutboxMessage outboxMessage;
+
+        public MiddlewareInvokeCommand(OutboxMessage outboxMessage)
         {
             outboxMessage.TypeLoaded = typeof(T);
-            outboxMessage.ToEnvelope<T>();
-
-            var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(typeof(T));
-
-            var options = serviceProvider.GetRequiredService<ProducerMiddlewareSettings<T>>();
-
-            //TODO: avoid box -> unbox -> box -> unbox -> box
-            producer.Produce(outboxMessage.AggregateId, new Message<string, byte[]>
-            {
-                //Headers = ,
-                Key = outboxMessage.AggregateId!,
-                Value = outboxMessage.Payload,
-
-            }, HandleDeliveryReport);
-
-            return ValueTask.CompletedTask;
+            this.outboxMessage = outboxMessage;
         }
 
-        private void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
+        public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            outboxMessage.ProcessedAt = report.Timestamp.UtcDateTime;
-            bool processed = report.Error.Code is ErrorCode.NoError;
-            if (processed)
-            {
-                outboxMessage.IsSuccessfullyProcessed = processed;
-            }
-            else
-            {
-                outboxMessage.Retries++;
-            }
+            var middleware = serviceProvider.GetRequiredService<OutboxProducerMiddleware<T>>();
+            return middleware.InvokeAsync(outboxMessage.AsEnvelope<T>(), cancellationToken);
         }
     }
 

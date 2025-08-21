@@ -1,5 +1,6 @@
 ﻿namespace K.EntityFrameworkCore;
 
+using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Represents a mutable envelope that holds a message of type <typeparamref name="T"/> along with its serialized data and headers.
@@ -17,7 +19,6 @@ using System.Text.Json;
 public class Envelope<T>(T? message)
     : IEnvelope<T>
     , ISerializedEnvelope<T>
-    , IInfrastructure<WeakReference<OutboxMessage?>>
     where T : class
 {
     private Envelope()
@@ -55,12 +56,8 @@ public class Envelope<T>(T? message)
 
     string? ISerializedEnvelope<T>.Key { get => key; set => key = value; }
 
-    /// <inheritdoc/>
-    [field: AllowNull]
-    WeakReference<OutboxMessage?> IInfrastructure<WeakReference<OutboxMessage?>>.Instance
-    {
-        get => field ??= new WeakReference<OutboxMessage?>(null);
-    }
+    [field: JsonIgnore, NotMapped, AllowNull]
+    internal WeakReference<OutboxMessage> WeakReference { get => field ??= new(null!); }
 }
 
 
@@ -164,14 +161,18 @@ internal static class EnvelopeExtensions
     /// <param name="outboxMessage">The outbox message to convert.</param>
     /// <returns>A new envelope populated with data from the outbox message.</returns>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Envelope<T> ToEnvelope<T>(this OutboxMessage outboxMessage) where T : class
+    public static Envelope<T> AsEnvelope<T>(this OutboxMessage outboxMessage) where T : class
     {
-        Envelope<T> envelope = new(null);
+        if (outboxMessage.WeakReference.TryGetTarget(out object? target) && target is Envelope<T> envelope)
+        {
+            return envelope;
+        }
 
+        envelope = new Envelope<T>(null);
         envelope.SetKey(outboxMessage.AggregateId!);
         envelope.DeserializeHeadersFromJson(outboxMessage.Headers);
         envelope.SetSerializedData(outboxMessage.Payload);
-        envelope.GetInfrastructure().SetTarget(outboxMessage);
+        envelope.WeakReference.SetTarget(outboxMessage);
         return envelope;
     }
 
@@ -182,8 +183,15 @@ internal static class EnvelopeExtensions
     /// <param name="envelope">The envelope to convert.</param>
     /// <returns>A new OutboxMessage populated with data from the envelope.</returns>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OutboxMessage ToOutboxMessage<T>(this ISerializedEnvelope<T> envelope) where T : class
+    public static OutboxMessage AsOutboxMessage<T>(this ISerializedEnvelope<T> envelope) where T : class
     {
+        Envelope<T> typedEnvelope = (Envelope<T>)envelope;
+
+        if (typedEnvelope.WeakReference.TryGetTarget(out OutboxMessage? outboxMessage))
+        {
+            return outboxMessage;
+        }
+
         Type runtimeType = envelope.Message!.GetType();
         Type compiledType = typeof(T);
 
@@ -197,7 +205,7 @@ internal static class EnvelopeExtensions
             runtimeTypeAssemblyQualifiedName = envelope.Message.GetType().AssemblyQualifiedName!;
         }
 
-        return new OutboxMessage
+        outboxMessage = new OutboxMessage
         {
             Type = compiledType.AssemblyQualifiedName!,
             RuntimeType = runtimeTypeAssemblyQualifiedName,
@@ -205,6 +213,10 @@ internal static class EnvelopeExtensions
             Headers = SerializeHeadersToJson(envelope),
             AggregateId = envelope.Key,
         };
+
+        typedEnvelope.WeakReference.SetTarget(outboxMessage);
+
+        return outboxMessage;
     }
 
     /// <summary>
@@ -255,6 +267,36 @@ internal static class EnvelopeExtensions
         where T : class
     {
         envelope.SerializedData = payload;
+    }
+
+    /// <summary>
+    /// Extracts headers from an envelope and converts them to a Confluent.Kafka.Headers object.
+    /// </summary>
+    public static Headers GetHeaders<T>(this ISerializedEnvelope<T> envelope)
+        where T : class
+    {
+        Headers headers = [];
+
+        if (envelope.Headers == null)
+        {
+            return headers;
+        }
+
+        foreach (var item in envelope.Headers)
+        {
+            headers.Add(new(item.Key, (byte[])item.Value));
+        }
+
+        return headers;
+    }
+
+    /// <summary>
+    /// Gets the serialized data from an envelope.
+    /// </summary>
+    public static byte[] GetSerializedData<T>(this ISerializedEnvelope<T> envelope)
+        where T : class
+    {
+        return envelope.GetSerializedData();
     }
 
     /// <summary>
