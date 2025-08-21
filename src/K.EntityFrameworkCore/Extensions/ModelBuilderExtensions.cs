@@ -67,6 +67,7 @@ namespace K.EntityFrameworkCore.Extensions
         /// <summary>
         /// Configures the topic to use a specific serialization strategy identified by options type.
         /// </summary>
+        /// <typeparam name="TSerializer">The serializer type.</typeparam>
         /// <typeparam name="TOptions">The options type that identifies the serialization strategy.</typeparam>
         /// <param name="configure">Optional action to configure the strategy-specific settings.</param>
         /// <returns>The topic type builder instance.</returns>
@@ -242,7 +243,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
            .GetRequiredService<ProducerMiddlewareSettings<T>>();
 
-        // Ensure when batch is enabled single is not
+        // Ensure when batch is enabled single sent is not
         producerMiddlewareSettings.DisableMiddleware();
 
         return this;

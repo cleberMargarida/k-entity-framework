@@ -2,7 +2,6 @@
 
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;

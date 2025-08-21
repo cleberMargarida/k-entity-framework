@@ -1,7 +1,5 @@
-﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.Extensions;
+﻿using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +7,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
