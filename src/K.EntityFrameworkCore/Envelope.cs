@@ -57,7 +57,10 @@ public class Envelope<T>(T? message)
 
     /// <inheritdoc/>
     [field: AllowNull]
-    WeakReference<OutboxMessage?> IInfrastructure<WeakReference<OutboxMessage?>>.Instance => field ??= new WeakReference<OutboxMessage?>(null);
+    WeakReference<OutboxMessage?> IInfrastructure<WeakReference<OutboxMessage?>>.Instance
+    {
+        get => field ??= new WeakReference<OutboxMessage?>(null);
+    }
 }
 
 
@@ -125,14 +128,14 @@ internal static class EnvelopeExtensions
     /// Deserializes headers from an OutboxMessage into an envelope.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
-    /// <param name="outboxMessage">The outbox message containing serialized headers.</param>
+    /// <param name="outboxMessageHeaders">The headers serialized headers from outbox message.</param>
     /// <param name="envelope">The envelope to populate with deserialized headers.</param>
-    public static void DeserializeHeaders<T>(this OutboxMessage outboxMessage, ISerializedEnvelope<T> envelope)
+    public static void DeserializeHeadersFromJson<T>(this ISerializedEnvelope<T> envelope, string? outboxMessageHeaders)
         where T : class
     {
-        Dictionary<string, string>? headers = outboxMessage.Headers is null
+        Dictionary<string, string>? headers = outboxMessageHeaders is null
             ? null
-            : JsonSerializer.Deserialize<Dictionary<string, string>>(outboxMessage.Headers)!;
+            : JsonSerializer.Deserialize<Dictionary<string, string>>(outboxMessageHeaders)!;
 
         envelope.Headers = headers?.ToDictionary(
             h => h.Key,
@@ -164,12 +167,11 @@ internal static class EnvelopeExtensions
     public static Envelope<T> ToEnvelope<T>(this OutboxMessage outboxMessage) where T : class
     {
         Envelope<T> envelope = new(null);
-        ISerializedEnvelope<T> serializedEnvelope = envelope;
 
-        serializedEnvelope.Key = outboxMessage.AggregateId;
-        serializedEnvelope.SerializedData = outboxMessage.Payload;
-        DeserializeHeaders(outboxMessage, serializedEnvelope);
-
+        envelope.SetKey(outboxMessage.AggregateId!);
+        envelope.DeserializeHeadersFromJson(outboxMessage.Headers);
+        envelope.SetSerializedData(outboxMessage.Payload);
+        envelope.GetInfrastructure().SetTarget(outboxMessage);
         return envelope;
     }
 
@@ -180,18 +182,28 @@ internal static class EnvelopeExtensions
     /// <param name="envelope">The envelope to convert.</param>
     /// <returns>A new OutboxMessage populated with data from the envelope.</returns>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OutboxMessage ToOutboxMessage<T>(this Envelope<T> envelope) where T : class
+    public static OutboxMessage ToOutboxMessage<T>(this ISerializedEnvelope<T> envelope) where T : class
     {
-        ISerializedEnvelope<T> serializedEnvelope = envelope;
+        Type runtimeType = envelope.Message!.GetType();
+        Type compiledType = typeof(T);
+
+        string? runtimeTypeAssemblyQualifiedName;
+        if (runtimeType == compiledType)
+        {
+            runtimeTypeAssemblyQualifiedName = null;
+        }
+        else
+        {
+            runtimeTypeAssemblyQualifiedName = envelope.Message.GetType().AssemblyQualifiedName!;
+        }
 
         return new OutboxMessage
         {
-            Id = Guid.NewGuid(),
-            EventType = typeof(T).AssemblyQualifiedName!,
-            RuntimeType = envelope.Message!.GetType().AssemblyQualifiedName!,
-            Payload = serializedEnvelope.SerializedData,
-            Headers = SerializeHeadersToJson(serializedEnvelope),
-            AggregateId = serializedEnvelope.Key,
+            Type = compiledType.AssemblyQualifiedName!,
+            RuntimeType = runtimeTypeAssemblyQualifiedName,
+            Payload = envelope.SerializedData,
+            Headers = SerializeHeadersToJson(envelope),
+            AggregateId = envelope.Key,
         };
     }
 
@@ -219,6 +231,30 @@ internal static class EnvelopeExtensions
         where T : class
     {
         envelope.Key = keyExtractor(message);
+    }
+    
+    /// <summary>
+    /// Sets the key in an envelope using the provided key extraction function.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="envelope">The envelope to update.</param>
+    /// <param name="key">The key.</param>
+    public static void SetKey<T>(this ISerializedEnvelope<T> envelope, string? key)
+        where T : class
+    {
+        envelope.Key = key;
+    }
+    
+    /// <summary>
+    /// Sets the key in an envelope using the provided key extraction function.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="envelope">The envelope to update.</param>
+    /// <param name="payload">The raw payload data.</param>
+    public static void SetSerializedData<T>(this ISerializedEnvelope<T> envelope, byte[] payload)
+        where T : class
+    {
+        envelope.SerializedData = payload;
     }
 
     /// <summary>

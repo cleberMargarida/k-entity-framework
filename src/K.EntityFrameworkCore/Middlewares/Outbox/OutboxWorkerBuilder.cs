@@ -23,6 +23,9 @@ public sealed class OutboxWorkerBuilder<TDbContext>
     /// <param name="intervalMilliseconds">Polling interval in milliseconds.</param>
     /// <remarks>
     /// Default is <c>1000</c> milliseconds (1 second).
+    /// <br></br>
+    /// <br></br>
+    /// Make sure this value is not lower than the most lower batch timeout.
     /// </remarks>
     /// <returns>The builder instance for chaining.</returns>
     public OutboxWorkerBuilder<TDbContext> WithPollingInterval(int intervalMilliseconds)

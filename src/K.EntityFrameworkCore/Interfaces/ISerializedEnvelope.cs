@@ -7,7 +7,7 @@ internal interface ISerializedEnvelope<T> : IEnvelope<T> where T : class
 {
     public string? Key { get; set; }
 
-    new public T? Message { set; }
+    new public T? Message { get; set; }
 
     /// <summary>
     /// Gets metadata headers for the serialized message.

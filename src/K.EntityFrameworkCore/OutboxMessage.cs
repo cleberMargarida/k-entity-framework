@@ -28,15 +28,15 @@ namespace K.EntityFrameworkCore
         /// <summary>
         /// The type or name of the event/message.
         /// </summary>
-        public string EventType { get; set; } = default!;
+        public string Type { get; set; } = default!;
 
         [JsonIgnore, NotMapped]
-        internal Type? Type { get; set; }
+        internal Type? TypeLoaded { get; set; }
 
         /// <summary>
         /// The type or name of the message at runtime.
         /// </summary>
-        public string RuntimeType { get; set; } = default!;
+        public string? RuntimeType { get => field ?? Type; set; } = default!;
 
         /// <summary>
         /// The message headers.
@@ -51,8 +51,8 @@ namespace K.EntityFrameworkCore
         /// <summary>
         /// Whether the message has been processed/published.
         /// </summary>
-        public bool IsSucceeded { get; set; }
-
+        public bool IsSuccessfullyProcessed { get; set; }
+        
         /// <summary>
         /// When the message was processed/published (if applicable).
         /// </summary>

@@ -139,7 +139,7 @@ namespace K.EntityFrameworkCore.CodeGen
             sb.AppendLine($"{{");
             sb.AppendLine($"    public class {dbContext.Name}MiddlewareSpecifier : IMiddlewareSpecifier<{dbContext.Name}>");
             sb.AppendLine($"    {{");
-            sb.AppendLine($"        public ScopedCommand DeferedExecution(OutboxMessage outboxMessage) => outboxMessage.EventType switch");
+            sb.AppendLine($"        public ScopedCommand DeferedExecution(OutboxMessage outboxMessage) => outboxMessage.Type switch");
             sb.AppendLine($"        {{");
 
             foreach (var type in distinctMessageTypes)

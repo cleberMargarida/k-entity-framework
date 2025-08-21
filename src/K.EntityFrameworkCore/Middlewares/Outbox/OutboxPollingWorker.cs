@@ -8,7 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 
@@ -19,10 +23,10 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox;
 public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     where TDbContext : DbContext
 {
+    private static ILogger<OutboxPollingWorker<TDbContext>> logger = default!;
     private readonly IServiceScope scope = default!;
     private readonly TDbContext context;
     private readonly OutboxPollingWorkerSettings<TDbContext> settings;
-    private readonly ILogger<OutboxPollingWorker<TDbContext>> logger = default!;
     private readonly IMiddlewareSpecifier<TDbContext>? middlewareSpecifier;
 
     /// <summary>
@@ -34,7 +38,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
         , IMiddlewareSpecifier<TDbContext>? middlewareSpecifier = null)
         : this(applicationServiceProvider.CreateScope(), settings)
     {
-        this.logger = applicationServiceProvider.GetRequiredService<ILogger<OutboxPollingWorker<TDbContext>>>();
+        logger = applicationServiceProvider.GetRequiredService<ILogger<OutboxPollingWorker<TDbContext>>>();
         this.middlewareSpecifier = middlewareSpecifier;
     }
 
@@ -60,53 +64,75 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var coordination = scope.ServiceProvider.GetRequiredService<IOutboxCoordinationStrategy<TDbContext>>();
         var outboxMessages = context.Set<OutboxMessage>();
+        var dbContextServiceProvider = context.GetInfrastructure();
+        var coordination = scope.ServiceProvider.GetRequiredService<IOutboxCoordinationStrategy<TDbContext>>();
 
         int maxMessagesPerPoll = settings.MaxMessagesPerPoll;
         using var timer = new PeriodicTimer(settings.PollingInterval);
-
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            var sw = Stopwatch.StartNew();
-            sw.Start();
-
             var query = coordination.ApplyScope(outboxMessages);
+            var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
+            var deferedExecutions = new Task[outboxMessageArray.Length];
+            var outboxMessageTypes = new HashSet<Type?>();
 
-            var list = await query.Take(maxMessagesPerPoll).ToListAsync(stoppingToken);
+            for (int i = 0; i < outboxMessageArray.Length; i++)
+            {
+                OutboxMessage? o = outboxMessageArray[i];
+                deferedExecutions[i] = ExecuteOutboxMessageAsync(o, dbContextServiceProvider, stoppingToken);
+                outboxMessageTypes.Add(o.TypeLoaded);
+            }
 
-            var deferedExecutions = list.Select(DeferedExecution);
-
-            IServiceProvider serviceProvider = context.GetInfrastructure();
-
-            var batchs = list
-                .Select(o => o.Type)
-                .ToHashSet()
-                .Select(type =>
-                    Task.Factory.StartNew(
-                        () => serviceProvider.GetKeyedService<IBatchProducer>(type)!.Flush(stoppingToken)
-                        , stoppingToken
-                        , TaskCreationOptions.LongRunning
-                        , TaskScheduler.Default));
-
-            // confirm all defered executions
             await Task.WhenAll(deferedExecutions);
 
-            // finished to produce on kafka
-            await Task.WhenAll(batchs);
+            var topicFlushments = outboxMessageTypes
+                .Select(type =>
+                    Task.Factory.StartNew(
+                        () => dbContextServiceProvider.GetRequiredKeyedService<IBatchProducer>(type).Flush(stoppingToken)
+                        , stoppingToken
+                        , TaskCreationOptions.LongRunning
+                        , TaskScheduler.Default))
+                .ToArray();
 
-            // mark all messages as processed
+            await Task.WhenAll(topicFlushments);
             await context.SaveChangesAsync(stoppingToken);
-
-            sw.Stop();
         }
     }
 
-    private Task DeferedExecution(OutboxMessage outboxMessage)
+    private Task ExecuteOutboxMessageAsync(OutboxMessage outboxMessage, IServiceProvider dbContextServiceProvider, CancellationToken stoppingToken)
     {
-        return middlewareSpecifier?.DeferedExecution(outboxMessage).Invoke(
-            context.GetInfrastructure()/*TODO share instance*/
-            , CancellationToken.None).AsTask();
+        ScopedCommand? command = CreateScopedCommandWithAutoGenerator(outboxMessage) ??
+                                 CreateScopedCommandWithClr(outboxMessage);
+        return command.Invoke(dbContextServiceProvider, stoppingToken).AsTask();
+    }
+
+    private ScopedCommand? CreateScopedCommandWithAutoGenerator(OutboxMessage outboxMessage)
+    {
+        return middlewareSpecifier?.DeferedExecution(outboxMessage);
+    }
+
+    private static ScopedCommand CreateScopedCommandWithClr(OutboxMessage outboxMessage)
+    {
+        return deferedExecutionMethodByType.GetOrAdd(outboxMessage.Type, LoadDeferedExecutionMethod).Invoke(outboxMessage);
+    }
+
+    private static readonly ConcurrentDictionary<string, Func<OutboxMessage, ScopedCommand>> deferedExecutionMethodByType = [];
+
+    private static Func<OutboxMessage, ScopedCommand> LoadDeferedExecutionMethod(string assemblyQualifiedName)
+    {
+        logger.LogWarning("Source generator not found for type '{MessageType}'. Falling back to CLR reflection strategy. " +
+                              "Consider adding package 'K.EntityFrameworkCore.CodeGen' for better performance.", outboxMessage.Type);
+
+        var messageParam = Expression.Parameter(typeof(OutboxMessage), "outboxMessage");
+
+        var method = typeof(OutboxPollingWorker<TDbContext>)
+            .GetMethod(nameof(DeferedExecution), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(Type.GetType(assemblyQualifiedName, true)!);
+
+        var body = Expression.Call(null, method, messageParam);
+
+        return Expression.Lambda<Func<OutboxMessage, ScopedCommand>>(body, messageParam).Compile();
     }
 
     /// <summary>
@@ -126,11 +152,10 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            Type type = typeof(T);
+            outboxMessage.TypeLoaded = typeof(T);
+            outboxMessage.ToEnvelope<T>();
 
-            outboxMessage.Type = type;
-
-            var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(type);
+            var producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(typeof(T));
 
             var options = serviceProvider.GetRequiredService<ProducerMiddlewareSettings<T>>();
 
@@ -152,7 +177,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
             bool processed = report.Error.Code is ErrorCode.NoError;
             if (processed)
             {
-                outboxMessage.IsSucceeded = processed;
+                outboxMessage.IsSuccessfullyProcessed = processed;
             }
             else
             {

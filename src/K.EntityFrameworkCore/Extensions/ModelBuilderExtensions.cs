@@ -132,7 +132,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 
         modelBuilder.Entity<OutboxMessage>(outbox =>
         {
-            outbox.HasQueryFilter(outbox => !outbox.IsSucceeded);
+            outbox.HasQueryFilter(outbox => !outbox.IsSuccessfullyProcessed);
 
             outbox.ToTable("OutboxMessages");
 
