@@ -32,88 +32,55 @@ public class ConsumerRetryBuilder<T>(ConsumerRetryMiddlewareSettings<T> settings
     /// <summary>
     /// Sets the maximum number of retry attempts.
     /// </summary>
-    /// <param name="maxAttempts">The maximum number of retry attempts.</param>
+    /// <param name="maxRetries">The maximum number of retry attempts.</param>
     /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithMaxAttempts(int maxAttempts)
+    public ConsumerRetryBuilder<T> WithMaxRetries(int maxRetries)
     {
-        settings.MaxRetryAttempts = maxAttempts;
+        settings.MaxRetries = maxRetries;
         return this;
     }
 
     /// <summary>
-    /// Sets the base delay between retry attempts.
+    /// Sets the base backoff time in milliseconds before retrying.
     /// </summary>
-    /// <param name="delay">The base delay.</param>
+    /// <param name="milliseconds">The backoff time in milliseconds.</param>
     /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithBaseDelay(TimeSpan delay)
+    public ConsumerRetryBuilder<T> WithRetryBackoffMilliseconds(int milliseconds)
     {
-        settings.BaseDelay = delay;
+        settings.RetryBackoffMilliseconds = milliseconds;
         return this;
     }
 
     /// <summary>
-    /// Sets the maximum delay between retry attempts.
+    /// Sets the base backoff time using a TimeSpan.
     /// </summary>
-    /// <param name="maxDelay">The maximum delay.</param>
+    /// <param name="delay">The backoff time as a TimeSpan.</param>
     /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithMaxDelay(TimeSpan maxDelay)
+    public ConsumerRetryBuilder<T> WithRetryBackoff(TimeSpan delay)
     {
-        settings.MaxDelay = maxDelay;
+        settings.RetryBackoffMilliseconds = (int)delay.TotalMilliseconds;
         return this;
     }
 
     /// <summary>
-    /// Sets the backoff strategy for retry delays.
+    /// Sets the maximum backoff time in milliseconds before retrying.
     /// </summary>
-    /// <param name="strategy">The backoff strategy.</param>
+    /// <param name="milliseconds">The maximum backoff time in milliseconds.</param>
     /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithBackoffStrategy(RetryBackoffStrategy strategy)
+    public ConsumerRetryBuilder<T> WithRetryBackoffMaxMilliseconds(int milliseconds)
     {
-        settings.BackoffStrategy = strategy;
+        settings.RetryBackoffMaxMilliseconds = milliseconds;
         return this;
     }
 
     /// <summary>
-    /// Sets the backoff multiplier for exponential backoff.
+    /// Sets the maximum backoff time using a TimeSpan.
     /// </summary>
-    /// <param name="multiplier">The backoff multiplier.</param>
+    /// <param name="maxDelay">The maximum backoff time as a TimeSpan.</param>
     /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithBackoffMultiplier(double multiplier)
+    public ConsumerRetryBuilder<T> WithRetryBackoffMax(TimeSpan maxDelay)
     {
-        settings.BackoffMultiplier = multiplier;
-        return this;
-    }
-
-    /// <summary>
-    /// Enables or disables jitter to avoid thundering herd.
-    /// </summary>
-    /// <param name="useJitter">Whether to use jitter.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithJitter(bool useJitter = true)
-    {
-        settings.UseJitter = useJitter;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets exception types that should trigger a retry.
-    /// </summary>
-    /// <param name="exceptionTypes">The exception types to retry on.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithRetriableExceptions(params Type[] exceptionTypes)
-    {
-        settings.RetriableExceptionTypes = exceptionTypes;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a custom predicate to determine if an exception should trigger a retry.
-    /// </summary>
-    /// <param name="predicate">The retry predicate.</param>
-    /// <returns>The builder instance.</returns>
-    public ConsumerRetryBuilder<T> WithRetryPredicate(Func<Exception, bool> predicate)
-    {
-        settings.ShouldRetryPredicate = predicate;
+        settings.RetryBackoffMaxMilliseconds = (int)maxDelay.TotalMilliseconds;
         return this;
     }
 }

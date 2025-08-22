@@ -5,24 +5,23 @@ namespace K.EntityFrameworkCore.Middlewares.Retry;
 internal abstract class RetryMiddleware<T>(RetryMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
-    private static readonly Random random = new();
-
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         Exception? lastException = null;
+        int maxRetries = settings.MaxRetries;
 
-        for (int attempt = 0; attempt <= settings.MaxRetryAttempts; attempt++)
+        for (int attempt = 0; attempt <= maxRetries; attempt++)
         {
             try
             {
                 await base.InvokeAsync(envelope, cancellationToken);
                 return;
             }
-            catch (Exception ex) when (attempt < settings.MaxRetryAttempts && ShouldRetry(ex))
+            catch (Exception ex) when (attempt < maxRetries)
             {
                 lastException = ex;
 
-                if (attempt < settings.MaxRetryAttempts)
+                if (attempt < maxRetries)
                 {
                     var delay = CalculateDelay(attempt + 1);
                     await Task.Delay(delay, cancellationToken);
@@ -36,44 +35,17 @@ internal abstract class RetryMiddleware<T>(RetryMiddlewareSettings<T> settings) 
         }
     }
 
-    private bool ShouldRetry(Exception exception)
-    {
-        if (settings.ShouldRetryPredicate != null)
-        {
-            return settings.ShouldRetryPredicate(exception);
-        }
-
-        if (settings.RetriableExceptionTypes != null && settings.RetriableExceptionTypes.Length > 0)
-        {
-            return settings.RetriableExceptionTypes.Contains(exception.GetType());
-        }
-
-        return true;
-    }
-
     private TimeSpan CalculateDelay(int attemptNumber)
     {
-        TimeSpan delay = settings.BackoffStrategy switch
+        int baseDelayMs = settings.RetryBackoffMilliseconds;
+        int maxDelayMs = settings.RetryBackoffMaxMilliseconds;
+        double delayMs = baseDelayMs * Math.Pow(2, attemptNumber - 1);
+        
+        if (delayMs > maxDelayMs)
         {
-            RetryBackoffStrategy.Fixed => settings.BaseDelay,
-            RetryBackoffStrategy.Linear => TimeSpan.FromMilliseconds(settings.BaseDelay.TotalMilliseconds * attemptNumber),
-            RetryBackoffStrategy.Exponential => TimeSpan.FromMilliseconds(
-                settings.BaseDelay.TotalMilliseconds * Math.Pow(settings.BackoffMultiplier, attemptNumber - 1)),
-            _ => settings.BaseDelay
-        };
-
-        if (delay > settings.MaxDelay)
-        {
-            delay = settings.MaxDelay;
+            delayMs = maxDelayMs;
         }
-
-        if (settings.UseJitter)
-        {
-            // Add random jitter up to 20% of the delay
-            var jitterAmount = delay.TotalMilliseconds * 0.2 * random.NextDouble();
-            delay = delay.Add(TimeSpan.FromMilliseconds(jitterAmount));
-        }
-
-        return delay;
+        
+        return TimeSpan.FromMilliseconds(delayMs);
     }
 }

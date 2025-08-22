@@ -103,6 +103,15 @@ namespace K.EntityFrameworkCore.Extensions
 public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     where T : class
 {
+    /// <summary>
+    /// Configures the producer to use a specific property as message key when producing the message.
+    /// </summary>
+    /// <typeparam name="TProp"></typeparam>
+    /// <param name="keyPropertyAccessor"></param>
+    /// <remarks>
+    /// Extremely important, as it allows the producer to correctly partition messages based on the key.
+    /// </remarks>
+    /// <returns></returns>
     public ProducerBuilder<T> HasKey<TProp>(Expression<Func<T, TProp>> keyPropertyAccessor)
     {
         var settings = ServiceProviderCache.Instance
@@ -118,6 +127,9 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// Configures the outbox middleware for the producer.
     /// </summary>
     /// <param name="configure">Action to configure the outbox middleware settings.</param>
+    /// <remarks>
+    /// Automatically enables the batch middleware when outbox is configured.
+    /// </remarks>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
     {
@@ -186,17 +198,19 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// Configures the circuit breaker middleware for the producer.
     /// </summary>
     /// <param name="configure">Action to configure the circuit breaker middleware settings.</param>
+    /// <remarks>
+    /// Do not take effect if the producer is configured to use outbox or batch middleware.
+    /// </remarks>
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasCircuitBreaker(Action<ProducerCircuitBreakerBuilder<T>>? configure = null)
     {
-        var settings = ServiceProviderCache.Instance
+        var circuitBreaker = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
             .GetRequiredService<ProducerCircuitBreakerMiddlewareSettings<T>>();
 
-        // Enable the middleware by default when HasCircuitBreaker is called
-        settings.IsMiddlewareEnabled = true;
+        circuitBreaker.EnableMiddleware();
 
-        var builder = new ProducerCircuitBreakerBuilder<T>(settings);
+        var builder = new ProducerCircuitBreakerBuilder<T>(circuitBreaker);
         configure?.Invoke(builder);
         return this;
     }

@@ -1,7 +1,6 @@
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Outbox;
-using K.EntityFrameworkCore.Middlewares.Retry;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 
@@ -44,88 +43,55 @@ public class ProducerRetryBuilder<T>(ProducerRetryMiddlewareSettings<T> settings
     /// <summary>
     /// Sets the maximum number of retry attempts.
     /// </summary>
-    /// <param name="maxAttempts">The maximum number of retry attempts.</param>
+    /// <param name="maxRetries">The maximum number of retry attempts.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseMaxAttempts(int maxAttempts)
+    public ProducerRetryBuilder<T> UseMaxRetries(int maxRetries)
     {
-        settings.MaxRetryAttempts = maxAttempts;
+        settings.MaxRetries = maxRetries;
         return this;
     }
 
     /// <summary>
-    /// Sets the base delay between retry attempts.
+    /// Sets the base backoff time in milliseconds before retrying.
     /// </summary>
-    /// <param name="delay">The base delay.</param>
+    /// <param name="milliseconds">The backoff time in milliseconds.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseBaseDelay(TimeSpan delay)
+    public ProducerRetryBuilder<T> UseRetryBackoffMilliseconds(int milliseconds)
     {
-        settings.BaseDelay = delay;
+        settings.RetryBackoffMilliseconds = milliseconds;
         return this;
     }
 
     /// <summary>
-    /// Sets the maximum delay between retry attempts.
+    /// Sets the base backoff time using a TimeSpan.
     /// </summary>
-    /// <param name="maxDelay">The maximum delay.</param>
+    /// <param name="delay">The backoff time as a TimeSpan.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseMaxDelay(TimeSpan maxDelay)
+    public ProducerRetryBuilder<T> UseRetryBackoff(TimeSpan delay)
     {
-        settings.MaxDelay = maxDelay;
+        settings.RetryBackoffMilliseconds = (int)delay.TotalMilliseconds;
         return this;
     }
 
     /// <summary>
-    /// Sets the backoff strategy for retry delays.
+    /// Sets the maximum backoff time in milliseconds before retrying.
     /// </summary>
-    /// <param name="strategy">The backoff strategy.</param>
+    /// <param name="milliseconds">The maximum backoff time in milliseconds.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseBackoffStrategy(RetryBackoffStrategy strategy)
+    public ProducerRetryBuilder<T> UseRetryBackoffMaxMilliseconds(int milliseconds)
     {
-        settings.BackoffStrategy = strategy;
+        settings.RetryBackoffMaxMilliseconds = milliseconds;
         return this;
     }
 
     /// <summary>
-    /// Sets the backoff multiplier for exponential backoff.
+    /// Sets the maximum backoff time using a TimeSpan.
     /// </summary>
-    /// <param name="multiplier">The backoff multiplier.</param>
+    /// <param name="maxDelay">The maximum backoff time as a TimeSpan.</param>
     /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseBackoffMultiplier(double multiplier)
+    public ProducerRetryBuilder<T> UseRetryBackoffMax(TimeSpan maxDelay)
     {
-        settings.BackoffMultiplier = multiplier;
-        return this;
-    }
-
-    /// <summary>
-    /// Enables or disables jitter to avoid thundering herd.
-    /// </summary>
-    /// <param name="useJitter">Whether to use jitter.</param>
-    /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseJitter(bool useJitter = true)
-    {
-        settings.UseJitter = useJitter;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets exception types that should trigger a retry.
-    /// </summary>
-    /// <param name="exceptionTypes">The exception types to retry on.</param>
-    /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseRetriableExceptions(params Type[] exceptionTypes)
-    {
-        settings.RetriableExceptionTypes = exceptionTypes;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a custom predicate to determine if an exception should trigger a retry.
-    /// </summary>
-    /// <param name="predicate">The retry predicate.</param>
-    /// <returns>The builder instance.</returns>
-    public ProducerRetryBuilder<T> UseRetryPredicate(Func<Exception, bool> predicate)
-    {
-        settings.ShouldRetryPredicate = predicate;
+        settings.RetryBackoffMaxMilliseconds = (int)maxDelay.TotalMilliseconds;
         return this;
     }
 }
