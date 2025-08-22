@@ -107,12 +107,16 @@ namespace K.EntityFrameworkCore.Extensions
             Type type = (Type)key!;
 
             var batchSettings = (IBatchMiddlewareSettings)provider.GetRequiredService(typeof(ProducerBatchMiddlewareSettings<>).MakeGenericType(type));
+            var retrySettings = (IRetryMiddlewareSettings)provider.GetRequiredService(typeof(ProducerRetryMiddlewareSettings<>).MakeGenericType(type));
 
             var client = provider.GetRequiredService<ClientConfig>();
             var producerConfig = new ProducerConfig(client)
             {
                 BatchSize = batchSettings.BatchSize,
                 MessageTimeoutMs = batchSettings.BatchTimeoutMilliseconds,
+                RetryBackoffMaxMs = retrySettings.RetryBackoffMaxMilliseconds,
+                RetryBackoffMs = retrySettings.RetryBackoffMilliseconds,
+                MessageSendMaxRetries = retrySettings.MaxRetries,
             };
 
             return ProducerFactory(producerConfig);

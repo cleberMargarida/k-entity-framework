@@ -95,6 +95,7 @@ namespace HelloWorld
                     {
                         outbox.UseBackgroundOnly();
                     });
+                    producer.HasRetry
                     producer.HasBatch(batching =>
                     {
                         batching.UseBatchTimeout(TimeSpan.FromSeconds(2));

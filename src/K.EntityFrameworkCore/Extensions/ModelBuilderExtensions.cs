@@ -171,14 +171,13 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasRetry(Action<ProducerRetryBuilder<T>>? configure = null)
     {
-        var settings = ServiceProviderCache.Instance
+        var retrySettings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
             .GetRequiredService<ProducerRetryMiddlewareSettings<T>>();
 
-        // Enable the middleware by default when HasRetry is called
-        settings.IsMiddlewareEnabled = true;
+        retrySettings.EnableMiddleware();
 
-        var builder = new ProducerRetryBuilder<T>(settings);
+        var builder = new ProducerRetryBuilder<T>(retrySettings);
         configure?.Invoke(builder);
         return this;
     }
