@@ -29,18 +29,48 @@ namespace K.EntityFrameworkCore.Extensions
         }
     }
 
-    public class KafkaClientBuilder(
-        ClientConfig clientConfig,
-        ProducerConfig producerConfig,
-        ConsumerConfig consumerConfig)
+    /// <summary>
+    /// 
+    /// </summary>
+    public class KafkaClientBuilder(ClientConfig clientConfig) : IClientConfig
     {
-        internal KafkaClientBuilder(ClientConfig clientConfig) : this(
-            clientConfig,
-            new ProducerConfig(clientConfig),
-            new ConsumerConfig(clientConfig))
-        {
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public IProducerConfig Producer { get; } = new ProducerConfigInternal(clientConfig);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public IConsumerConfig Consumer { get; } = new ConsumerConfigInternal(clientConfig);
+    }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    public interface IClientConfig
+    {
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public interface IConsumerConfig
+    {
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public interface IProducerConfig
+    {
+    }
+
+    internal class ProducerConfigInternal(ClientConfig clientConfig) : ProducerConfig(clientConfig), IProducerConfig
+    {
+    }
+
+    internal class ConsumerConfigInternal(ClientConfig clientConfig) : ConsumerConfig(clientConfig), IConsumerConfig
+    {
     }
 }
