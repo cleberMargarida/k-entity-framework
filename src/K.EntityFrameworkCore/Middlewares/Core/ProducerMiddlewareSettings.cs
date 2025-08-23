@@ -1,7 +1,4 @@
 using Confluent.Kafka;
-using K.EntityFrameworkCore.Middlewares.Batch;
-using K.EntityFrameworkCore.Middlewares.CircuitBreaker;
-using K.EntityFrameworkCore.Middlewares.Retry;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Linq.Expressions;
@@ -139,29 +136,3 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
 }
 
 
-/// <summary>
-/// Producer-specific configuration options for the RetryMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerRetryMiddlewareSettings<T> : RetryMiddlewareSettings<T>
-    where T : class
-{
-}
-
-/// <summary>
-/// Producer-specific configuration options for the CircuitBreakerMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerCircuitBreakerMiddlewareSettings<T> : CircuitBreakerMiddlewareSettings<T>
-    where T : class
-{
-}
-
-/// <summary>
-/// Producer-specific configuration options for the BatchMiddleware.
-/// </summary>
-/// <typeparam name="T">The message type.</typeparam>
-public class ProducerBatchMiddlewareSettings<T> : BatchMiddlewareSettings<T>
-    where T : class
-{
-}

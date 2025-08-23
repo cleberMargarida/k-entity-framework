@@ -17,9 +17,9 @@ namespace K.EntityFrameworkCore.Extensions
         /// <param name="optionsBuilder"></param>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static DbContextOptionsBuilder UseKafkaExtensibility(this DbContextOptionsBuilder optionsBuilder, Action<ClientConfig> client)
+        public static DbContextOptionsBuilder UseKafkaExtensibility(this DbContextOptionsBuilder optionsBuilder, Action<KafkaClientBuilder> client)
         {
-            var clientInstance = new ClientConfig();
+            var clientInstance = new KafkaClientBuilder(new ClientConfig());
             client.Invoke(clientInstance);
             IDbContextOptionsBuilderInfrastructure infrastructure = optionsBuilder;
             infrastructure.AddOrUpdateExtension(new KafkaOptionsExtension(clientInstance, optionsBuilder.Options.ContextType));
@@ -27,5 +27,20 @@ namespace K.EntityFrameworkCore.Extensions
             optionsBuilder.ReplaceService<IDbSetInitializer, DbSetInitializerExt>();
             return optionsBuilder;
         }
+    }
+
+    public class KafkaClientBuilder(
+        ClientConfig clientConfig,
+        ProducerConfig producerConfig,
+        ConsumerConfig consumerConfig)
+    {
+        internal KafkaClientBuilder(ClientConfig clientConfig) : this(
+            clientConfig,
+            new ProducerConfig(clientConfig),
+            new ConsumerConfig(clientConfig))
+        {
+        }
+
+
     }
 }

@@ -1,11 +1,9 @@
 ﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.Middlewares.Batch;
 
 namespace K.EntityFrameworkCore.Middlewares.Core
 {
     internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareSettings<T> settings) 
         : Middleware<T>(settings)
-        , IEndMiddleware
         where T : class
     {
         public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)

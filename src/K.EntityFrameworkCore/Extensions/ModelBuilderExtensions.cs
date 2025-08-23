@@ -185,54 +185,12 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
             forgetSettings.EnableMiddleware();
         }
 
-        // Ensure that batch middleware is enabled when using any outbox
-        var batchSettings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerBatchMiddlewareSettings<T>>();
-
-        batchSettings.EnableMiddleware();
-
         return this;
     }
 
-    /// <summary>
-    /// Configures the retry middleware for the producer.
-    /// </summary>
-    /// <param name="configure">Action to configure the retry middleware settings.</param>
-    /// <returns>The producer builder instance.</returns>
-    public ProducerBuilder<T> HasRetry(Action<ProducerRetryBuilder<T>>? configure = null)
-    {
-        var retrySettings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerRetryMiddlewareSettings<T>>();
 
-        retrySettings.EnableMiddleware();
 
-        var builder = new ProducerRetryBuilder<T>(retrySettings);
-        configure?.Invoke(builder);
-        return this;
-    }
 
-    /// <summary>
-    /// Configures the circuit breaker middleware for the producer.
-    /// </summary>
-    /// <param name="configure">Action to configure the circuit breaker middleware settings.</param>
-    /// <remarks>
-    /// Do not take effect if the producer is configured to use outbox or batch middleware.
-    /// </remarks>
-    /// <returns>The producer builder instance.</returns>
-    public ProducerBuilder<T> HasCircuitBreaker(Action<ProducerCircuitBreakerBuilder<T>>? configure = null)
-    {
-        var circuitBreaker = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerCircuitBreakerMiddlewareSettings<T>>();
-
-        circuitBreaker.EnableMiddleware();
-
-        var builder = new ProducerCircuitBreakerBuilder<T>(circuitBreaker);
-        configure?.Invoke(builder);
-        return this;
-    }
 
     /// <summary>
     /// Configures the forget middleware for the producer.
@@ -254,32 +212,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
         return this;
     }
 
-    /// <summary>
-    /// Configures the batch middleware for the producer.
-    /// </summary>
-    /// <param name="configure">Action to configure the batch middleware settings.</param>
-    /// <returns>The producer builder instance.</returns>
-    public ProducerBuilder<T> HasBatch(Action<ProducerBatchBuilder<T>>? configure = null)
-    {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerBatchMiddlewareSettings<T>>();
 
-        // Enable the middleware by default when HasBatch is called
-        settings.IsMiddlewareEnabled = true;
-
-        var builder = new ProducerBatchBuilder<T>(settings);
-        configure?.Invoke(builder);
-
-        var producerMiddlewareSettings = ServiceProviderCache.Instance
-           .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-           .GetRequiredService<ProducerMiddlewareSettings<T>>();
-
-        // Ensure when batch is enabled single sent is not
-        producerMiddlewareSettings.DisableMiddleware();
-
-        return this;
-    }
 }
 
 public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
@@ -317,62 +250,11 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         return this;
     }
 
-    /// <summary>
-    /// Configures the retry middleware for the consumer.
-    /// </summary>
-    /// <param name="configure">Action to configure the retry middleware settings.</param>
-    /// <returns>The consumer builder instance.</returns>
-    public ConsumerBuilder<T> HasRetry(Action<ConsumerRetryBuilder<T>>? configure = null)
-    {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerRetryMiddlewareSettings<T>>();
 
-        // Enable the middleware by default when HasRetry is called
-        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ConsumerRetryBuilder<T>(settings);
-        configure?.Invoke(builder);
-        return this;
-    }
 
-    /// <summary>
-    /// Configures the circuit breaker middleware for the consumer.
-    /// </summary>
-    /// <param name="configure">Action to configure the circuit breaker middleware settings.</param>
-    /// <returns>The consumer builder instance.</returns>
-    public ConsumerBuilder<T> HasCircuitBreaker(Action<ConsumerCircuitBreakerBuilder<T>>? configure = null)
-    {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerCircuitBreakerMiddlewareSettings<T>>();
 
-        // Enable the middleware by default when HasCircuitBreaker is called
-        settings.IsMiddlewareEnabled = true;
 
-        var builder = new ConsumerCircuitBreakerBuilder<T>(settings);
-        configure?.Invoke(builder);
-        return this;
-    }
-
-    /// <summary>
-    /// Configures the batch middleware for the consumer.
-    /// </summary>
-    /// <param name="configure">Action to configure the batch middleware settings.</param>
-    /// <returns>The consumer builder instance.</returns>
-    public ConsumerBuilder<T> HasBatch(Action<ConsumerBatchBuilder<T>>? configure = null)
-    {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerBatchMiddlewareSettings<T>>();
-
-        // Enable the middleware by default when HasBatch is called
-        settings.IsMiddlewareEnabled = true;
-
-        var builder = new ConsumerBatchBuilder<T>(settings);
-        configure?.Invoke(builder);
-        return this;
-    }
 
     /// <summary>
     /// Configures the forget middleware for the consumer.

@@ -1,5 +1,4 @@
 ﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.Middlewares.Batch;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,10 +6,9 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
 {
     internal class OutboxProducerMiddleware<T>(IServiceProvider serviceProvider, OutboxMiddlewareSettings<T> settings) 
         : Middleware<T>(settings) 
-        , IEndMiddleware
         where T : class
     {
-        private readonly IBatchProducer producer = serviceProvider.GetRequiredKeyedService<IBatchProducer>(typeof(T));
+        private readonly IProducer producer = serviceProvider.GetRequiredKeyedService<IProducer>(typeof(T));
 
         public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {

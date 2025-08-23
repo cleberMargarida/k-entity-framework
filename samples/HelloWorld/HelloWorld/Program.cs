@@ -11,7 +11,7 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
 
     // Configure EF Core to use SQL Server
     .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
-
+        
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
     .UseKafkaExtensibility(client =>
     {
@@ -80,6 +80,7 @@ namespace HelloWorld
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //modelBuilder.Broker
             modelBuilder.Topic<OrderCreated>(topic =>
             {
                 topic.HasName("order-created-topic");
@@ -92,22 +93,9 @@ namespace HelloWorld
                 topic.HasProducer(producer =>
                 {
                     producer.HasKey(o => o.OrderId);
-
                     producer.HasOutbox(outbox =>
                     {
                         outbox.UseBackgroundOnly();
-                    });
-
-                    //TODO integrate CB with native producer
-                    producer.HasCircuitBreaker(circuitBreaker =>
-                    {
-                    });
-
-                    //TODO delete ProduceAsync use only Produce with TCS
-                    //TODO remove batch middleware
-                    producer.HasBatch(batching =>
-                    {
-                        batching.UseBatchTimeout(TimeSpan.FromSeconds(2));
                     });
                 });
 

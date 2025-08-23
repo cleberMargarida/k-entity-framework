@@ -83,7 +83,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
             var publicationTasks = outboxMessageTypes
                 .Select(type =>
                     Task.Factory.StartNew(
-                        () => dbContextServiceProvider.GetRequiredKeyedService<IBatchProducer>(type).Flush(stoppingToken)
+                        () => dbContextServiceProvider.GetRequiredKeyedService<IProducer>(type).Flush(stoppingToken)
                         , stoppingToken
                         , TaskCreationOptions.LongRunning
                         , TaskScheduler.Default))
