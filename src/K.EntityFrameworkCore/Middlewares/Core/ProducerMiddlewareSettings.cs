@@ -2,6 +2,8 @@ using Confluent.Kafka;
 using K.EntityFrameworkCore.Middlewares.Batch;
 using K.EntityFrameworkCore.Middlewares.CircuitBreaker;
 using K.EntityFrameworkCore.Middlewares.Retry;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Linq.Expressions;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
@@ -63,13 +65,54 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
     /// Gets the key value for the specified entity instance.
     /// </summary>
     /// <param name="entity">The entity instance to extract the key from.</param>
-    /// <returns>The key value as a string, or null if no key accessor is configured.</returns>
-    public string? GetKey(T entity)
+    /// <returns>The key value as a string.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no key accessor is configured and no suitable key property is found, or entity is null.</exception>
+    public string GetKey(T entity)
     {
-        if (keyAccessor == null || entity == null)
-            return null;
+        if (entity == null)
+        {
+            throw new InvalidOperationException("Entity cannot be null when extracting key.");
+        }
+
+        if (keyAccessor != null)
+        {
+            return keyAccessor(entity);
+        }
+
+        var keyProperty = FindKeyProperty() ?? throw new InvalidOperationException(
+            $"No key accessor has been configured and no suitable key property found. " +
+            $"Event type '{typeof(T).Name}' must have either a property named 'Id' (case-insensitive) " +
+            $"or a property decorated with [Key] attribute.");
+
+        keyAccessor = SetKeyAccessorFromProperty(keyProperty);
 
         return keyAccessor(entity);
+    }
+
+    /// <summary>
+    /// Finds a suitable key property by looking for 'Id' property or KeyAttribute.
+    /// </summary>
+    /// <returns>The PropertyInfo of the key property, or null if not found.</returns>
+    private static PropertyInfo? FindKeyProperty() => 
+        typeof(T)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .SingleOrDefault(p => p.GetCustomAttribute<KeyAttribute>() != null)
+            ?? 
+        typeof(T)
+            .GetProperty("Id", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+    /// <summary>
+    /// Creates and sets the key accessor from a PropertyInfo.
+    /// </summary>
+    /// <param name="property">The property to create the accessor from.</param>
+    private static Func<T, string> SetKeyAccessorFromProperty(PropertyInfo property)
+    {
+        var parameter = Expression.Parameter(typeof(T), "event");
+        var propertyAccess = Expression.Property(parameter, property);
+        var toStringMethod = typeof(object).GetMethod("ToString")!;
+        var toStringCall = Expression.Call(propertyAccess, toStringMethod);
+        var lambdaExpression = Expression.Lambda<Func<T, string>>(toStringCall, parameter);
+        return lambdaExpression.Compile();
     }
 }
 
