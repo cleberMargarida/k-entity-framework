@@ -2,6 +2,7 @@
 using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,13 +92,19 @@ namespace HelloWorld
                 topic.HasProducer(producer =>
                 {
                     producer.HasKey(o => o.OrderId);
+
                     producer.HasOutbox(outbox =>
                     {
                         outbox.UseBackgroundOnly();
                     });
+
+                    //TODO integrate CB with native producer
                     producer.HasCircuitBreaker(circuitBreaker =>
                     {
                     });
+
+                    //TODO delete ProduceAsync use only Produce with TCS
+                    //TODO remove batch middleware
                     producer.HasBatch(batching =>
                     {
                         batching.UseBatchTimeout(TimeSpan.FromSeconds(2));

@@ -24,6 +24,7 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
     where T : class
 {
     private Func<T, string>? keyAccessor;
+    private bool hasNoKey = false;
 
     private readonly ProducerConfig producerConfig = new(clientSettings.ClientConfig);
     public IEnumerable<KeyValuePair<string, string>> ProducerConfig => producerConfig;
@@ -33,6 +34,8 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
     {
         set
         {
+            hasNoKey = false; // Reset the no key flag when setting a new accessor
+            
             if (value == null)
             {
                 keyAccessor = null;
@@ -62,16 +65,32 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
     }
 
     /// <summary>
+    /// Configures the producer to have no key (returns null for all messages).
+    /// This disables automatic key discovery and key-based partitioning.
+    /// </summary>
+    public void SetNoKey()
+    {
+        hasNoKey = true;
+        keyAccessor = null;
+    }
+
+    /// <summary>
     /// Gets the key value for the specified entity instance.
     /// </summary>
     /// <param name="entity">The entity instance to extract the key from.</param>
-    /// <returns>The key value as a string.</returns>
+    /// <returns>The key value as a string, or null if configured with no key.</returns>
     /// <exception cref="InvalidOperationException">Thrown when no key accessor is configured and no suitable key property is found, or entity is null.</exception>
-    public string GetKey(T entity)
+    public string? GetKey(T entity)
     {
         if (entity == null)
         {
             throw new InvalidOperationException("Entity cannot be null when extracting key.");
+        }
+
+        // If explicitly configured to have no key, return null
+        if (hasNoKey)
+        {
+            return null;
         }
 
         if (keyAccessor != null)
@@ -80,9 +99,12 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
         }
 
         var keyProperty = FindKeyProperty() ?? throw new InvalidOperationException(
-            $"No key accessor has been configured and no suitable key property found. " +
-            $"Event type '{typeof(T).Name}' must have either a property named 'Id' (case-insensitive) " +
-            $"or a property decorated with [Key] attribute.");
+            $"No key accessor has been configured and no suitable key property found for type '{typeof(T).Name}'. " +
+            $"To resolve this, choose one of the following options:\n" +
+            $"1. Decorate a property with [Key] attribute: [Key] public string MyKey {{ get; set; }}\n" +
+            $"2. Add a property named 'Id': public string Id {{ get; set; }}\n" +
+            $"3. Configure explicitly using HasKey(): .HasKey(x => x.MyProperty)\n" +
+            $"4. Use HasNoKey() for random partitioning: .HasNoKey()\n");
 
         keyAccessor = SetKeyAccessorFromProperty(keyProperty);
 

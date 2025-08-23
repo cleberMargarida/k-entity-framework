@@ -124,6 +124,25 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     }
 
     /// <summary>
+    /// Configures the producer to have no key (returns null for key), which means messages will be distributed randomly across partitions.
+    /// </summary>
+    /// <remarks>
+    /// This disables automatic key discovery and explicitly sets the key to null for all messages.
+    /// Use this when you want random partition distribution instead of key-based partitioning.
+    /// </remarks>
+    /// <returns></returns>
+    public ProducerBuilder<T> HasNoKey()
+    {
+        var settings = ServiceProviderCache.Instance
+            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+            .GetRequiredService<ProducerMiddlewareSettings<T>>();
+
+        settings.SetNoKey();
+
+        return this;
+    }
+
+    /// <summary>
     /// Configures the outbox middleware for the producer.
     /// </summary>
     /// <param name="configure">Action to configure the outbox middleware settings.</param>
