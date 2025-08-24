@@ -8,12 +8,14 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ConsumerMiddlewareInvoker(
-          DeserializerMiddleware<T> serializationMiddleware
+          ConsumerMiddleware<T> consumerMiddleware
+        , DeserializerMiddleware<T> deserializationMiddleware
         , InboxMiddleware<T> inboxMiddleware
-        , ForgetMiddleware<T> forgetMiddleware
+        , ConsumerForgetMiddleware<T> forgetMiddleware
         )
     {
-        Use(serializationMiddleware);
+        Use(consumerMiddleware);
+        Use(deserializationMiddleware);
         Use(inboxMiddleware);
         Use(forgetMiddleware);
     }

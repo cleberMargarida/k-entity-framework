@@ -1,4 +1,5 @@
 ﻿global using IProducer = Confluent.Kafka.IProducer<string, byte[]>;
+global using IConsumer = Confluent.Kafka.IConsumer<string, byte[]>;
 
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
@@ -9,6 +10,7 @@ using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Outbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Inbox;
 
 
 namespace K.EntityFrameworkCore.Extensions
@@ -41,11 +43,17 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ClientSettings<>));
 
             // Consumer-specific middleware options and classes
-            services.AddScoped(typeof(DeserializerMiddleware<>));
-            services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
-
             services.AddSingleton(typeof(ConsumerForgetMiddlewareSettings<>));
             services.AddScoped(typeof(ConsumerForgetMiddleware<>));
+
+            services.AddSingleton(typeof(InboxMiddlewareSettings<>));
+            services.AddScoped(typeof(InboxMiddleware<>));
+
+            services.AddSingleton(typeof(SubscriptionHandler<>));
+            services.AddSingleton(typeof(ConsumerMiddleware<>));
+            services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
+
+            services.AddScoped(typeof(DeserializerMiddleware<>));
 
             // Producer-specific middleware options and classes
             services.AddSingleton(typeof(ProducerMiddlewareSettings<>));
@@ -62,7 +70,7 @@ namespace K.EntityFrameworkCore.Extensions
 
             services.AddSingleton(_ => client.ClientConfig);
             services.AddSingleton(_ => (ProducerConfig)client.Producer);
-            services.AddSingleton(_ => (ConsumerConfig)client.ClientConfig);
+            services.AddSingleton(_ => (ConsumerConfig)client.Consumer);
 
             // https://github.com/confluentinc/confluent-kafka-dotnet/issues/197
             // One consumer per process
@@ -73,13 +81,13 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(ProducerFactory);
 
             //TODO: move to source generator is okay reflection here?
-            foreach (var item in contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            foreach (var type in contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(prop => 
                     prop.PropertyType.IsGenericType &&
                     prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
                 .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
             {
-                //services.AddKeyedSingleton<IProducer>(item, ProducerFactory);
+                services.AddKeyedSingleton(type, static (_,type) => _.GetRequiredService(typeof(ConsumerMiddleware<>).MakeGenericType((Type)type!)));
             }
         }
 
@@ -88,9 +96,9 @@ namespace K.EntityFrameworkCore.Extensions
             return new ProducerBuilder<string, byte[]>(provider.GetRequiredService<ProducerConfig>()).SetLogHandler((_, _) => { }).Build();//TODO handle kafka logs
         }
 
-        private IConsumer<Ignore, byte[]> ConsumerFactory(IServiceProvider provider)
+        private IConsumer<string, byte[]> ConsumerFactory(IServiceProvider provider)
         {
-            return new ConsumerBuilder<Ignore, byte[]>(provider.GetRequiredService<ConsumerConfig>()).Build();
+            return new ConsumerBuilder<string, byte[]>(provider.GetRequiredService<ConsumerConfig>()).Build();
         }
 
         public void Validate(IDbContextOptions options)

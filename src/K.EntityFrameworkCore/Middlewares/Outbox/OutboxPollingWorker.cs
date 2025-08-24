@@ -80,16 +80,9 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
                 outboxMessageTypes.Add(o.TypeLoaded);
             }
 
-            var publicationTasks = outboxMessageTypes
-                .Select(type =>
-                    Task.Factory.StartNew(
-                        () => dbContextServiceProvider.GetRequiredKeyedService<IProducer>(type).Flush(stoppingToken)
-                        , stoppingToken
-                        , TaskCreationOptions.LongRunning
-                        , TaskScheduler.Default))
-                .ToArray();
+            var producer = dbContextServiceProvider.GetRequiredService<IProducer>();
+            producer.Flush(stoppingToken);
 
-            await Task.WhenAll(publicationTasks);
             await Task.WhenAll(outboxFinishedTasks);
             await context.SaveChangesAsync(stoppingToken);
         }

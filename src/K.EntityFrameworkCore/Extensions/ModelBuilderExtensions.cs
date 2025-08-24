@@ -218,17 +218,6 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     where T : class
 {
-    public ConsumerBuilder<T> GroupId(string value)
-    {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerMiddlewareSettings<T>>();
-
-        settings.GroupId = value;
-
-        return this;
-    }
-
     /// <summary>
     /// Configures the inbox middleware for the consumer.
     /// </summary>
@@ -236,7 +225,7 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasInbox(Action<InboxBuilder<T>>? configure = null)
     {
-        modelBuilder.Entity<InboxMessage>();
+        //modelBuilder.Entity<InboxMessage>();
 
         var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
@@ -249,12 +238,6 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         configure?.Invoke(builder);
         return this;
     }
-
-
-
-
-
-
 
     /// <summary>
     /// Configures the forget middleware for the consumer.

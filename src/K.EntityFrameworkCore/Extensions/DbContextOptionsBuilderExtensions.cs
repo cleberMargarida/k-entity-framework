@@ -35,7 +35,7 @@ namespace K.EntityFrameworkCore.Extensions
     public class KafkaClientBuilder(ClientConfig clientConfig) : IClientConfig
     {
         private readonly Lazy<ProducerConfigInternal> producerConfigInternal = new(() => new ProducerConfigInternal(clientConfig.ToDictionary()));
-        private readonly Lazy<ConsumerConfigInternal> consumerConfigInternal = new(() => new ConsumerConfigInternal(clientConfig.ToDictionary()));
+        private readonly Lazy<ConsumerConfigInternal> consumerConfigInternal = new(() => new ConsumerConfigInternal(clientConfig));
 
         internal KafkaClientBuilder() : this(new ClientConfig())
         {
@@ -57,17 +57,17 @@ namespace K.EntityFrameworkCore.Extensions
         public IConsumerConfig Consumer => consumerConfigInternal.Value;
 
         /// <inheritdoc />
-        public Acks? Acks 
+        public Acks? Acks
         {
-            get => clientConfig.Acks; 
-            set => clientConfig.Acks = value; 
+            get => clientConfig.Acks;
+            set => clientConfig.Acks = value;
         }
 
         /// <inheritdoc />
-        public bool? AllowAutoCreateTopics 
-        { 
-            get => clientConfig.AllowAutoCreateTopics; 
-            set => clientConfig.AllowAutoCreateTopics = value; 
+        public bool? AllowAutoCreateTopics
+        {
+            get => clientConfig.AllowAutoCreateTopics;
+            set => clientConfig.AllowAutoCreateTopics = value;
         }
 
         /// <inheritdoc />
@@ -987,16 +987,24 @@ namespace K.EntityFrameworkCore.Extensions
     {
         // ISharedOperationalConfig implementation - properties that can be configured separately for producers
         // These delegate to the underlying ProducerConfig which inherits from ClientConfig
-        
+
         // All producer-specific properties are automatically implemented through inheritance from ProducerConfig
         // All shared operational properties are automatically implemented through inheritance from ClientConfig
     }
 
     internal class ConsumerConfigInternal(Dictionary<string, string> clientConfig) : ConsumerConfig(clientConfig), IConsumerConfig
     {
+        public ConsumerConfigInternal(ClientConfig clientConfig) : this(clientConfig.ToDictionary())
+        {
+            // set default settings
+            GroupId = AppDomain.CurrentDomain.FriendlyName;
+            AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+            EnableAutoCommit = false;
+        }
+
         // ISharedOperationalConfig implementation - properties that can be configured separately for consumers
         // These delegate to the underlying ConsumerConfig which inherits from ClientConfig
-        
+
         // All consumer-specific properties are automatically implemented through inheritance from ConsumerConfig
         // All shared operational properties are automatically implemented through inheritance from ClientConfig
     }

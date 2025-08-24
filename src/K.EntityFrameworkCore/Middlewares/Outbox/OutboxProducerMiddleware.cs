@@ -1,20 +1,24 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Middlewares.Core;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
 {
-    internal class OutboxProducerMiddleware<T>(IServiceProvider serviceProvider, OutboxMiddlewareSettings<T> settings) 
+    internal class OutboxProducerMiddleware<T>(
+        IProducer producer, 
+        OutboxMiddlewareSettings<T> settings,
+        ProducerMiddlewareSettings<T> producerMiddlewareSettings) 
         : Middleware<T>(settings) 
         where T : class
     {
-        private readonly IProducer producer = serviceProvider.GetRequiredKeyedService<IProducer>(typeof(T));
+        private readonly string topicName = producerMiddlewareSettings.TopicName;
 
         public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {
             var outboxMessage = envelope.AsOutboxMessage();
 
-            producer.Produce(outboxMessage.AggregateId, new Message<string, byte[]>
+            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            producer.Produce(topicName, new Message<string, byte[]>
             {
                 Headers = envelope.GetHeaders(),
                 Key = outboxMessage.AggregateId!,
@@ -22,7 +26,8 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
 
             }, HandleDeliveryReport);
 
-            return ValueTask.CompletedTask;
+
+            return new ValueTask(tcs.Task);
 
             void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
             {
@@ -36,6 +41,8 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
                 {
                     outboxMessage.Retries++;
                 }
+
+                tcs.SetResult();
             }
         }
     }

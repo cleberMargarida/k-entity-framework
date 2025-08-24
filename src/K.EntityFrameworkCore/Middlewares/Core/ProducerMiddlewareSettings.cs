@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Linq.Expressions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
@@ -25,7 +26,9 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
 
     private readonly ProducerConfig producerConfig = new(clientSettings.ClientConfig);
     public IEnumerable<KeyValuePair<string, string>> ProducerConfig => producerConfig;
-    public string TopicName => clientSettings.TopicName;
+
+    [field: AllowNull]
+    public string TopicName => field ??= clientSettings.TopicName;
 
     public Expression KeyPropertyAccessor
     {

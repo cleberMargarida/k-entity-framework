@@ -1,11 +1,15 @@
 ﻿using Confluent.Kafka;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace K.EntityFrameworkCore.Middlewares.Core
 {
-    internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareSettings<T> settings)
+    internal class ProducerMiddleware<T>(IProducer producer, ICurrentDbContext dbContext, ProducerMiddlewareSettings<T> settings)
         : Middleware<T>(settings)
         where T : class
     {
+        private readonly DbContext context = dbContext.Context;
+
         public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {
             Message<string, byte[]> confluentMessage = new()
@@ -18,6 +22,11 @@ namespace K.EntityFrameworkCore.Middlewares.Core
             await producer.ProduceAsync(settings.TopicName, confluentMessage, cancellationToken);
 
             await base.InvokeAsync(envelope, cancellationToken);
+
+            if (envelope.WeakReference.TryGetTarget(out var outbox))
+            {
+                context.Entry(outbox).State = EntityState.Detached;
+            }
         }
     }
 }

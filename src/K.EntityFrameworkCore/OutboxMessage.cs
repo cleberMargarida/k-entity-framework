@@ -42,7 +42,7 @@ namespace K.EntityFrameworkCore
         /// <summary>
         /// The message headers.
         /// </summary>
-        public string? Headers { get; set; } = default!;
+        public string Headers { get; set; } = default!;
 
         /// <summary>
         /// The serialized event payload.

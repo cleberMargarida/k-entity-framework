@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -27,7 +28,7 @@ public class Envelope<T>(T? message)
 
     private string? key;
     private byte[] serializedData = [];//TODO instantiate?
-    private Dictionary<string, object>? headers;
+    private Dictionary<string, object> headers = [];
 
     /// <inheritdoc/>
     [NotMapped]
@@ -39,7 +40,7 @@ public class Envelope<T>(T? message)
 
     /// <inheritdoc/>
     [NotMapped]
-    Dictionary<string, object>? ISerializedEnvelope<T>.Headers
+    Dictionary<string, object> ISerializedEnvelope<T>.Headers
     {
         get => headers;
         set => headers = value;
@@ -109,17 +110,12 @@ internal static class EnvelopeExtensions
     {
         Dictionary<string, object>? headers = envelope.Headers;
 
-        if (headers is null)
-        {
-            return;
-        }
-
         foreach (var header in headers)
         {
             headers[header.Key] = JsonSerializer.SerializeToUtf8Bytes(header.Value);
         }
 
-        headers["$type"] = Convert.FromBase64String(envelope.Message!.GetType().AssemblyQualifiedName!);
+        headers["$type"] = Encoding.UTF8.GetBytes(envelope.Message!.GetType().AssemblyQualifiedName!);
     }
 
     /// <summary>
@@ -128,16 +124,14 @@ internal static class EnvelopeExtensions
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="outboxMessageHeaders">The headers serialized headers from outbox message.</param>
     /// <param name="envelope">The envelope to populate with deserialized headers.</param>
-    public static void DeserializeHeadersFromJson<T>(this ISerializedEnvelope<T> envelope, string? outboxMessageHeaders)
+    public static void DeserializeHeadersFromJson<T>(this ISerializedEnvelope<T> envelope, string outboxMessageHeaders)
         where T : class
     {
-        Dictionary<string, string>? headers = outboxMessageHeaders is null
-            ? null
-            : JsonSerializer.Deserialize<Dictionary<string, string>>(outboxMessageHeaders)!;
+        Dictionary<string, string> headers = JsonSerializer.Deserialize<Dictionary<string, string>>(outboxMessageHeaders)!;
 
-        envelope.Headers = headers?.ToDictionary(
+        envelope.Headers = headers.ToDictionary(
             h => h.Key,
-            h => (object)Convert.FromBase64String(h.Value));
+            h => (object)Encoding.UTF8.GetBytes(h.Value));
     }
 
     /// <summary>
@@ -150,7 +144,7 @@ internal static class EnvelopeExtensions
     {
         Dictionary<string, string>? headers = envelope.Headers?.ToDictionary(
             h => h.Key,
-            h => Convert.ToBase64String((byte[])h.Value));
+            h => Encoding.UTF8.GetString((byte[])h.Value));
 
         return headers?.Count > 0 ? JsonSerializer.Serialize(headers) : null;
     }

@@ -7,46 +7,61 @@ namespace K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 
 /// <summary>
 /// Represents a topic in the Kafka message broker that can be used for both producing and consuming messages.
 /// </summary>
-public sealed class Topic<T>(DbContext dbContext)
+public sealed class Topic<T>(DbContext context)
     : IProducer<T>
     , IConsumer<T>
     where T : class
 {
-    private T? current;
-
-    private readonly Lazy<ConsumerMiddlewareInvoker<T>> consumerMiddlewareInvoker = new(() => dbContext
-        .GetInfrastructure()
-        .GetRequiredService<ConsumerMiddlewareInvoker<T>>());
+    /// <inheritdoc/>
+    public void Publish(T message) 
+        => context.Publish(message);
 
     /// <inheritdoc/>
-    public T? Current => current;
+    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) 
+        => new ConsumerEnumerator(context.GetInfrastructure(), cancellationToken)!;
 
-    /// <inheritdoc/>
-    public void Publish(T message)
+    private class ConsumerEnumerator : IAsyncEnumerator<T?>
     {
-        dbContext.Publish(message);
-    }
+        private readonly SubscriptionHandler<T> subscriptionHandle;
+        private readonly ConsumerMiddlewareInvoker<T> middleware;
+        private readonly CancellationToken cancellationToken;
 
-    /// <inheritdoc/>
-    public async ValueTask<bool> MoveNextAsync()
-    {
-        var envelope = Seal(default);
-        await consumerMiddlewareInvoker.Value.InvokeAsync(envelope);
-        return Unseal(envelope);
-    }
+        /// <inheritdoc/>
+        public T? Current { get; private set; }
 
-    private static Envelope<T> Seal(T? message)
-    {
-        return EnvelopeExtensions.Seal(message);
-    }
+        internal ConsumerEnumerator(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        {
+            subscriptionHandle = serviceProvider.GetRequiredService<SubscriptionHandler<T>>();
+            subscriptionHandle.Subscribe();
+            middleware = serviceProvider.GetRequiredService<ConsumerMiddlewareInvoker<T>>();
+            this.cancellationToken = cancellationToken;
+        }
 
-    private bool Unseal(Envelope<T> envelope)
-    {
-        return envelope.HasMessage() && (current = envelope.Unseal()) != null;
+        /// <inheritdoc/>
+        public async ValueTask<bool> MoveNextAsync()
+        {
+            var envelope = default(T).Seal();
+            await middleware.InvokeAsync(envelope, this.cancellationToken);
+            return Unseal(envelope);
+        }
+
+        private bool Unseal(Envelope<T> envelope)
+        {
+            return envelope.HasMessage() && (Current = envelope.Unseal()) != null;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            subscriptionHandle.Unsubscribe();
+            return ValueTask.CompletedTask;
+        }
     }
 }
 

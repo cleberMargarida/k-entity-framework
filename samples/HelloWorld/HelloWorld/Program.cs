@@ -40,9 +40,6 @@ var scope = app.Services.CreateScope();
 
 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
-dbContext.Database.EnsureDeleted();
-dbContext.Database.EnsureCreated();
-
 // here you're intending to mark the entity to be persisted.
 dbContext.Orders.Add(new Order { Status = "New" });
 
@@ -55,11 +52,8 @@ await dbContext.SaveChangesAsync();
 Console.ReadLine();
 
 // here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
-while (await dbContext.OrderEvents.MoveNextAsync())
+await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopping))
 {
-    // here you're accessing event related to the current offset.
-    _ = dbContext.OrderEvents.Current;
-
     // here you're commiting the offset of the current event.
     await dbContext.SaveChangesAsync();
 }
@@ -94,13 +88,13 @@ namespace HelloWorld
                     producer.HasKey(o => o.OrderId);
                     producer.HasOutbox(outbox =>
                     {
-                        outbox.UseBackgroundOnly();
+                        outbox.UseImmediateWithFallback();
                     });
                 });
 
                 topic.HasConsumer(consumer =>
                 {
-                    consumer.GroupId("");
+                    consumer.HasInbox();
                 });
 
                 topic.HasSetting(_ => { });

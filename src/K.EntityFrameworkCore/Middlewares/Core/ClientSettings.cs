@@ -1,5 +1,4 @@
 ﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.Extensions;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
