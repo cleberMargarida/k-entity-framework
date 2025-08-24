@@ -2,7 +2,7 @@
 
 namespace K.EntityFrameworkCore.Middlewares.Core
 {
-    internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareSettings<T> settings) 
+    internal class ProducerMiddleware<T>(IProducer producer, ProducerMiddlewareSettings<T> settings)
         : Middleware<T>(settings)
         where T : class
     {
@@ -16,6 +16,8 @@ namespace K.EntityFrameworkCore.Middlewares.Core
             };
 
             await producer.ProduceAsync(settings.TopicName, confluentMessage, cancellationToken);
+
+            await base.InvokeAsync(envelope, cancellationToken);
         }
     }
 }

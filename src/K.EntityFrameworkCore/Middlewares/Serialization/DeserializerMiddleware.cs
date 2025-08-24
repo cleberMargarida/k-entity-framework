@@ -13,7 +13,6 @@ internal class DeserializerMiddleware<T>(SerializationMiddlewareSettings<T> sett
 {
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        //TODO deserialize runtime type
         settings.Deserializer.DeserializeMessage(envelope);
         return base.InvokeAsync(envelope, cancellationToken);
     }

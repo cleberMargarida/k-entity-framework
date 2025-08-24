@@ -118,6 +118,8 @@ internal static class EnvelopeExtensions
         {
             headers[header.Key] = JsonSerializer.SerializeToUtf8Bytes(header.Value);
         }
+
+        headers["$type"] = Convert.FromBase64String(envelope.Message!.GetType().AssemblyQualifiedName!);
     }
 
     /// <summary>
@@ -295,7 +297,7 @@ internal static class EnvelopeExtensions
     public static byte[] GetSerializedData<T>(this ISerializedEnvelope<T> envelope)
         where T : class
     {
-        return envelope.GetSerializedData();
+        return envelope.SerializedData;
     }
 
     /// <summary>
@@ -308,7 +310,7 @@ internal static class EnvelopeExtensions
     public static void DeserializeMessage<T>(this IMessageDeserializer<T> deserializer, Envelope<T> envelope)
         where T : class
     {
-        var serializedData = ((ISerializedEnvelope<T>)envelope).SerializedData;
+        var serializedData = envelope.GetSerializedData();
         envelope.Message = deserializer.Deserialize(serializedData);
     }
 }

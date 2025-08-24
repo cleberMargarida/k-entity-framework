@@ -14,14 +14,11 @@ namespace K.EntityFrameworkCore.Middlewares.Serialization;
 internal class SerializerMiddleware<T>(SerializationMiddlewareSettings<T> settings, ProducerMiddlewareSettings<T> producerMiddlewareSettings) : Middleware<T>(settings)
     where T : class
 {
-    [field: AllowNull]
-    private Func<T, string?> GetKey => field ??= producerMiddlewareSettings.GetKey;
-
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         T message = envelope.Message!;
         envelope.SerializeHeaders();
-        envelope.SetKey(message, GetKey);
+        envelope.SetKey(message, producerMiddlewareSettings.GetKey);
         envelope.SetSerializedData(message, settings.Serializer);
 
         return base.InvokeAsync(envelope, cancellationToken);

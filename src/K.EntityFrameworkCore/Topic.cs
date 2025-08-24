@@ -34,7 +34,7 @@ public sealed class Topic<T>(DbContext dbContext)
     /// <inheritdoc/>
     public async ValueTask<bool> MoveNextAsync()
     {
-        var envelope = Seal(default(T));
+        var envelope = Seal(default);
         await consumerMiddlewareInvoker.Value.InvokeAsync(envelope);
         return Unseal(envelope);
     }

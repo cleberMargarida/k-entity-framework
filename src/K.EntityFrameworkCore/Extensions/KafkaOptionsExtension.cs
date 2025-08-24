@@ -34,8 +34,6 @@ namespace K.EntityFrameworkCore.Extensions
         {
             services.AddScoped<ScopedCommandRegistry>();
 
-            services.AddSingleton(typeof(OutboxProducerMiddleware<>));
-            services.AddSingleton(typeof(OutboxProducerMiddleware<>));
             services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
 
@@ -60,16 +58,19 @@ namespace K.EntityFrameworkCore.Extensions
 
             services.AddSingleton(typeof(OutboxMiddlewareSettings<>));
             services.AddScoped(typeof(OutboxMiddleware<>));
+            services.AddSingleton(typeof(OutboxProducerMiddleware<>));
 
-            services.AddSingleton<ClientConfig>(_ => client.ClientConfig);
+            services.AddSingleton(_ => client.ClientConfig);
+            services.AddSingleton(_ => (ProducerConfig)client.Producer);
+            services.AddSingleton(_ => (ConsumerConfig)client.ClientConfig);
 
             // https://github.com/confluentinc/confluent-kafka-dotnet/issues/197
             // One consumer per process
-            services.AddSingleton<IConsumer<Ignore, byte[]>>(ConsumerFactory);
+            services.AddSingleton(ConsumerFactory);
 
             // https://github.com/confluentinc/confluent-kafka-dotnet/issues/1346
             // One producer per process
-            services.AddSingleton<IProducer>(ProducerFactory);
+            services.AddSingleton(ProducerFactory);
 
             //TODO: move to source generator is okay reflection here?
             foreach (var item in contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -84,21 +85,12 @@ namespace K.EntityFrameworkCore.Extensions
 
         private IProducer ProducerFactory(IServiceProvider provider)
         {
-            var client = provider.GetRequiredService<ClientConfig>();
-            var producerConfig = new ProducerConfig(client);
-            return ProducerFactory(producerConfig);
-        }
-
-        private static IProducer ProducerFactory(ClientConfig client)
-        {
-            return new ProducerBuilder<string, byte[]>(client)
-                .SetLogHandler((_,_) => { }).Build();//TODO handle kafka logs
+            return new ProducerBuilder<string, byte[]>(provider.GetRequiredService<ProducerConfig>()).SetLogHandler((_, _) => { }).Build();//TODO handle kafka logs
         }
 
         private IConsumer<Ignore, byte[]> ConsumerFactory(IServiceProvider provider)
         {
-            var client = provider.GetRequiredService<ClientConfig>();
-            return new ConsumerBuilder<Ignore, byte[]>(client).Build();
+            return new ConsumerBuilder<Ignore, byte[]>(provider.GetRequiredService<ConsumerConfig>()).Build();
         }
 
         public void Validate(IDbContextOptions options)

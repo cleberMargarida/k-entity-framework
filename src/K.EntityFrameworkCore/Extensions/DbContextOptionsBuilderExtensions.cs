@@ -635,9 +635,121 @@ namespace K.EntityFrameworkCore.Extensions
     }
 
     /// <summary>
+    /// Interface for shared operational configuration between producer and consumer.
+    /// Contains properties that can be configured differently for producers vs consumers.
+    /// </summary>
+    public interface IWorkerConfig
+    {
+        /// <summary>
+        /// The amount of time to wait before attempting to retry a failed request.
+        /// </summary>
+        int? RetryBackoffMs { get; set; }
+
+        /// <summary>
+        /// The maximum amount of time in milliseconds to wait before retrying.
+        /// </summary>
+        int? RetryBackoffMaxMs { get; set; }
+
+        /// <summary>
+        /// The base amount of time to wait before attempting to reconnect to a given host.
+        /// </summary>
+        int? ReconnectBackoffMs { get; set; }
+
+        /// <summary>
+        /// The maximum amount of time in milliseconds to wait when reconnecting to a broker that has repeatedly failed to connect.
+        /// </summary>
+        int? ReconnectBackoffMaxMs { get; set; }
+
+        /// <summary>
+        /// Maximum number of in-flight requests per broker connection.
+        /// </summary>
+        int? MaxInFlight { get; set; }
+
+        /// <summary>
+        /// Default timeout for network requests.
+        /// </summary>
+        int? SocketTimeoutMs { get; set; }
+
+        /// <summary>
+        /// Broker socket send buffer size.
+        /// </summary>
+        int? SocketSendBufferBytes { get; set; }
+
+        /// <summary>
+        /// Broker socket receive buffer size.
+        /// </summary>
+        int? SocketReceiveBufferBytes { get; set; }
+
+        /// <summary>
+        /// Enable TCP keep-alives (SO_KEEPALIVE) on broker sockets.
+        /// </summary>
+        bool? SocketKeepaliveEnable { get; set; }
+
+        /// <summary>
+        /// Disable the Nagle algorithm (TCP_NODELAY) on broker sockets.
+        /// </summary>
+        bool? SocketNagleDisable { get; set; }
+
+        /// <summary>
+        /// Disconnect from broker when this number of send failures has been reached.
+        /// </summary>
+        int? SocketMaxFails { get; set; }
+
+        /// <summary>
+        /// Maximum time allowed for broker connection setup.
+        /// </summary>
+        int? SocketConnectionSetupTimeoutMs { get; set; }
+
+        /// <summary>
+        /// Close idle connections after the number of milliseconds specified by this config.
+        /// </summary>
+        int? ConnectionsMaxIdleMs { get; set; }
+
+        /// <summary>
+        /// Maximum Kafka protocol request message size.
+        /// </summary>
+        int? MessageMaxBytes { get; set; }
+
+        /// <summary>
+        /// Maximum receive message size.
+        /// </summary>
+        int? ReceiveMessageMaxBytes { get; set; }
+
+        /// <summary>
+        /// Maximum size for message copying. Messages larger than this will be referenced rather than copied.
+        /// </summary>
+        int? MessageCopyMaxBytes { get; set; }
+
+        /// <summary>
+        /// librdkafka statistics emit interval.
+        /// </summary>
+        int? StatisticsIntervalMs { get; set; }
+
+        /// <summary>
+        /// A comma-separated list of debug contexts to enable.
+        /// </summary>
+        string? Debug { get; set; }
+
+        /// <summary>
+        /// Log broker disconnects.
+        /// </summary>
+        bool? LogConnectionClose { get; set; }
+
+        /// <summary>
+        /// Enable queue statistics.
+        /// </summary>
+        bool? LogQueue { get; set; }
+
+        /// <summary>
+        /// Include thread name in log messages.
+        /// </summary>
+        bool? LogThreadName { get; set; }
+    }
+
+    /// <summary>
     /// Interface for Kafka consumer configuration options.
     /// </summary>
-    public interface IConsumerConfig
+    public interface IConsumerConfig : IWorkerConfig
     {
         /// <summary>
         /// The frequency in milliseconds that the consumer offsets are auto-committed to Kafka if enable.auto.commit is set to true.
@@ -768,7 +880,7 @@ namespace K.EntityFrameworkCore.Extensions
     /// <summary>
     /// Interface for Kafka producer configuration options.
     /// </summary>
-    public interface IProducerConfig
+    public interface IProducerConfig : IWorkerConfig
     {
         /// <summary>
         /// Maximum number of messages batched in one MessageSet.
@@ -873,13 +985,19 @@ namespace K.EntityFrameworkCore.Extensions
 
     internal class ProducerConfigInternal(Dictionary<string, string> clientConfig) : ProducerConfig(clientConfig), IProducerConfig
     {
-        // IProducerConfig implementation is already inherited from ProducerConfig base class
-        // All properties are automatically implemented through inheritance
+        // ISharedOperationalConfig implementation - properties that can be configured separately for producers
+        // These delegate to the underlying ProducerConfig which inherits from ClientConfig
+        
+        // All producer-specific properties are automatically implemented through inheritance from ProducerConfig
+        // All shared operational properties are automatically implemented through inheritance from ClientConfig
     }
 
     internal class ConsumerConfigInternal(Dictionary<string, string> clientConfig) : ConsumerConfig(clientConfig), IConsumerConfig
     {
-        // IConsumerConfig implementation is already inherited from ConsumerConfig base class
-        // All properties are automatically implemented through inheritance
+        // ISharedOperationalConfig implementation - properties that can be configured separately for consumers
+        // These delegate to the underlying ConsumerConfig which inherits from ClientConfig
+        
+        // All consumer-specific properties are automatically implemented through inheritance from ConsumerConfig
+        // All shared operational properties are automatically implemented through inheritance from ClientConfig
     }
 }
