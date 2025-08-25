@@ -1,7 +1,6 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
@@ -14,6 +13,12 @@ internal class ConsumerMiddleware<T>(
     , IConsumeResultSource
     where T : class
 {
+
+#if NET9_0_OR_GREATER
+    private readonly System.Threading.Lock sync = new();
+#else
+    private readonly object sync = new();
+#endif
     public TaskCompletionSource<ConsumeResult<string, byte[]>> TaskCompletionSource { get; private set; }
         = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -22,36 +27,51 @@ internal class ConsumerMiddleware<T>(
         // here consumer can/will consume from another {T}.
         var result = consumer.Consume(cancellationToken);
 
-        result.Message.Headers.TryGetLastBytes("$type", out byte[] bytes);
+        if (result is null or { Message: null })
+        {
+            return;
+        }
 
-        string typeName = Encoding.UTF8.GetString(bytes);
+        result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
 
-        Type? otherType = Type.GetType(typeName) 
-            ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
+        string typeName = Encoding.UTF8.GetString(typeNameBytes);
 
-        ISerializedEnvelope<T> serializedEnvelope = envelope;
+        Type? otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
+
         if (typeof(T).IsAssignableFrom(otherType))
         {
-            this.TaskCompletionSource.SetResult(result);
+            this.SetResult(result);
         }
         else
         {
             var other = provider.GetRequiredKeyedService<IConsumeResultSource>(otherType);
-            other.TaskCompletionSource.SetResult(result);
+            other.SetResult(result);
         }
 
         result = await TaskCompletionSource.Task;
-        TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        serializedEnvelope.Headers = result.Message.Headers.ToDictionary(h => h.Key, h => (object)h.GetValueBytes());
-        serializedEnvelope.Key = result.Message.Key;
-        serializedEnvelope.SerializedData = result.Message.Value;
+        lock (sync)
+        {
+            TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+
+        ((ISerializedEnvelope<T>)envelope).Headers = result.Message.Headers.ToDictionary(h => h.Key, h => (object)h.GetValueBytes());
+        ((ISerializedEnvelope<T>)envelope).Key = result.Message.Key;
+        ((ISerializedEnvelope<T>)envelope).SerializedData = result.Message.Value;
 
         await base.InvokeAsync(envelope, cancellationToken);
+    }
+
+    public void SetResult(ConsumeResult<string, byte[]> result)
+    {
+        lock (sync)
+        {
+            TaskCompletionSource.SetResult(result);
+        }
     }
 }
 
 internal interface IConsumeResultSource
 {
-    TaskCompletionSource<ConsumeResult<string, byte[]>> TaskCompletionSource { get; }
+    void SetResult(ConsumeResult<string, byte[]> result);
 }
