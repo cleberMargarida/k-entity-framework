@@ -11,7 +11,7 @@ internal class InboxMiddleware<T>(ICurrentDbContext currentDbContext, InboxMiddl
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        Guid hashId = settings.Hash(envelope);
+        ulong hashId = settings.Hash(envelope);
 
         DbSet<InboxMessage> inboxMessages = context.Set<InboxMessage>();
 
@@ -22,7 +22,7 @@ internal class InboxMiddleware<T>(ICurrentDbContext currentDbContext, InboxMiddl
             return;
         }
 
-        inboxMessages.Add(new InboxMessage
+        inboxMessages.Add(new()
         {
             HashId = hashId,
             ReceivedAt = DateTime.UtcNow,

@@ -11,7 +11,7 @@ public class InboxMessage
     /// <remarks>
     /// The unique message identifier used for deduplication.
     /// </remarks>
-    public Guid HashId { get; set; }
+    public ulong HashId { get; set; }
 
     /// <summary>
     /// When the message was first received for cleanup purposes.

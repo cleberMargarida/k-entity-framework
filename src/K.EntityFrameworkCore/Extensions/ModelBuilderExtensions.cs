@@ -225,14 +225,17 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasInbox(Action<InboxBuilder<T>>? configure = null)
     {
-        //modelBuilder.Entity<InboxMessage>();
+        modelBuilder.Entity<InboxMessage>(entity => 
+        {
+            entity.HasKey(entity => entity.HashId);
+            entity.HasIndex(entity => entity.ReceivedAt);
+        });
 
         var settings = ServiceProviderCache.Instance
             .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
             .GetRequiredService<InboxMiddlewareSettings<T>>();
 
-        // Enable the middleware by default when HasInbox is called
-        settings.IsMiddlewareEnabled = true;
+        settings.EnableMiddleware();
 
         var builder = new InboxBuilder<T>(settings);
         configure?.Invoke(builder);

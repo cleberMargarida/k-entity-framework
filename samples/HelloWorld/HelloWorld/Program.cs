@@ -40,6 +40,10 @@ var scope = app.Services.CreateScope();
 
 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
+// testing purposes only
+dbContext.Database.EnsureDeleted();
+dbContext.Database.EnsureCreated();
+
 // here you're intending to mark the entity to be persisted.
 dbContext.Orders.Add(new Order { Status = "New" });
 
@@ -96,7 +100,7 @@ namespace HelloWorld
                 {
                     consumer.HasInbox(inbox =>
                     {
-                        inbox.DeduplicateBy(o => new { o.OrderId, o.Status });
+                        inbox.HasDeduplicateProperties(o => o.OrderId);
                         inbox.UseDeduplicationTimeWindow(TimeSpan.FromHours(1));
                     });
                 });
