@@ -10,14 +10,9 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// <typeparam name="T">The message type.</typeparam>
 public class InboxBuilder<T>(InboxMiddlewareSettings<T> settings) where T : class
 {
-    public void DeduplicateByOffset()
-    {
-        throw new NotImplementedException();
-    }
-
     public void DeduplicateBy(Func<T, object> value)
     {
-        throw new NotImplementedException();
+
     }
 
     /// <summary>

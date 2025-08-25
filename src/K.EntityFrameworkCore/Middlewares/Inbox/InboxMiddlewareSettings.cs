@@ -21,4 +21,9 @@ public class InboxMiddlewareSettings<T> : MiddlewareSettings<T>
     /// Default is 1 hour.
     /// </summary>
     public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);
+
+    internal Guid Hash(Envelope<T> envelope)
+    {
+        throw new NotImplementedException();
+    }
 }

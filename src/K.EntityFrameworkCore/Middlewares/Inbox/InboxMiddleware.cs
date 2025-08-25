@@ -9,14 +9,25 @@ internal class InboxMiddleware<T>(ICurrentDbContext currentDbContext, InboxMiddl
 {
     private readonly DbContext context = currentDbContext.Context;
 
-    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        context.Set<InboxMessage>().Add(new InboxMessage 
+        Guid hashId = settings.Hash(envelope);
+
+        DbSet<InboxMessage> inboxMessages = context.Set<InboxMessage>();
+
+        var isDuplicate = (await inboxMessages.FindAsync(new object[] { hashId }, cancellationToken)) != null;
+        if (isDuplicate)
         {
-            //MessageId = ,
+            envelope.Clean();
+            return;
+        }
+
+        inboxMessages.Add(new InboxMessage
+        {
+            HashId = hashId,
             ReceivedAt = DateTime.UtcNow,
         });
 
-        return base.InvokeAsync(envelope, cancellationToken);
+        await base.InvokeAsync(envelope, cancellationToken);
     }
 }

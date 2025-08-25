@@ -8,20 +8,25 @@ public class InboxMessage
     /// <summary>
     /// Unique identifier of the inbox message.
     /// </summary>
-    public Guid Id { get; set; }
-
-    /// <summary>
-    /// The sequence in which this message was received.
-    /// </summary>
-    public long SequenceNumber { get; set; }
-
-    /// <summary>
+    /// <remarks>
     /// The unique message identifier used for deduplication.
-    /// </summary>
-    public string MessageId { get; set; } = default!;
+    /// </remarks>
+    public Guid HashId { get; set; }
 
     /// <summary>
     /// When the message was first received for cleanup purposes.
     /// </summary>
     public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+    {
+        return obj is InboxMessage message && HashId.Equals(message.HashId);
+    }
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        return HashId.GetHashCode();
+    }
 }

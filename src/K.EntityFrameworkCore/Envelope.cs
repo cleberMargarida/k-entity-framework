@@ -58,6 +58,15 @@ public class Envelope<T>(T? message)
 
     [field: JsonIgnore, NotMapped, AllowNull]
     internal WeakReference<OutboxMessage> WeakReference { get => field ??= new(null!); }
+
+    internal void Clean()
+    {
+        message = null;
+        key = null;
+        serializedData = [];
+        headers = [];
+        WeakReference.SetTarget(null!);
+    }
 }
 
 
