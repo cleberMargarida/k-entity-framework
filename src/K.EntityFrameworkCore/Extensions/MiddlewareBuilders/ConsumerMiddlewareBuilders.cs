@@ -10,23 +10,22 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// <typeparam name="T">The message type.</typeparam>
 public class InboxBuilder<T>(InboxMiddlewareSettings<T> settings) where T : class
 {
+    public void DeduplicateBy(Func<T, object> value)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Sets the timeout for duplicate message detection.
     /// </summary>
     /// <param name="timeout">The duplicate detection timeout.</param>
     /// <returns>The builder instance.</returns>
-    public InboxBuilder<T> WithDuplicateDetectionTimeout(TimeSpan timeout)
+    public InboxBuilder<T> UseDeduplicationTimeWindow(TimeSpan timeout)
     {
-        settings.DuplicateDetectionTimeout = timeout;
+        settings.DeduplicationTimeWindow = timeout;
         return this;
     }
 }
-
-
-
-
-
-
 
 /// <summary>
 /// Fluent builder for configuring consumer ForgetMiddleware settings.

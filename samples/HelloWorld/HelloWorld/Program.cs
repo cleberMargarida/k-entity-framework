@@ -10,7 +10,7 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
 
     // Configure EF Core to use SQL Server
     .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
-        
+
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
     .UseKafkaExtensibility(client =>
     {
@@ -94,7 +94,11 @@ namespace HelloWorld
 
                 topic.HasConsumer(consumer =>
                 {
-                    consumer.HasInbox();
+                    consumer.HasInbox(inbox =>
+                    {
+                        inbox.DeduplicateBy(o => new { o.OrderId, o.Status });
+                        inbox.UseDeduplicationTimeWindow(TimeSpan.FromHours(1));
+                    });
                 });
 
                 topic.HasSetting(_ => { });
@@ -114,5 +118,11 @@ namespace HelloWorld
     {
         public int OrderId { get; set; }
         public string Status { get; set; }
+    }
+
+    public class Foo
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 }

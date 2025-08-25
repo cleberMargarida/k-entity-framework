@@ -14,7 +14,7 @@ public class InboxMiddlewareSettings<T> : MiddlewareSettings<T>
     /// Messages older than this timeout will be considered safe to process again.
     /// Default is 24 hours.
     /// </summary>
-    public TimeSpan DuplicateDetectionTimeout { get; set; } = TimeSpan.FromHours(24);
+    public TimeSpan DeduplicationTimeWindow { get; set; } = TimeSpan.FromHours(24);
 
     /// <summary>
     /// Gets or sets the interval for automatic cleanup operations.

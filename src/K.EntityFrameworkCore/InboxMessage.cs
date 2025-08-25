@@ -1,6 +1,5 @@
-﻿namespace K.EntityFrameworkCore
+﻿namespace K.EntityFrameworkCore;
+
+internal class InboxMessage
 {
-    internal class InboxMessage
-    {
-    }
 }

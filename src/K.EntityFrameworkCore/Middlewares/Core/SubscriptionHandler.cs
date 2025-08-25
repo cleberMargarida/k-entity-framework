@@ -21,16 +21,12 @@ namespace K.EntityFrameworkCore.Middlewares.Core
         public void Unsubscribe()
         {
             var assignments = consumer.Assignment.Select(TopicName).ToHashSet();
-
             assignments.Remove(Topic);
 
-            if (assignments.Count == 0)
-            {
+            if (assignments.Count > 0)
+                consumer.Subscribe(assignments);
+            else
                 consumer.Unsubscribe();
-                return;
-            }
-
-            consumer.Subscribe(assignments);
         }
 
         private static string TopicName(TopicPartition topicPartition) => topicPartition.Topic;

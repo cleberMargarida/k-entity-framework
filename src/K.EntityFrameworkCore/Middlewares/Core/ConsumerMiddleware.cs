@@ -24,20 +24,26 @@ internal class ConsumerMiddleware<T>(
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        // here consumer can/will consume from another {T}.
-        var result = consumer.Consume(cancellationToken);
+        ConsumeResult<string, byte[]>? result = null;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            // here consumer can/will consume from another {T}.
+            result = consumer.Consume(cancellationToken);
+
+            if (result is not null and { Message: not null })
+                break;
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+        }
 
         if (result is null or { Message: null })
         {
             return;
         }
 
-        result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
-
-        string typeName = Encoding.UTF8.GetString(typeNameBytes);
-
-        Type? otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
-
+        var otherType = LoadGenericType(result);
         if (typeof(T).IsAssignableFrom(otherType))
         {
             this.SetResult(result);
@@ -66,11 +72,27 @@ internal class ConsumerMiddleware<T>(
             }
         }
 
-        ((ISerializedEnvelope<T>)envelope).Headers = result.Message.Headers.ToDictionary(h => h.Key, h => (object)h.GetValueBytes());
-        ((ISerializedEnvelope<T>)envelope).Key = result.Message.Key;
-        ((ISerializedEnvelope<T>)envelope).SerializedData = result.Message.Value;
+        FillEnvelopeWithConsumeResult(envelope, result);
 
         await base.InvokeAsync(envelope, cancellationToken);
+    }
+
+    private static void FillEnvelopeWithConsumeResult(ISerializedEnvelope<T> envelope, ConsumeResult<string, byte[]> result)
+    {
+        envelope.Headers = result.Message.Headers.ToDictionary(h => h.Key, h => (object)h.GetValueBytes());
+        envelope.Key = result.Message.Key;
+        envelope.SerializedData = result.Message.Value;
+    }
+
+    private static Type LoadGenericType(ConsumeResult<string, byte[]> result)
+    {
+        result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
+
+        string typeName = Encoding.UTF8.GetString(typeNameBytes);
+
+        Type? otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
+
+        return otherType;
     }
 
     public void SetResult(ConsumeResult<string, byte[]> result)
@@ -78,12 +100,12 @@ internal class ConsumerMiddleware<T>(
         lock (sync)
         {
             // Check if the TaskCompletionSource is still valid and hasn't been completed yet
-            TaskCompletionSource.TrySetResult(result);
+            TaskCompletionSource.SetResult(result);
         }
     }
 }
 
-internal interface IConsumeResultSource
+interface IConsumeResultSource
 {
     void SetResult(ConsumeResult<string, byte[]> result);
 }
