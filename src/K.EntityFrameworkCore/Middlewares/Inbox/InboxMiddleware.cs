@@ -1,5 +1,4 @@
-﻿using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares.Core;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -12,7 +11,11 @@ internal class InboxMiddleware<T>(ICurrentDbContext currentDbContext, InboxMiddl
 
     public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        context.Set<InboxMessage>().Add(envelope.Message);
+        context.Set<InboxMessage>().Add(new InboxMessage 
+        {
+            //MessageId = ,
+            ReceivedAt = DateTime.UtcNow,
+        });
 
         return base.InvokeAsync(envelope, cancellationToken);
     }
