@@ -48,11 +48,22 @@ internal class ConsumerMiddleware<T>(
             other.SetResult(result);
         }
 
-        result = await TaskCompletionSource.Task;
+        TaskCompletionSource<ConsumeResult<string, byte[]>> currentTcs;
 
         lock (sync)
         {
-            TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            currentTcs = TaskCompletionSource;
+        }
+
+        result = await currentTcs.Task;
+
+        lock (sync)
+        {
+            // Only recreate if this is still the same TaskCompletionSource we were waiting on
+            if (TaskCompletionSource == currentTcs)
+            {
+                TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
         }
 
         ((ISerializedEnvelope<T>)envelope).Headers = result.Message.Headers.ToDictionary(h => h.Key, h => (object)h.GetValueBytes());
@@ -66,7 +77,8 @@ internal class ConsumerMiddleware<T>(
     {
         lock (sync)
         {
-            TaskCompletionSource.SetResult(result);
+            // Check if the TaskCompletionSource is still valid and hasn't been completed yet
+            TaskCompletionSource.TrySetResult(result);
         }
     }
 }
