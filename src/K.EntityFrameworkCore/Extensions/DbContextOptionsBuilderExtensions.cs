@@ -999,7 +999,9 @@ namespace K.EntityFrameworkCore.Extensions
             // set default settings
             GroupId = AppDomain.CurrentDomain.FriendlyName;
             AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
-            EnableAutoCommit = false;
+            EnableAutoCommit = true;
+            AutoCommitIntervalMs = 1000;
+            EnableAutoOffsetStore = false;
         }
 
         // ISharedOperationalConfig implementation - properties that can be configured separately for consumers

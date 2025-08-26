@@ -21,9 +21,13 @@ namespace K.EntityFrameworkCore.Extensions
 
             IServiceProvider serviceProvider = dbContext.GetInfrastructure();
 
+            // first database operation result
+            result = await base.SavingChangesAsync(eventData, result, cancellationToken);
+
+            // second kafka operation
             await serviceProvider.GetRequiredService<ScopedCommandRegistry>().ExecuteAsync(serviceProvider, cancellationToken);
 
-            return await base.SavingChangesAsync(eventData, result, cancellationToken);
+            return result;
         }
     }
 }

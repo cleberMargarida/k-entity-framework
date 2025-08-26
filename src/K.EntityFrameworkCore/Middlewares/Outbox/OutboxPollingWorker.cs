@@ -60,31 +60,35 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var outboxMessages = context.Set<OutboxMessage>();
-        var dbContextServiceProvider = context.GetInfrastructure();
-        var coordination = scope.ServiceProvider.GetRequiredService<IOutboxCoordinationStrategy<TDbContext>>();
-
-        int maxMessagesPerPoll = settings.MaxMessagesPerPoll;
-        using var timer = new PeriodicTimer(settings.PollingInterval);
-        while (await timer.WaitForNextTickAsync(stoppingToken))
+        try
         {
-            var query = coordination.ApplyScope(outboxMessages);
-            var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
-            var outboxFinishedTasks = new Task[outboxMessageArray.Length];
-            var outboxMessageTypes = new HashSet<Type?>();
+            var outboxMessages = context.Set<OutboxMessage>();
+            var dbContextServiceProvider = context.GetInfrastructure();
+            var coordination = scope.ServiceProvider.GetRequiredService<IOutboxCoordinationStrategy<TDbContext>>();
 
-            for (int i = 0; i < outboxMessageArray.Length; i++)
+            int maxMessagesPerPoll = settings.MaxMessagesPerPoll;
+            using var timer = new PeriodicTimer(settings.PollingInterval);
+            while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                OutboxMessage? o = outboxMessageArray[i];
-                outboxFinishedTasks[i] = ExecuteOutboxMessageAsync(o, dbContextServiceProvider, stoppingToken);
-                outboxMessageTypes.Add(o.TypeLoaded);
+                var query = coordination.ApplyScope(outboxMessages);
+                var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
+                var outboxFinishedTasks = new Task[outboxMessageArray.Length];
+
+                for (int i = 0; i < outboxMessageArray.Length; i++)
+                {
+                    outboxFinishedTasks[i] = ExecuteOutboxMessageAsync(outboxMessageArray[i], dbContextServiceProvider, stoppingToken);
+                }
+
+                var producer = dbContextServiceProvider.GetRequiredService<IProducer>();
+                producer.Flush(stoppingToken);
+
+                await Task.WhenAll(outboxFinishedTasks);
+                await context.SaveChangesAsync(stoppingToken);
             }
-
-            var producer = dbContextServiceProvider.GetRequiredService<IProducer>();
-            producer.Flush(stoppingToken);
-
-            await Task.WhenAll(outboxFinishedTasks);
-            await context.SaveChangesAsync(stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogDebug("Operation Cancelled.");
         }
     }
 

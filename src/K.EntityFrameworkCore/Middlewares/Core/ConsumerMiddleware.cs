@@ -72,6 +72,8 @@ internal class ConsumerMiddleware<T>(
             }
         }
 
+        envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
+
         FillEnvelopeWithConsumeResult(envelope, result);
 
         await base.InvokeAsync(envelope, cancellationToken);

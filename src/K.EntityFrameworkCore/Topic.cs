@@ -9,6 +9,7 @@ using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 /// <summary>
@@ -20,11 +21,11 @@ public sealed class Topic<T>(DbContext context)
     where T : class
 {
     /// <inheritdoc/>
-    public void Publish(T message) 
+    public void Publish(T message)
         => context.Publish(message);
 
     /// <inheritdoc/>
-    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) 
+    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         => new ConsumerEnumerator(context.GetInfrastructure(), cancellationToken)!;
 
     private class ConsumerEnumerator : IAsyncEnumerator<T?>
@@ -47,14 +48,17 @@ public sealed class Topic<T>(DbContext context)
         /// <inheritdoc/>
         public async ValueTask<bool> MoveNextAsync()
         {
-            var envelope = default(T).Seal();
-            await middleware.InvokeAsync(envelope, this.cancellationToken);
-            return Unseal(envelope);
-        }
+            do
+            {
+                var envelope = default(T).Seal();
 
-        private bool Unseal(Envelope<T> envelope)
-        {
-            return envelope.HasMessage() && (Current = envelope.Unseal()) != null;
+                await middleware.InvokeAsync(envelope, cancellationToken);
+
+                Current = envelope.Unseal();
+
+            } while (Current == null && !cancellationToken.IsCancellationRequested);
+
+            return !cancellationToken.IsCancellationRequested;
         }
 
         public ValueTask DisposeAsync()

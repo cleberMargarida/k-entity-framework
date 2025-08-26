@@ -57,7 +57,7 @@ public class Envelope<T>(T? message)
     string? ISerializedEnvelope<T>.Key { get => key; set => key = value; }
 
     [field: JsonIgnore, NotMapped, AllowNull]
-    internal WeakReference<OutboxMessage> WeakReference { get => field ??= new(null!); }
+    internal WeakReference<object> WeakReference { get => field ??= new(null!); }
 
     internal void Clean()
     {
@@ -191,7 +191,7 @@ internal static class EnvelopeExtensions
     {
         Envelope<T> typedEnvelope = (Envelope<T>)envelope;
 
-        if (typedEnvelope.WeakReference.TryGetTarget(out OutboxMessage? outboxMessage))
+        if (typedEnvelope.WeakReference.TryGetTarget(out object? value) && value is OutboxMessage outboxMessage)
         {
             return outboxMessage;
         }

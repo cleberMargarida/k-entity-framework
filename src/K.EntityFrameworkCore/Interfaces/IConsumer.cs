@@ -1,4 +1,5 @@
-﻿namespace K.EntityFrameworkCore.Interfaces;
+﻿
+namespace K.EntityFrameworkCore.Interfaces;
 
 /// <summary>
 /// Represents a consumer that processes messages asynchronously.

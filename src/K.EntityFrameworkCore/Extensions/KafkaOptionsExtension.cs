@@ -43,9 +43,6 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ClientSettings<>));
 
             // Consumer-specific middleware options and classes
-            services.AddSingleton(typeof(ConsumerForgetMiddlewareSettings<>));
-            services.AddScoped(typeof(ConsumerForgetMiddleware<>));
-
             services.AddSingleton(typeof(InboxMiddlewareSettings<>));
             services.AddScoped(typeof(InboxMiddleware<>));
 

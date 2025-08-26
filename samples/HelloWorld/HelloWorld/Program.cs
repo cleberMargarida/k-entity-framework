@@ -34,33 +34,34 @@ using var app = builder.Build();
 
 app.Start();
 
-Console.ReadLine();
+//Console.ReadLine();
 
 var scope = app.Services.CreateScope();
 
 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
 // testing purposes only
-dbContext.Database.EnsureDeleted();
-dbContext.Database.EnsureCreated();
+//dbContext.Database.EnsureDeleted();
+//dbContext.Database.EnsureCreated();
 
 // here you're intending to mark the entity to be persisted.
-dbContext.Orders.Add(new Order { Status = "New" });
+//dbContext.Orders.Add(new Order { Status = "New" });
 
 // here you're signing the event to be published.
-dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, Status = "Created" });
+//dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, Status = Guid.NewGuid().ToString() });
 
 // here you're saving the changes to the database and publishing the event.
-await dbContext.SaveChangesAsync();
+//await dbContext.SaveChangesAsync();
 
-Console.ReadLine();
+//Console.ReadLine();
 
 // here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
-await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopping))
+await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopped))
 {
     // here you're commiting the offset of the current event.
     await dbContext.SaveChangesAsync();
 }
+
 
 namespace HelloWorld
 {
@@ -92,7 +93,7 @@ namespace HelloWorld
                     producer.HasKey(o => o.OrderId);
                     producer.HasOutbox(outbox =>
                     {
-                        outbox.UseImmediateWithFallback();
+                        outbox.UseBackgroundOnly();
                     });
                 });
 
@@ -100,7 +101,7 @@ namespace HelloWorld
                 {
                     consumer.HasInbox(inbox =>
                     {
-                        inbox.HasDeduplicateProperties(o => o.OrderId);
+                        inbox.HasDeduplicateProperties(o => new { o.OrderId, o.Status });
                         inbox.UseDeduplicationTimeWindow(TimeSpan.FromHours(1));
                     });
                 });

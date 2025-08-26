@@ -228,6 +228,9 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         modelBuilder.Entity<InboxMessage>(entity => 
         {
             entity.HasKey(entity => entity.HashId);
+
+            entity.Property(e => e.HashId).ValueGeneratedNever();
+
             entity.HasIndex(entity => entity.ReceivedAt);
         });
 
@@ -238,26 +241,6 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         settings.EnableMiddleware();
 
         var builder = new InboxBuilder<T>(settings);
-        configure?.Invoke(builder);
-        return this;
-    }
-
-    /// <summary>
-    /// Configures the forget middleware for the consumer.
-    /// Supports both await-forget and fire-forget strategies.
-    /// </summary>
-    /// <param name="configure">Action to configure the forget middleware settings.</param>
-    /// <returns>The consumer builder instance.</returns>
-    public ConsumerBuilder<T> HasForget(Action<ConsumerForgetBuilder<T>>? configure = null)
-    {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerForgetMiddlewareSettings<T>>();
-
-        // Enable the middleware by default when HasForget is called
-        settings.IsMiddlewareEnabled = true;
-
-        var builder = new ConsumerForgetBuilder<T>(settings);
         configure?.Invoke(builder);
         return this;
     }
