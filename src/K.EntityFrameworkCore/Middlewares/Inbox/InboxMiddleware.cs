@@ -47,7 +47,7 @@ internal class InboxMiddleware<T>(
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            var consumer = serviceProvider.GetRequiredService<IConsumer>();
+            var consumer = serviceProvider.GetRequiredKeyedService<IConsumer>(typeof(T));
             consumer.StoreOffset(new TopicPartitionOffset(topicPartitionOffset.Topic, topicPartitionOffset.Partition, topicPartitionOffset.Offset + 1, topicPartitionOffset.LeaderEpoch));
             return ValueTask.CompletedTask;
         }

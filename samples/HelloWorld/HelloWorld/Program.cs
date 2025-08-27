@@ -58,7 +58,7 @@ var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 //Console.ReadLine();
 
 // here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
-await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopped))
+await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopping))
 {
     // here you're commiting the offset of the current event.
     await dbContext.SaveChangesAsync();

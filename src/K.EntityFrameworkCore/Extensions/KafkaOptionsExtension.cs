@@ -88,14 +88,14 @@ namespace K.EntityFrameworkCore.Extensions
                     prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
                 .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
             {
-                Type serviceType = typeof(ConsumerMiddleware<>).MakeGenericType(type!);
+                Type consumerMiddlewareType = typeof(ConsumerMiddleware<>).MakeGenericType(type!);
 
-                services.AddKeyedScoped(serviceType, type, serviceType);
+                services.AddKeyedSingleton(consumerMiddlewareType, type, consumerMiddlewareType);
                 services.AddKeyedSingleton(type, (_,_) => new ConsumerConfig((ConsumerConfig)client.Consumer));
                 services.AddKeyedSingleton<IConsumerConfig>(type, (_,_) => new ConsumerConfigInternal(client.ClientConfig));
-                services.AddKeyedScoped(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(serviceType, type));
-                services.AddKeyedScoped<IConsumer>(type, KeyedConsumerFactory);
-                services.AddKeyedScoped<KafkaConsumerPollService>(type, (provider, key) => new KafkaConsumerPollService(provider, provider.GetRequiredKeyedService<IConsumer>(key)));
+                services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(consumerMiddlewareType, type));
+                services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
+                services.AddKeyedSingleton<KafkaConsumerPollService>(type, (provider, key) => new KafkaConsumerPollService(provider, provider.GetRequiredKeyedService<IConsumer>(key)));
             }
         }
 
