@@ -220,7 +220,8 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
 {
     public ConsumerBuilder<T> HasDedicatedConnection(Action<IConsumerConfig> consumer)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
+        return this;
     }
 
     /// <summary>

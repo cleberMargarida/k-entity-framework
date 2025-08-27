@@ -2,81 +2,41 @@
 using K.EntityFrameworkCore.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text;
+using System.Threading.Channels;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
 internal class ConsumerMiddleware<T>(
-      IConsumer consumer
-    , IServiceProvider provider
-    , ConsumerMiddlewareSettings<T> settings)
+      ConsumerMiddlewareSettings<T> settings,
+      KafkaConsumerPollService pollService,
+      KafkaConsumerChannelOptions channelOptions)
     : Middleware<T>(settings)
-    , IConsumeResultSource
+    , IConsumeResultChannel
     where T : class
 {
+    private readonly KafkaConsumerPollService _ = pollService;
 
-#if NET9_0_OR_GREATER
-    private readonly System.Threading.Lock sync = new();
-#else
-    private readonly object sync = new();
-#endif
-    public TaskCompletionSource<ConsumeResult<string, byte[]>> TaskCompletionSource { get; private set; }
-        = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly Channel<ConsumeResult<string, byte[]>> channel = Channel.CreateBounded<ConsumeResult<string, byte[]>>(channelOptions.ToBoundedChannelOptions());
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        ConsumeResult<string, byte[]>? result = null;
-
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            // here consumer can/will consume from another {T}.
-            result = consumer.Consume(cancellationToken);
+            var result = await channel.Reader.ReadAsync(cancellationToken);
 
-            if (result is not null and { Message: not null })
-                break;
+            envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
+            FillEnvelopeWithConsumeResult(envelope, result);
 
-            if (cancellationToken.IsCancellationRequested)
-                return;
+            await base.InvokeAsync(envelope, cancellationToken);
         }
-
-        if (result is null or { Message: null })
+        catch (InvalidOperationException ex) when (ex.Message.Contains("completed"))
         {
-            return;
+            throw;
         }
-
-        var otherType = LoadGenericType(result);
-        if (typeof(T).IsAssignableFrom(otherType))
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            this.SetResult(result);
+            throw;
         }
-        else
-        {
-            var other = provider.GetRequiredKeyedService<IConsumeResultSource>(otherType);
-            other.SetResult(result);
-        }
-
-        TaskCompletionSource<ConsumeResult<string, byte[]>> currentTcs;
-
-        lock (sync)
-        {
-            currentTcs = TaskCompletionSource;
-        }
-
-        result = await currentTcs.Task;
-
-        lock (sync)
-        {
-            // Only recreate if this is still the same TaskCompletionSource we were waiting on
-            if (TaskCompletionSource == currentTcs)
-            {
-                TaskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            }
-        }
-
-        envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
-
-        FillEnvelopeWithConsumeResult(envelope, result);
-
-        await base.InvokeAsync(envelope, cancellationToken);
     }
 
     private static void FillEnvelopeWithConsumeResult(ISerializedEnvelope<T> envelope, ConsumeResult<string, byte[]> result)
@@ -86,27 +46,39 @@ internal class ConsumerMiddleware<T>(
         envelope.SerializedData = result.Message.Value;
     }
 
-    private static Type LoadGenericType(ConsumeResult<string, byte[]> result)
+    public bool TryEnqueue(ConsumeResult<string, byte[]> result)
     {
-        result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
-
-        string typeName = Encoding.UTF8.GetString(typeNameBytes);
-
-        Type? otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
-
-        return otherType;
+        var success = channel.Writer.TryWrite(result);
+        return success;
     }
 
-    public void SetResult(ConsumeResult<string, byte[]> result)
+    public async ValueTask WriteAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellationToken = default)
     {
-        lock (sync)
+        try
         {
-            // Check if the TaskCompletionSource is still valid and hasn't been completed yet
-            TaskCompletionSource.SetResult(result);
+            await channel.Writer.WriteAsync(result, cancellationToken);
         }
+        catch (ChannelClosedException)
+        {
+            throw;
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("closed"))
+        {
+            throw;
+        }
+    }
+
+    public async ValueTask<ConsumeResult<string, byte[]>> ReadAsync(CancellationToken cancellationToken = default)
+    {
+        return await channel.Reader.ReadAsync(cancellationToken);
     }
 }
 
+/// <summary>
+/// Legacy interface replaced by IConsumeResultChannel.
+/// Kept for backward compatibility but should not be used in new code.
+/// </summary>
+[Obsolete("Use IConsumeResultChannel instead. This interface will be removed in a future version.")]
 interface IConsumeResultSource
 {
     void SetResult(ConsumeResult<string, byte[]> result);
