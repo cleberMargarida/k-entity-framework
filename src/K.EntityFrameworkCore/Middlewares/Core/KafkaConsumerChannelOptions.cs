@@ -21,12 +21,6 @@ public class KafkaConsumerChannelOptions
     public BoundedChannelFullMode FullMode { get; set; } = BoundedChannelFullMode.Wait;
 
     /// <summary>
-    /// Whether to allow synchronous continuations on channel operations.
-    /// Default is false to prevent blocking the poll thread.
-    /// </summary>
-    public bool AllowSynchronousContinuations { get; set; } = false;
-
-    /// <summary>
     /// Creates bounded channel options from this configuration.
     /// </summary>
     internal BoundedChannelOptions ToBoundedChannelOptions()
@@ -36,7 +30,7 @@ public class KafkaConsumerChannelOptions
             SingleReader = true,
             SingleWriter = false,
             FullMode = FullMode,
-            AllowSynchronousContinuations = AllowSynchronousContinuations
+            AllowSynchronousContinuations = false
         };
     }
 }

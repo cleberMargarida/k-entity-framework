@@ -1,22 +1,22 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
 internal class ConsumerMiddleware<T>(
       ConsumerMiddlewareSettings<T> settings,
-      KafkaConsumerPollService pollService,
+#pragma warning disable CS9113 // Parameter is unread.
+      KafkaConsumerPollService _,
+#pragma warning restore CS9113 // Parameter is unread.
       KafkaConsumerChannelOptions channelOptions)
     : Middleware<T>(settings)
     , IConsumeResultChannel
     where T : class
 {
-    private readonly KafkaConsumerPollService _ = pollService;
-
-    private readonly Channel<ConsumeResult<string, byte[]>> channel = Channel.CreateBounded<ConsumeResult<string, byte[]>>(channelOptions.ToBoundedChannelOptions());
+    private readonly Channel<ConsumeResult<string, byte[]>> channel
+        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(channelOptions.ToBoundedChannelOptions());
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
@@ -28,10 +28,6 @@ internal class ConsumerMiddleware<T>(
             FillEnvelopeWithConsumeResult(envelope, result);
 
             await base.InvokeAsync(envelope, cancellationToken);
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("completed"))
-        {
-            throw;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -46,40 +42,8 @@ internal class ConsumerMiddleware<T>(
         envelope.SerializedData = result.Message.Value;
     }
 
-    public bool TryEnqueue(ConsumeResult<string, byte[]> result)
+    public ValueTask WriteAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellationToken = default)
     {
-        var success = channel.Writer.TryWrite(result);
-        return success;
+        return channel.Writer.WriteAsync(result, cancellationToken);
     }
-
-    public async ValueTask WriteAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await channel.Writer.WriteAsync(result, cancellationToken);
-        }
-        catch (ChannelClosedException)
-        {
-            throw;
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("closed"))
-        {
-            throw;
-        }
-    }
-
-    public async ValueTask<ConsumeResult<string, byte[]>> ReadAsync(CancellationToken cancellationToken = default)
-    {
-        return await channel.Reader.ReadAsync(cancellationToken);
-    }
-}
-
-/// <summary>
-/// Legacy interface replaced by IConsumeResultChannel.
-/// Kept for backward compatibility but should not be used in new code.
-/// </summary>
-[Obsolete("Use IConsumeResultChannel instead. This interface will be removed in a future version.")]
-interface IConsumeResultSource
-{
-    void SetResult(ConsumeResult<string, byte[]> result);
 }

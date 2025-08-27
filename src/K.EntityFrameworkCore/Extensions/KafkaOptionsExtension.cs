@@ -47,7 +47,6 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(InboxMiddleware<>));
 
             services.AddSingleton(typeof(SubscriptionHandler<>));
-            services.AddSingleton(typeof(ConsumerMiddleware<>));
             services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
 
             // Register channel options for configuration
@@ -99,11 +98,7 @@ namespace K.EntityFrameworkCore.Extensions
                     prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
                 .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
             {
-                services.AddKeyedSingleton(type, (_, _) => new ConsumerConfig((ConsumerConfig)client.Consumer));
-                services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
-
-                // Register each type-specific ConsumerMiddleware as both itself and as IConsumeResultChannel
-                Type serviceType = typeof(ConsumerMiddleware<>).MakeGenericType((Type)type!);
+                Type serviceType = typeof(ConsumerMiddleware<>).MakeGenericType(type!);
                 services.AddKeyedSingleton(serviceType, type, serviceType);
                 services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(serviceType, type));
             }
@@ -112,11 +107,6 @@ namespace K.EntityFrameworkCore.Extensions
         private IProducer ProducerFactory(IServiceProvider provider)
         {
             return new ProducerBuilder<string, byte[]>(provider.GetRequiredService<ProducerConfig>()).SetLogHandler((_, _) => { }).Build();//TODO handle kafka logs
-        }
-
-        private IConsumer<string, byte[]> KeyedConsumerFactory(IServiceProvider provider, object? key)
-        {
-            return new ConsumerBuilder<string, byte[]>(provider.GetRequiredKeyedService<ConsumerConfig>(key)).Build();
         }
 
         private IConsumer<string, byte[]> ConsumerFactory(IServiceProvider provider)

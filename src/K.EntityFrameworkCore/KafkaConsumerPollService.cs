@@ -44,7 +44,7 @@ namespace K.EntityFrameworkCore
                 if (isStarted)
                     return;
 
-                pollTask = Task.Run(async () => await PollLoopAsync(cts.Token));
+                pollTask = PollLoopAsync(cts.Token);
                 isStarted = true;
             }
         }
@@ -64,15 +64,11 @@ namespace K.EntityFrameworkCore
                         // Extract the type information from the message
                         var type = LoadGenericTypeFromConsumeResult(result);
                         if (type == null)
-                        {
                             continue;
-                        }
 
                         var channel = serviceProvider.GetKeyedService<IConsumeResultChannel>(type);
                         if (channel == null)
-                        {
                             continue;
-                        }
 
                         await channel.WriteAsync(result, cancellationToken);
                     }
@@ -90,13 +86,9 @@ namespace K.EntityFrameworkCore
             {
                 // Poll loop cancelled
             }
-            catch (Exception)
-            {
-                // Fatal error in poll loop
-            }
         }
 
-        private Type? LoadGenericTypeFromConsumeResult(ConsumeResult<string, byte[]> result)
+        private static Type? LoadGenericTypeFromConsumeResult(ConsumeResult<string, byte[]> result)
         {
             result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
 
@@ -105,19 +97,6 @@ namespace K.EntityFrameworkCore
             Type? otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
 
             return otherType;
-
-            // TODO: Implement your type resolution logic here
-            // This could be based on:
-            // 1. Message headers
-            // 2. Topic name patterns
-            // 3. Message content inspection
-            // 4. Custom type mapping configuration
-
-            // Example implementation based on topic name:
-            // return TypeRegistry.GetTypeFromTopicName(result.Topic);
-
-            // For now, return null - you'll need to implement this based on your specific needs
-            return null;
         }
 
         /// <summary>

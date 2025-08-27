@@ -100,11 +100,6 @@ namespace HelloWorld
 
                 topic.HasConsumer(consumer =>
                 {
-                    consumer.HasDedicatedConnection(consumer => 
-                    {
-                        consumer.SessionTimeoutMs = 6000;
-                    });
-
                     consumer.HasInbox(inbox =>
                     {
                         inbox.HasDeduplicateProperties(o => new { o.OrderId, o.Status });
