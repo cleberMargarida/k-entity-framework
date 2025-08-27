@@ -103,23 +103,9 @@ namespace K.EntityFrameworkCore.Extensions
                 services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
 
                 // Register each type-specific ConsumerMiddleware as both itself and as IConsumeResultChannel
-                services.AddKeyedSingleton(typeof(ConsumerMiddleware<>).MakeGenericType(type), type, (provider, key) => 
-                {
-                    var consumerMiddlewareType = typeof(ConsumerMiddleware<>).MakeGenericType(type);
-                    var settingsType = typeof(ConsumerMiddlewareSettings<>).MakeGenericType(type);
-                    
-                    var settings = provider.GetRequiredService(settingsType);
-                    var pollService = provider.GetRequiredService<KafkaConsumerPollService>();
-                    var channelOptions = provider.GetService<KafkaConsumerChannelOptions>() ?? new KafkaConsumerChannelOptions();
-                    
-                    return Activator.CreateInstance(consumerMiddlewareType, settings, pollService, channelOptions)!;
-                });
-
-                services.AddKeyedSingleton<IConsumeResultChannel>(type, (provider, key) =>
-                {
-                    var consumerMiddlewareType = typeof(ConsumerMiddleware<>).MakeGenericType(type);
-                    return (IConsumeResultChannel)provider.GetRequiredKeyedService(consumerMiddlewareType, key);
-                });
+                Type serviceType = typeof(ConsumerMiddleware<>).MakeGenericType((Type)type!);
+                services.AddKeyedSingleton(serviceType, type, serviceType);
+                services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(serviceType, type));
             }
         }
 

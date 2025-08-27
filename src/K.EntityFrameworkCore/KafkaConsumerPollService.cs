@@ -98,27 +98,25 @@ namespace K.EntityFrameworkCore
 
         private Type? LoadGenericTypeFromConsumeResult(ConsumeResult<string, byte[]> result)
         {
-            // Try to get type information from message headers
-            if (result.Message.Headers.TryGetLastBytes("$type", out byte[]? typeNameBytes) && typeNameBytes != null)
-            {
-                string typeName = Encoding.UTF8.GetString(typeNameBytes);
-                Type? type = Type.GetType(typeName);
-                if (type != null)
-                {
-                    return type;
-                }
-            }
+            result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
 
-            // TODO: Implement additional type resolution logic here
+            string typeName = Encoding.UTF8.GetString(typeNameBytes);
+
+            Type? otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
+
+            return otherType;
+
+            // TODO: Implement your type resolution logic here
             // This could be based on:
-            // 1. Topic name patterns
-            // 2. Message content inspection
-            // 3. Custom type mapping configuration
+            // 1. Message headers
+            // 2. Topic name patterns
+            // 3. Message content inspection
+            // 4. Custom type mapping configuration
 
             // Example implementation based on topic name:
             // return TypeRegistry.GetTypeFromTopicName(result.Topic);
 
-            // For now, return null if no type could be determined
+            // For now, return null - you'll need to implement this based on your specific needs
             return null;
         }
 
