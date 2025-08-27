@@ -9,15 +9,14 @@ namespace K.EntityFrameworkCore.Middlewares.Core;
 internal class ConsumerMiddleware<T>(
       ConsumerMiddlewareSettings<T> settings,
 #pragma warning disable CS9113 // Parameter is unread.
-      KafkaConsumerPollService _,
+      KafkaConsumerPollService _)
 #pragma warning restore CS9113 // Parameter is unread.
-      IConsumerProcessingConfig consumerOptions)
     : Middleware<T>(settings)
     , IConsumeResultChannel
     where T : class
 {
     private readonly Channel<ConsumeResult<string, byte[]>> channel
-        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(consumerOptions.ToBoundedChannelOptions());
+        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(((IConsumerProcessingConfig)settings).ToBoundedChannelOptions());
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {

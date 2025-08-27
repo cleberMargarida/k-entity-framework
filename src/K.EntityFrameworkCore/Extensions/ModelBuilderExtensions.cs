@@ -244,4 +244,38 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         configure?.Invoke(builder);
         return this;
     }
+
+    /// <summary>
+    /// Sets the maximum number of messages that can be buffered in memory for this message type.
+    /// Default is inherited from global consumer configuration.
+    /// Higher values provide better throughput but use more memory.
+    /// Lower values reduce memory usage but may limit processing throughput.
+    /// </summary>
+    /// <param name="maxMessages">The maximum number of buffered messages.</param>
+    /// <returns>The consumer builder instance.</returns>
+    public ConsumerBuilder<T> HasMaxBufferedMessages(int maxMessages)
+    {
+        var settings = ServiceProviderCache.Instance
+            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+            .GetRequiredService<ConsumerMiddlewareSettings<T>>();
+
+        settings.MaxBufferedMessages = maxMessages;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the behavior when the message buffer reaches capacity for this message type.
+    /// Default is inherited from global consumer configuration.
+    /// </summary>
+    /// <param name="mode">The backpressure mode to use.</param>
+    /// <returns>The consumer builder instance.</returns>
+    public ConsumerBuilder<T> HasBackpressureMode(ConsumerBackpressureMode mode)
+    {
+        var settings = ServiceProviderCache.Instance
+            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
+            .GetRequiredService<ConsumerMiddlewareSettings<T>>();
+
+        settings.BackpressureMode = mode;
+        return this;
+    }
 }

@@ -102,6 +102,10 @@ namespace HelloWorld
 
                 topic.HasConsumer(consumer =>
                 {
+                    consumer.DedicatedConnection();
+                    consumer.HasMaxBufferedMessages(2000);
+                    consumer.HasBackpressureMode(ConsumerBackpressureMode.ApplyBackpressure);
+
                     consumer.HasInbox(inbox =>
                     {
                         inbox.HasDeduplicateProperties(o => new { o.OrderId, o.Status });
