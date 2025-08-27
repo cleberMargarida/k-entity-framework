@@ -43,12 +43,12 @@ internal class InboxMiddleware<T>(
         await base.InvokeAsync(envelope, cancellationToken);
     }
 
-    readonly struct CommitMiddlewareInvokeCommand(TopicPartitionOffset offset)
+    readonly struct CommitMiddlewareInvokeCommand(TopicPartitionOffset topicPartitionOffset)
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
             var consumer = serviceProvider.GetRequiredService<IConsumer>();
-            consumer.StoreOffset(offset);
+            consumer.StoreOffset(new TopicPartitionOffset(topicPartitionOffset.Topic, topicPartitionOffset.Partition, topicPartitionOffset.Offset + 1, topicPartitionOffset.LeaderEpoch));
             return ValueTask.CompletedTask;
         }
     }

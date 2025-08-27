@@ -218,6 +218,11 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     where T : class
 {
+    public ConsumerBuilder<T> HasDedicatedConnection(Action<IConsumerConfig> consumer)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Configures the inbox middleware for the consumer.
     /// </summary>

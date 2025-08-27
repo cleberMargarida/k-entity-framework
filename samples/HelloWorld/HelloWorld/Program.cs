@@ -62,6 +62,7 @@ await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.
     await dbContext.SaveChangesAsync();
 }
 
+app.WaitForShutdown();
 
 namespace HelloWorld
 {
@@ -99,6 +100,11 @@ namespace HelloWorld
 
                 topic.HasConsumer(consumer =>
                 {
+                    consumer.HasDedicatedConnection(consumer => 
+                    {
+                        consumer.SessionTimeoutMs = 6000;
+                    });
+
                     consumer.HasInbox(inbox =>
                     {
                         inbox.HasDeduplicateProperties(o => new { o.OrderId, o.Status });

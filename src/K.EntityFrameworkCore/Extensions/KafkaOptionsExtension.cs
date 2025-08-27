@@ -79,18 +79,25 @@ namespace K.EntityFrameworkCore.Extensions
 
             //TODO: move to source generator is okay reflection here?
             foreach (var type in contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(prop => 
+                .Where(prop =>
                     prop.PropertyType.IsGenericType &&
                     prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
                 .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
             {
-                services.AddKeyedSingleton(type, static (_,type) => _.GetRequiredService(typeof(ConsumerMiddleware<>).MakeGenericType((Type)type!)));
+                services.AddKeyedSingleton(type, (_, _) => new ConsumerConfig((ConsumerConfig)client.Consumer));
+                services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
+                services.AddKeyedSingleton(type, static (_, type) => _.GetRequiredService(typeof(ConsumerMiddleware<>).MakeGenericType((Type)type!)));
             }
         }
 
         private IProducer ProducerFactory(IServiceProvider provider)
         {
             return new ProducerBuilder<string, byte[]>(provider.GetRequiredService<ProducerConfig>()).SetLogHandler((_, _) => { }).Build();//TODO handle kafka logs
+        }
+
+        private IConsumer<string, byte[]> KeyedConsumerFactory(IServiceProvider provider, object? key)
+        {
+            return new ConsumerBuilder<string, byte[]>(provider.GetRequiredKeyedService<ConsumerConfig>(key)).Build();
         }
 
         private IConsumer<string, byte[]> ConsumerFactory(IServiceProvider provider)
