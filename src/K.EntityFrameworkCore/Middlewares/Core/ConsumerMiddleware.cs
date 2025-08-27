@@ -6,17 +6,11 @@ using System.Threading.Channels;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
-internal class ConsumerMiddleware<T>(
-      ConsumerMiddlewareSettings<T> settings,
-#pragma warning disable CS9113 // Parameter is unread.
-      KafkaConsumerPollService _)
-#pragma warning restore CS9113 // Parameter is unread.
-    : Middleware<T>(settings)
-    , IConsumeResultChannel
+internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : Middleware<T>(settings), IConsumeResultChannel
     where T : class
 {
-    private readonly Channel<ConsumeResult<string, byte[]>> channel
-        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(((IConsumerProcessingConfig)settings).ToBoundedChannelOptions());
+    private readonly Channel<ConsumeResult<string, byte[]>> channel = Channel
+        .CreateBounded<ConsumeResult<string, byte[]>>(((IConsumerProcessingConfig)settings).ToBoundedChannelOptions());
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
@@ -25,6 +19,7 @@ internal class ConsumerMiddleware<T>(
             var result = await channel.Reader.ReadAsync(cancellationToken);
 
             envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
+
             FillEnvelopeWithConsumeResult(envelope, result);
 
             await base.InvokeAsync(envelope, cancellationToken);

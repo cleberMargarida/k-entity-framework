@@ -51,6 +51,7 @@ namespace K.EntityFrameworkCore
 
         private async Task PollLoopAsync(CancellationToken cancellationToken)
         {
+            await Task.Yield();
             try
             {
                 while (!cancellationToken.IsCancellationRequested)

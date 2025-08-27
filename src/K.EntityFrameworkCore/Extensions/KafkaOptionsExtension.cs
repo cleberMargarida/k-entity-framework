@@ -75,16 +75,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(ConsumerFactory);
 
             // Register the central Kafka consumer poll service as a singleton that starts lazily
-            services.AddSingleton<KafkaConsumerPollService>(provider =>
-            {
-                var pollService = new KafkaConsumerPollService(
-                    provider,
-                    provider.GetRequiredService<IConsumer>());
-
-                // Start the service immediately when it's created
-                pollService.EnsureStarted();
-                return pollService;
-            });
+            services.AddSingleton<KafkaConsumerPollService>();
 
             // https://github.com/confluentinc/confluent-kafka-dotnet/issues/1346
             // One producer per process
@@ -98,14 +89,24 @@ namespace K.EntityFrameworkCore.Extensions
                 .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
             {
                 Type serviceType = typeof(ConsumerMiddleware<>).MakeGenericType(type!);
-                services.AddKeyedSingleton(serviceType, type, serviceType);
-                services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(serviceType, type));
+
+                services.AddKeyedScoped(serviceType, type, serviceType);
+                services.AddKeyedSingleton(type, (_,_) => new ConsumerConfig((ConsumerConfig)client.Consumer));
+                services.AddKeyedSingleton<IConsumerConfig>(type, (_,_) => new ConsumerConfigInternal(client.ClientConfig));
+                services.AddKeyedScoped(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(serviceType, type));
+                services.AddKeyedScoped<IConsumer>(type, KeyedConsumerFactory);
+                services.AddKeyedScoped<KafkaConsumerPollService>(type, (provider, key) => new KafkaConsumerPollService(provider, provider.GetRequiredKeyedService<IConsumer>(key)));
             }
         }
 
         private IProducer ProducerFactory(IServiceProvider provider)
         {
             return new ProducerBuilder<string, byte[]>(provider.GetRequiredService<ProducerConfig>()).SetLogHandler((_, _) => { }).Build();//TODO handle kafka logs
+        }
+
+        private IConsumer<string, byte[]> KeyedConsumerFactory(IServiceProvider provider, object? key)
+        {
+            return new ConsumerBuilder<string, byte[]>(provider.GetRequiredKeyedService<ConsumerConfig>(key)).Build();
         }
 
         private IConsumer<string, byte[]> ConsumerFactory(IServiceProvider provider)

@@ -102,7 +102,14 @@ namespace HelloWorld
 
                 topic.HasConsumer(consumer =>
                 {
-                    consumer.DedicatedConnection();
+                     consumer.HasExclusiveConnection(connection =>
+                     {
+                         connection.GroupId = "order-created-dedicated";
+                         connection.MaxPollIntervalMs = 300000;
+                         connection.MaxBufferedMessages = 5000;
+                         connection.BackpressureMode = ConsumerBackpressureMode.ApplyBackpressure;
+                     });
+
                     consumer.HasMaxBufferedMessages(2000);
                     consumer.HasBackpressureMode(ConsumerBackpressureMode.ApplyBackpressure);
 

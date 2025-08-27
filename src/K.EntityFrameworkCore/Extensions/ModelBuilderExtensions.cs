@@ -188,10 +188,6 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
         return this;
     }
 
-
-
-
-
     /// <summary>
     /// Configures the forget middleware for the producer.
     /// Supports both await-forget and fire-forget strategies.
@@ -276,6 +272,26 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
             .GetRequiredService<ConsumerMiddlewareSettings<T>>();
 
         settings.BackpressureMode = mode;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures this message type to use a dedicated consumer connection.
+    /// When enabled, a separate KafkaConsumerPollService will be created specifically for this type,
+    /// allowing for type-specific consumer configurations and isolation.
+    /// </summary>
+    /// <param name="connection">Optional action to configure the dedicated connection settings.</param>
+    /// <returns>The consumer builder instance.</returns>
+    public ConsumerBuilder<T> HasExclusiveConnection(Action<IConsumerConfig>? connection = null)
+    {
+        IServiceProvider serviceProvider = ServiceProviderCache.Instance.GetOrAdd(KafkaOptionsExtension.CachedOptions!, true);
+
+        var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
+        settings.ExclusiveConnection = true;
+
+        var consumerConfig = serviceProvider.GetRequiredKeyedService<IConsumerConfig>(typeof(T));
+        connection?.Invoke(consumerConfig);
+
         return this;
     }
 }
