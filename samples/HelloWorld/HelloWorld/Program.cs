@@ -15,6 +15,8 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
     .UseKafkaExtensibility(client =>
     {
         client.BootstrapServers = "localhost:9092";
+        client.Consumer.MaxBufferedMessages = 1000;
+        client.Consumer.BackpressureMode = ConsumerBackpressureMode.ApplyBackpressure;
         //...
     }))
 

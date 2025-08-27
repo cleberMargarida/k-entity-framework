@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
+using K.EntityFrameworkCore.Middlewares.Core;
+using System.Threading.Channels;
 #pragma warning disable EF1001
 
 namespace K.EntityFrameworkCore.Extensions
@@ -32,6 +34,13 @@ namespace K.EntityFrameworkCore.Extensions
     /// <summary>
     /// Builder for Kafka client configuration.
     /// </summary>
+    /// <summary>
+    /// Builder for Kafka client configuration.
+    /// </summary>
+    /// <remarks>
+    /// Consumer processing options for configuring message buffering and backpressure behavior.
+    /// </remarks>
+    /// <param name="clientConfig"></param>
     public class KafkaClientBuilder(ClientConfig clientConfig) : IClientConfig
     {
         private readonly Lazy<ProducerConfigInternal> producerConfigInternal = new(() => new ProducerConfigInternal(clientConfig.ToDictionary()));
@@ -747,9 +756,74 @@ namespace K.EntityFrameworkCore.Extensions
     }
 
     /// <summary>
+    /// Interface for Kafka consumer message processing options.
+    /// Controls how messages are buffered and processed within the framework.
+    /// </summary>
+    public interface IConsumerProcessingConfig
+    {
+        /// <summary>
+        /// The maximum number of messages that can be buffered in memory per message type before applying backpressure.
+        /// Default is 1000. Higher values provide better throughput but use more memory.
+        /// Lower values reduce memory usage but may limit processing throughput.
+        /// </summary>
+        int MaxBufferedMessages { get; set; }
+
+        /// <summary>
+        /// The behavior when the message buffer is full.
+        /// Default is ApplyBackpressure, which slows down message consumption to prevent memory exhaustion.
+        /// </summary>
+        ConsumerBackpressureMode BackpressureMode { get; set; }
+
+
+        /// <summary>
+        /// Creates internal channel options from this consumer configuration.
+        /// </summary>
+        internal BoundedChannelOptions ToBoundedChannelOptions()
+        {
+            return new BoundedChannelOptions(MaxBufferedMessages)
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                FullMode = BackpressureMode switch
+                {
+                    ConsumerBackpressureMode.DropOldestMessage => BoundedChannelFullMode.DropOldest,
+                    ConsumerBackpressureMode.DropNewestMessage => BoundedChannelFullMode.DropWrite,
+                    _ => BoundedChannelFullMode.Wait
+                },
+                AllowSynchronousContinuations = false
+            };
+        }
+    }
+
+    /// <summary>
+    /// Defines how the consumer should behave when the message buffer reaches capacity.
+    /// </summary>
+    public enum ConsumerBackpressureMode
+    {
+        /// <summary>
+        /// Applies backpressure by slowing down message consumption.
+        /// This is the recommended mode for most scenarios as it prevents message loss.
+        /// </summary>
+        ApplyBackpressure,
+
+        /// <summary>
+        /// Drops the oldest buffered message when a new message arrives.
+        /// Use with caution as this can result in message loss.
+        /// </summary>
+        DropOldestMessage,
+
+        /// <summary>
+        /// Drops the newest message when the buffer is full.
+        /// Use with caution as this can result in message loss.
+        /// </summary>
+        DropNewestMessage
+    }
+
+
+    /// <summary>
     /// Interface for Kafka consumer configuration options.
     /// </summary>
-    public interface IConsumerConfig : IWorkerConfig
+    public interface IConsumerConfig : IWorkerConfig, IConsumerProcessingConfig
     {
         /// <summary>
         /// The frequency in milliseconds that the consumer offsets are auto-committed to Kafka if enable.auto.commit is set to true.
@@ -992,9 +1066,9 @@ namespace K.EntityFrameworkCore.Extensions
         // All shared operational properties are automatically implemented through inheritance from ClientConfig
     }
 
-    internal class ConsumerConfigInternal(Dictionary<string, string> clientConfig) : ConsumerConfig(clientConfig), IConsumerConfig
+    internal class ConsumerConfigInternal : ConsumerConfig, IConsumerConfig
     {
-        public ConsumerConfigInternal(ClientConfig clientConfig) : this(clientConfig.ToDictionary())
+        public ConsumerConfigInternal(ClientConfig clientConfig) : base(clientConfig.ToDictionary())
         {
             // set default settings
             GroupId = AppDomain.CurrentDomain.FriendlyName;
@@ -1003,6 +1077,9 @@ namespace K.EntityFrameworkCore.Extensions
             AutoCommitIntervalMs = 1000;
             EnableAutoOffsetStore = false;
         }
+
+        public int MaxBufferedMessages { get; set; }
+        public ConsumerBackpressureMode BackpressureMode { get; set; }
 
         // ISharedOperationalConfig implementation - properties that can be configured separately for consumers
         // These delegate to the underlying ConsumerConfig which inherits from ClientConfig

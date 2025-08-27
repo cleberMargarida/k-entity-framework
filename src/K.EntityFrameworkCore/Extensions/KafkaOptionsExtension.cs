@@ -50,8 +50,6 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
 
             // Register channel options for configuration
-            services.AddSingleton<KafkaConsumerChannelOptions>();
-
             services.AddScoped(typeof(DeserializerMiddleware<>));
 
             // Producer-specific middleware options and classes
@@ -70,6 +68,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(_ => client.ClientConfig);
             services.AddSingleton(_ => (ProducerConfig)client.Producer);
             services.AddSingleton(_ => (ConsumerConfig)client.Consumer);
+            services.AddSingleton(_ => (IConsumerProcessingConfig)client.Consumer);
 
             // https://github.com/confluentinc/confluent-kafka-dotnet/issues/197
             // One consumer per process

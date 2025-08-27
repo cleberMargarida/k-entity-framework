@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
@@ -10,13 +11,13 @@ internal class ConsumerMiddleware<T>(
 #pragma warning disable CS9113 // Parameter is unread.
       KafkaConsumerPollService _,
 #pragma warning restore CS9113 // Parameter is unread.
-      KafkaConsumerChannelOptions channelOptions)
+      IConsumerProcessingConfig consumerOptions)
     : Middleware<T>(settings)
     , IConsumeResultChannel
     where T : class
 {
     private readonly Channel<ConsumeResult<string, byte[]>> channel
-        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(channelOptions.ToBoundedChannelOptions());
+        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(consumerOptions.ToBoundedChannelOptions());
 
     public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
