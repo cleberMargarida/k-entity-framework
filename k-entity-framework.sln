@@ -9,8 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{446945EA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solutions Items", "Solutions Items", "{6B1C438D-63B6-4144-8A60-1C7C57BC335A}"
 	ProjectSection(SolutionItems) = preProject
-		MIDDLEWARE_ARCHITECTURE.md = MIDDLEWARE_ARCHITECTURE.md
-		README.md = README.md
+		docs\README.md = docs\README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K.EntityFrameworkCore", "src\K.EntityFrameworkCore\K.EntityFrameworkCore.csproj", "{2AA6BCC6-13B4-4720-9542-C21DF216BBCD}"
@@ -18,6 +17,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld", "samples\HelloWorld\HelloWorld\HelloWorld.csproj", "{055ABCA5-2C43-4912-8C1C-9423244C5D17}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K.EntityFrameworkCore.CodeGen", "src\K.EntityFrameworkCore.CodeGen\K.EntityFrameworkCore.CodeGen.csproj", "{A5CAB5D1-8754-4D33-BE27-D2547BC22902}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K.EntityFrameworkCore.UnitTests", "tests\K.EntityFrameworkCore.UnitTests\K.EntityFrameworkCore.UnitTests.csproj", "{B1234567-1234-1234-1234-123456789012}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K.EntityFrameworkCore.IntegrationTests", "tests\K.EntityFrameworkCore.IntegrationTests\K.EntityFrameworkCore.IntegrationTests.csproj", "{C1234567-1234-1234-1234-123456789012}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +40,14 @@ Global
 		{A5CAB5D1-8754-4D33-BE27-D2547BC22902}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5CAB5D1-8754-4D33-BE27-D2547BC22902}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5CAB5D1-8754-4D33-BE27-D2547BC22902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-1234-1234-123456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-1234-1234-123456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-1234-1234-123456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-1234-1234-123456789012}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1234567-1234-1234-1234-123456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1234567-1234-1234-1234-123456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1234567-1234-1234-1234-123456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1234567-1234-1234-1234-123456789012}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -45,5 +56,7 @@ Global
 		{2AA6BCC6-13B4-4720-9542-C21DF216BBCD} = {A1707FFC-A0E2-4EAB-9853-F5417BDE845E}
 		{055ABCA5-2C43-4912-8C1C-9423244C5D17} = {A1707FFC-A0E2-4EAB-9853-F5417BDE845E}
 		{A5CAB5D1-8754-4D33-BE27-D2547BC22902} = {A1707FFC-A0E2-4EAB-9853-F5417BDE845E}
+		{B1234567-1234-1234-1234-123456789012} = {446945EA-2BDD-44FB-BF55-0068A4D0B349}
+		{C1234567-1234-1234-1234-123456789012} = {446945EA-2BDD-44FB-BF55-0068A4D0B349}
 	EndGlobalSection
 EndGlobal
