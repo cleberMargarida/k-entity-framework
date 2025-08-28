@@ -16,11 +16,12 @@ namespace K.EntityFrameworkCore.Extensions
     public static class DbContextOptionsBuilderExtensions
     {
         /// <summary>
-        /// Configures the DbContext to use Kafka with the specified client configuration.
+        /// Configures the DbContext to use Kafka extensibility features with the specified client configuration.
+        /// This enables message production and consumption capabilities through middleware pipelines.
         /// </summary>
-        /// <param name="optionsBuilder"></param>
-        /// <param name="client"></param>
-        /// <returns></returns>
+        /// <param name="optionsBuilder">The options builder for the DbContext.</param>
+        /// <param name="client">Action to configure the Kafka client settings.</param>
+        /// <returns>The same options builder instance for method chaining.</returns>
         public static DbContextOptionsBuilder UseKafkaExtensibility(this DbContextOptionsBuilder optionsBuilder, Action<KafkaClientBuilder> client)
         {
             var clientInstance = new KafkaClientBuilder();
@@ -34,15 +35,10 @@ namespace K.EntityFrameworkCore.Extensions
     }
 
     /// <summary>
-    /// Builder for Kafka client configuration.
+    /// Builder for Kafka client configuration that provides a fluent API for setting up Kafka clients.
+    /// This class wraps the underlying Confluent.Kafka ClientConfig and provides additional configuration options.
     /// </summary>
-    /// <summary>
-    /// Builder for Kafka client configuration.
-    /// </summary>
-    /// <remarks>
-    /// Consumer processing options for configuring message buffering and backpressure behavior.
-    /// </remarks>
-    /// <param name="clientConfig"></param>
+    /// <param name="clientConfig">The underlying Confluent.Kafka ClientConfig instance.</param>
     public class KafkaClientBuilder(ClientConfig clientConfig) : IClientConfig
     {
         private readonly Lazy<ProducerConfigInternal> producerConfigInternal = new(() => new ProducerConfigInternal(clientConfig.ToDictionary()));
@@ -82,161 +78,550 @@ namespace K.EntityFrameworkCore.Extensions
         }
 
         /// <inheritdoc />
-        public int? ApiVersionFallbackMs { get => clientConfig.ApiVersionFallbackMs; set => clientConfig.ApiVersionFallbackMs = value; }
-        /// <inheritdoc />
-        public bool? ApiVersionRequest { get => clientConfig.ApiVersionRequest; set => clientConfig.ApiVersionRequest = value; }
-        /// <inheritdoc />
-        public int? ApiVersionRequestTimeoutMs { get => clientConfig.ApiVersionRequestTimeoutMs; set => clientConfig.ApiVersionRequestTimeoutMs = value; }
-        /// <inheritdoc />
-        public string? BootstrapServers { get => clientConfig.BootstrapServers; set => clientConfig.BootstrapServers = value; }
-        /// <inheritdoc />
-        public BrokerAddressFamily? BrokerAddressFamily { get => clientConfig.BrokerAddressFamily; set => clientConfig.BrokerAddressFamily = value; }
-        /// <inheritdoc />
-        public int? BrokerAddressTtl { get => clientConfig.BrokerAddressTtl; set => clientConfig.BrokerAddressTtl = value; }
-        /// <inheritdoc />
-        public string? BrokerVersionFallback { get => clientConfig.BrokerVersionFallback; set => clientConfig.BrokerVersionFallback = value; }
-        /// <inheritdoc />
-        public ClientDnsLookup? ClientDnsLookup { get => clientConfig.ClientDnsLookup; set => clientConfig.ClientDnsLookup = value; }
-        /// <inheritdoc />
-        public string? ClientId { get => clientConfig.ClientId; set => clientConfig.ClientId = value; }
-        /// <inheritdoc />
-        public string? ClientRack { get => clientConfig.ClientRack; set => clientConfig.ClientRack = value; }
-        /// <inheritdoc />
-        public int? ConnectionsMaxIdleMs { get => clientConfig.ConnectionsMaxIdleMs; set => clientConfig.ConnectionsMaxIdleMs = value; }
-        /// <inheritdoc />
-        public string? Debug { get => clientConfig.Debug; set => clientConfig.Debug = value; }
-        /// <inheritdoc />
-        public bool? EnableMetricsPush { get => clientConfig.EnableMetricsPush; set => clientConfig.EnableMetricsPush = value; }
-        /// <inheritdoc />
-        public bool? EnableRandomSeed { get => clientConfig.EnableRandomSeed; set => clientConfig.EnableRandomSeed = value; }
-        /// <inheritdoc />
-        public bool? EnableSaslOauthbearerUnsecureJwt { get => clientConfig.EnableSaslOauthbearerUnsecureJwt; set => clientConfig.EnableSaslOauthbearerUnsecureJwt = value; }
-        /// <inheritdoc />
-        public bool? EnableSslCertificateVerification { get => clientConfig.EnableSslCertificateVerification; set => clientConfig.EnableSslCertificateVerification = value; }
-        /// <inheritdoc />
-        public int? InternalTerminationSignal { get => clientConfig.InternalTerminationSignal; set => clientConfig.InternalTerminationSignal = value; }
-        /// <inheritdoc />
-        public bool? LogConnectionClose { get => clientConfig.LogConnectionClose; set => clientConfig.LogConnectionClose = value; }
-        /// <inheritdoc />
-        public bool? LogQueue { get => clientConfig.LogQueue; set => clientConfig.LogQueue = value; }
-        /// <inheritdoc />
-        public bool? LogThreadName { get => clientConfig.LogThreadName; set => clientConfig.LogThreadName = value; }
-        /// <inheritdoc />
-        public int? MaxInFlight { get => clientConfig.MaxInFlight; set => clientConfig.MaxInFlight = value; }
-        /// <inheritdoc />
-        public int? MessageCopyMaxBytes { get => clientConfig.MessageCopyMaxBytes; set => clientConfig.MessageCopyMaxBytes = value; }
-        /// <inheritdoc />
-        public int? MessageMaxBytes { get => clientConfig.MessageMaxBytes; set => clientConfig.MessageMaxBytes = value; }
-        /// <inheritdoc />
-        public int? MetadataMaxAgeMs { get => clientConfig.MetadataMaxAgeMs; set => clientConfig.MetadataMaxAgeMs = value; }
-        /// <inheritdoc />
-        public MetadataRecoveryStrategy? MetadataRecoveryStrategy { get => clientConfig.MetadataRecoveryStrategy; set => clientConfig.MetadataRecoveryStrategy = value; }
-        /// <inheritdoc />
-        public string? PluginLibraryPaths { get => clientConfig.PluginLibraryPaths; set => clientConfig.PluginLibraryPaths = value; }
-        /// <inheritdoc />
-        public int? ReceiveMessageMaxBytes { get => clientConfig.ReceiveMessageMaxBytes; set => clientConfig.ReceiveMessageMaxBytes = value; }
-        /// <inheritdoc />
-        public int? ReconnectBackoffMaxMs { get => clientConfig.ReconnectBackoffMaxMs; set => clientConfig.ReconnectBackoffMaxMs = value; }
-        /// <inheritdoc />
-        public int? ReconnectBackoffMs { get => clientConfig.ReconnectBackoffMs; set => clientConfig.ReconnectBackoffMs = value; }
-        /// <inheritdoc />
-        public int? RetryBackoffMaxMs { get => clientConfig.RetryBackoffMaxMs; set => clientConfig.RetryBackoffMaxMs = value; }
-        /// <inheritdoc />
-        public int? RetryBackoffMs { get => clientConfig.RetryBackoffMs; set => clientConfig.RetryBackoffMs = value; }
-        /// <inheritdoc />
-        public string? SaslKerberosKeytab { get => clientConfig.SaslKerberosKeytab; set => clientConfig.SaslKerberosKeytab = value; }
-        /// <inheritdoc />
-        public string? SaslKerberosKinitCmd { get => clientConfig.SaslKerberosKinitCmd; set => clientConfig.SaslKerberosKinitCmd = value; }
-        /// <inheritdoc />
-        public int? SaslKerberosMinTimeBeforeRelogin { get => clientConfig.SaslKerberosMinTimeBeforeRelogin; set => clientConfig.SaslKerberosMinTimeBeforeRelogin = value; }
-        /// <inheritdoc />
-        public string? SaslKerberosPrincipal { get => clientConfig.SaslKerberosPrincipal; set => clientConfig.SaslKerberosPrincipal = value; }
-        /// <inheritdoc />
-        public string? SaslKerberosServiceName { get => clientConfig.SaslKerberosServiceName; set => clientConfig.SaslKerberosServiceName = value; }
-        /// <inheritdoc />
-        public SaslMechanism? SaslMechanism { get => clientConfig.SaslMechanism; set => clientConfig.SaslMechanism = value; }
-        /// <inheritdoc />
-        public string? SaslOauthbearerClientId { get => clientConfig.SaslOauthbearerClientId; set => clientConfig.SaslOauthbearerClientId = value; }
-        /// <inheritdoc />
-        public string? SaslOauthbearerClientSecret { get => clientConfig.SaslOauthbearerClientSecret; set => clientConfig.SaslOauthbearerClientSecret = value; }
-        /// <inheritdoc />
-        public string? SaslOauthbearerConfig { get => clientConfig.SaslOauthbearerConfig; set => clientConfig.SaslOauthbearerConfig = value; }
-        /// <inheritdoc />
-        public string? SaslOauthbearerExtensions { get => clientConfig.SaslOauthbearerExtensions; set => clientConfig.SaslOauthbearerExtensions = value; }
-        /// <inheritdoc />
-        public SaslOauthbearerMethod? SaslOauthbearerMethod { get => clientConfig.SaslOauthbearerMethod; set => clientConfig.SaslOauthbearerMethod = value; }
-        /// <inheritdoc />
-        public string? SaslOauthbearerScope { get => clientConfig.SaslOauthbearerScope; set => clientConfig.SaslOauthbearerScope = value; }
-        /// <inheritdoc />
-        public string? SaslOauthbearerTokenEndpointUrl { get => clientConfig.SaslOauthbearerTokenEndpointUrl; set => clientConfig.SaslOauthbearerTokenEndpointUrl = value; }
-        /// <inheritdoc />
-        public string? SaslPassword { get => clientConfig.SaslPassword; set => clientConfig.SaslPassword = value; }
-        /// <inheritdoc />
-        public string? SaslUsername { get => clientConfig.SaslUsername; set => clientConfig.SaslUsername = value; }
-        /// <inheritdoc />
-        public SecurityProtocol? SecurityProtocol { get => clientConfig.SecurityProtocol; set => clientConfig.SecurityProtocol = value; }
-        /// <inheritdoc />
-        public int? SocketConnectionSetupTimeoutMs { get => clientConfig.SocketConnectionSetupTimeoutMs; set => clientConfig.SocketConnectionSetupTimeoutMs = value; }
-        /// <inheritdoc />
-        public bool? SocketKeepaliveEnable { get => clientConfig.SocketKeepaliveEnable; set => clientConfig.SocketKeepaliveEnable = value; }
-        /// <inheritdoc />
-        public int? SocketMaxFails { get => clientConfig.SocketMaxFails; set => clientConfig.SocketMaxFails = value; }
-        /// <inheritdoc />
-        public bool? SocketNagleDisable { get => clientConfig.SocketNagleDisable; set => clientConfig.SocketNagleDisable = value; }
-        /// <inheritdoc />
-        public int? SocketReceiveBufferBytes { get => clientConfig.SocketReceiveBufferBytes; set => clientConfig.SocketReceiveBufferBytes = value; }
-        /// <inheritdoc />
-        public int? SocketSendBufferBytes { get => clientConfig.SocketSendBufferBytes; set => clientConfig.SocketSendBufferBytes = value; }
-        /// <inheritdoc />
-        public int? SocketTimeoutMs { get => clientConfig.SocketTimeoutMs; set => clientConfig.SocketTimeoutMs = value; }
-        /// <inheritdoc />
-        public string? SslCaCertificateStores { get => clientConfig.SslCaCertificateStores; set => clientConfig.SslCaCertificateStores = value; }
-        /// <inheritdoc />
-        public string? SslCaLocation { get => clientConfig.SslCaLocation; set => clientConfig.SslCaLocation = value; }
-        /// <inheritdoc />
-        public string? SslCaPem { get => clientConfig.SslCaPem; set => clientConfig.SslCaPem = value; }
-        /// <inheritdoc />
-        public string? SslCertificateLocation { get => clientConfig.SslCertificateLocation; set => clientConfig.SslCertificateLocation = value; }
-        /// <inheritdoc />
-        public string? SslCertificatePem { get => clientConfig.SslCertificatePem; set => clientConfig.SslCertificatePem = value; }
-        /// <inheritdoc />
-        public string? SslCipherSuites { get => clientConfig.SslCipherSuites; set => clientConfig.SslCipherSuites = value; }
-        /// <inheritdoc />
-        public string? SslCrlLocation { get => clientConfig.SslCrlLocation; set => clientConfig.SslCrlLocation = value; }
-        /// <inheritdoc />
-        public string? SslCurvesList { get => clientConfig.SslCurvesList; set => clientConfig.SslCurvesList = value; }
-        /// <inheritdoc />
-        public SslEndpointIdentificationAlgorithm? SslEndpointIdentificationAlgorithm { get => clientConfig.SslEndpointIdentificationAlgorithm; set => clientConfig.SslEndpointIdentificationAlgorithm = value; }
-        /// <inheritdoc />
-        public string? SslEngineId { get => clientConfig.SslEngineId; set => clientConfig.SslEngineId = value; }
-        /// <inheritdoc />
-        public string? SslEngineLocation { get => clientConfig.SslEngineLocation; set => clientConfig.SslEngineLocation = value; }
-        /// <inheritdoc />
-        public string? SslKeyLocation { get => clientConfig.SslKeyLocation; set => clientConfig.SslKeyLocation = value; }
-        /// <inheritdoc />
-        public string? SslKeyPassword { get => clientConfig.SslKeyPassword; set => clientConfig.SslKeyPassword = value; }
-        /// <inheritdoc />
-        public string? SslKeyPem { get => clientConfig.SslKeyPem; set => clientConfig.SslKeyPem = value; }
-        /// <inheritdoc />
-        public string? SslKeystoreLocation { get => clientConfig.SslKeystoreLocation; set => clientConfig.SslKeystoreLocation = value; }
-        /// <inheritdoc />
-        public string? SslKeystorePassword { get => clientConfig.SslKeystorePassword; set => clientConfig.SslKeystorePassword = value; }
-        /// <inheritdoc />
-        public string? SslProviders { get => clientConfig.SslProviders; set => clientConfig.SslProviders = value; }
-        /// <inheritdoc />
-        public string? SslSigalgsList { get => clientConfig.SslSigalgsList; set => clientConfig.SslSigalgsList = value; }
-        /// <inheritdoc />
-        public int? StatisticsIntervalMs { get => clientConfig.StatisticsIntervalMs; set => clientConfig.StatisticsIntervalMs = value; }
-        /// <inheritdoc />
-        public string? TopicBlacklist { get => clientConfig.TopicBlacklist; set => clientConfig.TopicBlacklist = value; }
-        /// <inheritdoc />
-        public int? TopicMetadataPropagationMaxMs { get => clientConfig.TopicMetadataPropagationMaxMs; set => clientConfig.TopicMetadataPropagationMaxMs = value; }
-        /// <inheritdoc />
-        public int? TopicMetadataRefreshFastIntervalMs { get => clientConfig.TopicMetadataRefreshFastIntervalMs; set => clientConfig.TopicMetadataRefreshFastIntervalMs = value; }
-        /// <inheritdoc />
-        public int? TopicMetadataRefreshIntervalMs { get => clientConfig.TopicMetadataRefreshIntervalMs; set => clientConfig.TopicMetadataRefreshIntervalMs = value; }
-        /// <inheritdoc />
-        public bool? TopicMetadataRefreshSparse { get => clientConfig.TopicMetadataRefreshSparse; set => clientConfig.TopicMetadataRefreshSparse = value; }
+        public int? ApiVersionFallbackMs
+        {
+            get => clientConfig.ApiVersionFallbackMs;
+            set => clientConfig.ApiVersionFallbackMs = value;
+        }
+
+        /// <inheritdoc />
+        public bool? ApiVersionRequest
+        {
+            get => clientConfig.ApiVersionRequest;
+            set => clientConfig.ApiVersionRequest = value;
+        }
+
+        /// <inheritdoc />
+        public int? ApiVersionRequestTimeoutMs
+        {
+            get => clientConfig.ApiVersionRequestTimeoutMs;
+            set => clientConfig.ApiVersionRequestTimeoutMs = value;
+        }
+
+        /// <inheritdoc />
+        public string? BootstrapServers
+        {
+            get => clientConfig.BootstrapServers;
+            set => clientConfig.BootstrapServers = value;
+        }
+
+        /// <inheritdoc />
+        public BrokerAddressFamily? BrokerAddressFamily
+        {
+            get => clientConfig.BrokerAddressFamily;
+            set => clientConfig.BrokerAddressFamily = value;
+        }
+
+        /// <inheritdoc />
+        public int? BrokerAddressTtl
+        {
+            get => clientConfig.BrokerAddressTtl;
+            set => clientConfig.BrokerAddressTtl = value;
+        }
+
+        /// <inheritdoc />
+        public string? BrokerVersionFallback
+        {
+            get => clientConfig.BrokerVersionFallback;
+            set => clientConfig.BrokerVersionFallback = value;
+        }
+
+        /// <inheritdoc />
+        public ClientDnsLookup? ClientDnsLookup
+        {
+            get => clientConfig.ClientDnsLookup;
+            set => clientConfig.ClientDnsLookup = value;
+        }
+
+        /// <inheritdoc />
+        public string? ClientId
+        {
+            get => clientConfig.ClientId;
+            set => clientConfig.ClientId = value;
+        }
+
+        /// <inheritdoc />
+        public string? ClientRack
+        {
+            get => clientConfig.ClientRack;
+            set => clientConfig.ClientRack = value;
+        }
+
+        /// <inheritdoc />
+        public int? ConnectionsMaxIdleMs
+        {
+            get => clientConfig.ConnectionsMaxIdleMs;
+            set => clientConfig.ConnectionsMaxIdleMs = value;
+        }
+
+        /// <inheritdoc />
+        public string? Debug
+        {
+            get => clientConfig.Debug;
+            set => clientConfig.Debug = value;
+        }
+
+        /// <inheritdoc />
+        public bool? EnableMetricsPush
+        {
+            get => clientConfig.EnableMetricsPush;
+            set => clientConfig.EnableMetricsPush = value;
+        }
+
+        /// <inheritdoc />
+        public bool? EnableRandomSeed
+        {
+            get => clientConfig.EnableRandomSeed;
+            set => clientConfig.EnableRandomSeed = value;
+        }
+
+        /// <inheritdoc />
+        public bool? EnableSaslOauthbearerUnsecureJwt
+        {
+            get => clientConfig.EnableSaslOauthbearerUnsecureJwt;
+            set => clientConfig.EnableSaslOauthbearerUnsecureJwt = value;
+        }
+
+        /// <inheritdoc />
+        public bool? EnableSslCertificateVerification
+        {
+            get => clientConfig.EnableSslCertificateVerification;
+            set => clientConfig.EnableSslCertificateVerification = value;
+        }
+
+        /// <inheritdoc />
+        public int? InternalTerminationSignal
+        {
+            get => clientConfig.InternalTerminationSignal;
+            set => clientConfig.InternalTerminationSignal = value;
+        }
+
+        /// <inheritdoc />
+        public bool? LogConnectionClose
+        {
+            get => clientConfig.LogConnectionClose;
+            set => clientConfig.LogConnectionClose = value;
+        }
+
+        /// <inheritdoc />
+        public bool? LogQueue
+        {
+            get => clientConfig.LogQueue;
+            set => clientConfig.LogQueue = value;
+        }
+
+        /// <inheritdoc />
+        public bool? LogThreadName
+        {
+            get => clientConfig.LogThreadName;
+            set => clientConfig.LogThreadName = value;
+        }
+
+        /// <inheritdoc />
+        public int? MaxInFlight
+        {
+            get => clientConfig.MaxInFlight;
+            set => clientConfig.MaxInFlight = value;
+        }
+
+        /// <inheritdoc />
+        public int? MessageCopyMaxBytes
+        {
+            get => clientConfig.MessageCopyMaxBytes;
+            set => clientConfig.MessageCopyMaxBytes = value;
+        }
+
+        /// <inheritdoc />
+        public int? MessageMaxBytes
+        {
+            get => clientConfig.MessageMaxBytes;
+            set => clientConfig.MessageMaxBytes = value;
+        }
+
+        /// <inheritdoc />
+        public int? MetadataMaxAgeMs
+        {
+            get => clientConfig.MetadataMaxAgeMs;
+            set => clientConfig.MetadataMaxAgeMs = value;
+        }
+
+        /// <inheritdoc />
+        public MetadataRecoveryStrategy? MetadataRecoveryStrategy
+        {
+            get => clientConfig.MetadataRecoveryStrategy;
+            set => clientConfig.MetadataRecoveryStrategy = value;
+        }
+
+        /// <inheritdoc />
+        public string? PluginLibraryPaths
+        {
+            get => clientConfig.PluginLibraryPaths;
+            set => clientConfig.PluginLibraryPaths = value;
+        }
+
+        /// <inheritdoc />
+        public int? ReceiveMessageMaxBytes
+        {
+            get => clientConfig.ReceiveMessageMaxBytes;
+            set => clientConfig.ReceiveMessageMaxBytes = value;
+        }
+
+        /// <inheritdoc />
+        public int? ReconnectBackoffMaxMs
+        {
+            get => clientConfig.ReconnectBackoffMaxMs;
+            set => clientConfig.ReconnectBackoffMaxMs = value;
+        }
+
+        /// <inheritdoc />
+        public int? ReconnectBackoffMs
+        {
+            get => clientConfig.ReconnectBackoffMs;
+            set => clientConfig.ReconnectBackoffMs = value;
+        }
+
+        /// <inheritdoc />
+        public int? RetryBackoffMaxMs
+        {
+            get => clientConfig.RetryBackoffMaxMs;
+            set => clientConfig.RetryBackoffMaxMs = value;
+        }
+
+        /// <inheritdoc />
+        public int? RetryBackoffMs
+        {
+            get => clientConfig.RetryBackoffMs;
+            set => clientConfig.RetryBackoffMs = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslKerberosKeytab
+        {
+            get => clientConfig.SaslKerberosKeytab;
+            set => clientConfig.SaslKerberosKeytab = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslKerberosKinitCmd
+        {
+            get => clientConfig.SaslKerberosKinitCmd;
+            set => clientConfig.SaslKerberosKinitCmd = value;
+        }
+
+        /// <inheritdoc />
+        public int? SaslKerberosMinTimeBeforeRelogin
+        {
+            get => clientConfig.SaslKerberosMinTimeBeforeRelogin;
+            set => clientConfig.SaslKerberosMinTimeBeforeRelogin = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslKerberosPrincipal
+        {
+            get => clientConfig.SaslKerberosPrincipal;
+            set => clientConfig.SaslKerberosPrincipal = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslKerberosServiceName
+        {
+            get => clientConfig.SaslKerberosServiceName;
+            set => clientConfig.SaslKerberosServiceName = value;
+        }
+
+        /// <inheritdoc />
+        public SaslMechanism? SaslMechanism
+        {
+            get => clientConfig.SaslMechanism;
+            set => clientConfig.SaslMechanism = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslOauthbearerClientId
+        {
+            get => clientConfig.SaslOauthbearerClientId;
+            set => clientConfig.SaslOauthbearerClientId = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslOauthbearerClientSecret
+        {
+            get => clientConfig.SaslOauthbearerClientSecret;
+            set => clientConfig.SaslOauthbearerClientSecret = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslOauthbearerConfig
+        {
+            get => clientConfig.SaslOauthbearerConfig;
+            set => clientConfig.SaslOauthbearerConfig = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslOauthbearerExtensions
+        {
+            get => clientConfig.SaslOauthbearerExtensions;
+            set => clientConfig.SaslOauthbearerExtensions = value;
+        }
+
+        /// <inheritdoc />
+        public SaslOauthbearerMethod? SaslOauthbearerMethod
+        {
+            get => clientConfig.SaslOauthbearerMethod;
+            set => clientConfig.SaslOauthbearerMethod = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslOauthbearerScope
+        {
+            get => clientConfig.SaslOauthbearerScope;
+            set => clientConfig.SaslOauthbearerScope = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslOauthbearerTokenEndpointUrl
+        {
+            get => clientConfig.SaslOauthbearerTokenEndpointUrl;
+            set => clientConfig.SaslOauthbearerTokenEndpointUrl = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslPassword
+        {
+            get => clientConfig.SaslPassword;
+            set => clientConfig.SaslPassword = value;
+        }
+
+        /// <inheritdoc />
+        public string? SaslUsername
+        {
+            get => clientConfig.SaslUsername;
+            set => clientConfig.SaslUsername = value;
+        }
+
+        /// <inheritdoc />
+        public SecurityProtocol? SecurityProtocol
+        {
+            get => clientConfig.SecurityProtocol;
+            set => clientConfig.SecurityProtocol = value;
+        }
+
+        /// <inheritdoc />
+        public int? SocketConnectionSetupTimeoutMs
+        {
+            get => clientConfig.SocketConnectionSetupTimeoutMs;
+            set => clientConfig.SocketConnectionSetupTimeoutMs = value;
+        }
+
+        /// <inheritdoc />
+        public bool? SocketKeepaliveEnable
+        {
+            get => clientConfig.SocketKeepaliveEnable;
+            set => clientConfig.SocketKeepaliveEnable = value;
+        }
+
+        /// <inheritdoc />
+        public int? SocketMaxFails
+        {
+            get => clientConfig.SocketMaxFails;
+            set => clientConfig.SocketMaxFails = value;
+        }
+
+        /// <inheritdoc />
+        public bool? SocketNagleDisable
+        {
+            get => clientConfig.SocketNagleDisable;
+            set => clientConfig.SocketNagleDisable = value;
+        }
+
+        /// <inheritdoc />
+        public int? SocketReceiveBufferBytes
+        {
+            get => clientConfig.SocketReceiveBufferBytes;
+            set => clientConfig.SocketReceiveBufferBytes = value;
+        }
+
+        /// <inheritdoc />
+        public int? SocketSendBufferBytes
+        {
+            get => clientConfig.SocketSendBufferBytes;
+            set => clientConfig.SocketSendBufferBytes = value;
+        }
+
+        /// <inheritdoc />
+        public int? SocketTimeoutMs
+        {
+            get => clientConfig.SocketTimeoutMs;
+            set => clientConfig.SocketTimeoutMs = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCaCertificateStores
+        {
+            get => clientConfig.SslCaCertificateStores;
+            set => clientConfig.SslCaCertificateStores = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCaLocation
+        {
+            get => clientConfig.SslCaLocation;
+            set => clientConfig.SslCaLocation = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCaPem
+        {
+            get => clientConfig.SslCaPem;
+            set => clientConfig.SslCaPem = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCertificateLocation
+        {
+            get => clientConfig.SslCertificateLocation;
+            set => clientConfig.SslCertificateLocation = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCertificatePem
+        {
+            get => clientConfig.SslCertificatePem;
+            set => clientConfig.SslCertificatePem = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCipherSuites
+        {
+            get => clientConfig.SslCipherSuites;
+            set => clientConfig.SslCipherSuites = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCrlLocation
+        {
+            get => clientConfig.SslCrlLocation;
+            set => clientConfig.SslCrlLocation = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslCurvesList
+        {
+            get => clientConfig.SslCurvesList;
+            set => clientConfig.SslCurvesList = value;
+        }
+
+        /// <inheritdoc />
+        public SslEndpointIdentificationAlgorithm? SslEndpointIdentificationAlgorithm
+        {
+            get => clientConfig.SslEndpointIdentificationAlgorithm;
+            set => clientConfig.SslEndpointIdentificationAlgorithm = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslEngineId
+        {
+            get => clientConfig.SslEngineId;
+            set => clientConfig.SslEngineId = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslEngineLocation
+        {
+            get => clientConfig.SslEngineLocation;
+            set => clientConfig.SslEngineLocation = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslKeyLocation
+        {
+            get => clientConfig.SslKeyLocation;
+            set => clientConfig.SslKeyLocation = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslKeyPassword
+        {
+            get => clientConfig.SslKeyPassword;
+            set => clientConfig.SslKeyPassword = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslKeyPem
+        {
+            get => clientConfig.SslKeyPem;
+            set => clientConfig.SslKeyPem = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslKeystoreLocation
+        {
+            get => clientConfig.SslKeystoreLocation;
+            set => clientConfig.SslKeystoreLocation = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslKeystorePassword
+        {
+            get => clientConfig.SslKeystorePassword;
+            set => clientConfig.SslKeystorePassword = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslProviders
+        {
+            get => clientConfig.SslProviders;
+            set => clientConfig.SslProviders = value;
+        }
+
+        /// <inheritdoc />
+        public string? SslSigalgsList
+        {
+            get => clientConfig.SslSigalgsList;
+            set => clientConfig.SslSigalgsList = value;
+        }
+
+        /// <inheritdoc />
+        public int? StatisticsIntervalMs
+        {
+            get => clientConfig.StatisticsIntervalMs;
+            set => clientConfig.StatisticsIntervalMs = value;
+        }
+
+        /// <inheritdoc />
+        public string? TopicBlacklist
+        {
+            get => clientConfig.TopicBlacklist;
+            set => clientConfig.TopicBlacklist = value;
+        }
+
+        /// <inheritdoc />
+        public int? TopicMetadataPropagationMaxMs
+        {
+            get => clientConfig.TopicMetadataPropagationMaxMs;
+            set => clientConfig.TopicMetadataPropagationMaxMs = value;
+        }
+
+        /// <inheritdoc />
+        public int? TopicMetadataRefreshFastIntervalMs
+        {
+            get => clientConfig.TopicMetadataRefreshFastIntervalMs;
+            set => clientConfig.TopicMetadataRefreshFastIntervalMs = value;
+        }
+
+        /// <inheritdoc />
+        public int? TopicMetadataRefreshIntervalMs
+        {
+            get => clientConfig.TopicMetadataRefreshIntervalMs;
+            set => clientConfig.TopicMetadataRefreshIntervalMs = value;
+        }
+
+        /// <inheritdoc />
+        public bool? TopicMetadataRefreshSparse
+        {
+            get => clientConfig.TopicMetadataRefreshSparse;
+            set => clientConfig.TopicMetadataRefreshSparse = value;
+        }
     }
 
     /// <summary>

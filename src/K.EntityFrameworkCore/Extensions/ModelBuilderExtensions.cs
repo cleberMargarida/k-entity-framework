@@ -43,26 +43,51 @@ namespace K.EntityFrameworkCore.Extensions
         }
     }
 
+    /// <summary>
+    /// Provides a fluent API for configuring a topic for a specific message type.
+    /// </summary>
+    /// <typeparam name="T">The message type for this topic.</typeparam>
+    /// <param name="modelBuilder">The model builder instance.</param>
     public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
         where T : class
     {
+        /// <summary>
+        /// Configures a consumer for this topic.
+        /// </summary>
+        /// <param name="consumer">Action to configure the consumer.</param>
+        /// <returns>The topic builder instance for method chaining.</returns>
         public TopicTypeBuilder<T> HasConsumer(Action<ConsumerBuilder<T>> consumer)
         {
             consumer(new ConsumerBuilder<T>(modelBuilder));
             return this;
         }
 
+        /// <summary>
+        /// Sets the name of this topic.
+        /// </summary>
+        /// <param name="name">The topic name.</param>
+        /// <returns>The topic builder instance for method chaining.</returns>
         public TopicTypeBuilder<T> HasName(string name)
         {
             return this;
         }
 
+        /// <summary>
+        /// Configures a producer for this topic.
+        /// </summary>
+        /// <param name="producer">Action to configure the producer.</param>
+        /// <returns>The topic builder instance for method chaining.</returns>
         public TopicTypeBuilder<T> HasProducer(Action<ProducerBuilder<T>> producer)
         {
             producer(new ProducerBuilder<T>(modelBuilder));
             return this;
         }
 
+        /// <summary>
+        /// Configures topic-specific settings.
+        /// </summary>
+        /// <param name="settings">Action to configure the topic settings.</param>
+        /// <returns>The topic builder instance for method chaining.</returns>
         public TopicTypeBuilder<T> HasSetting(Action<TopicSpecification> settings)
         {
             return this;
@@ -104,6 +129,11 @@ namespace K.EntityFrameworkCore.Extensions
     }
 }
 
+/// <summary>
+/// Provides a fluent API for configuring a producer for a specific message type.
+/// </summary>
+/// <typeparam name="T">The message type for this producer.</typeparam>
+/// <param name="modelBuilder">The model builder instance.</param>
 public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     where T : class
 {
@@ -134,7 +164,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// This disables automatic key discovery and explicitly sets the key to null for all messages.
     /// Use this when you want random partition distribution instead of key-based partitioning.
     /// </remarks>
-    /// <returns></returns>
+    /// <returns>The producer builder instance for method chaining.</returns>
     public ProducerBuilder<T> HasNoKey()
     {
         var settings = ServiceProviderCache.Instance
@@ -215,6 +245,11 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 
 }
 
+/// <summary>
+/// Provides a fluent API for configuring a consumer for a specific message type.
+/// </summary>
+/// <typeparam name="T">The message type for this consumer.</typeparam>
+/// <param name="modelBuilder">The model builder instance.</param>
 public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     where T : class
 {

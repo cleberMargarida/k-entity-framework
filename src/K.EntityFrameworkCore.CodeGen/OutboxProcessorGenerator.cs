@@ -11,9 +11,17 @@ using System.Threading;
 
 namespace K.EntityFrameworkCore.CodeGen
 {
+    /// <summary>
+    /// Source generator that creates middleware specifier implementations for DbContext types.
+    /// Automatically generates code to handle type-specific outbox message processing.
+    /// </summary>
     [Generator]
     public class OutboxProcessorGenerator : IIncrementalGenerator
     {
+        /// <summary>
+        /// Initializes the incremental generator by setting up syntax providers and registering source output.
+        /// </summary>
+        /// <param name="context">The generator initialization context.</param>
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             IncrementalValuesProvider<ITypeSymbol?> dbContexts = context.SyntaxProvider.CreateSyntaxProvider(
@@ -161,6 +169,12 @@ namespace K.EntityFrameworkCore.CodeGen
 
 internal static class SymbolExtensions
 {
+    /// <summary>
+    /// Gets the assembly-qualified name for a symbol.
+    /// </summary>
+    /// <param name="symbol">The symbol to get the qualified name for.</param>
+    /// <returns>The assembly-qualified name of the symbol.</returns>
+    /// <exception cref="System.NotImplementedException">Thrown when the symbol type is not supported.</exception>
     public static string GetAssemblyQualifiedName(this ISymbol symbol)
     {
         var typeSymbol = symbol switch
