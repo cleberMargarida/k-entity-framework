@@ -7,10 +7,12 @@ namespace K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Core.Producer;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using K.EntityFrameworkCore.Middlewares.Consumer;
 
 /// <summary>
 /// Represents a topic in the Kafka message broker that can be used for both producing and consuming messages.

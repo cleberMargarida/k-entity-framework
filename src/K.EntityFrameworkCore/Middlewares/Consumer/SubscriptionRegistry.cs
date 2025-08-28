@@ -1,9 +1,10 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 
-namespace K.EntityFrameworkCore.Middlewares.Core
+namespace K.EntityFrameworkCore.Middlewares.Consumer
 {
     internal sealed class SubscriptionRegistry<T>(IServiceProvider serviceProvider)
         where T : class

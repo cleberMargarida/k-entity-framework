@@ -1,8 +1,9 @@
-﻿using K.EntityFrameworkCore.Middlewares.Forget;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Outbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 
-namespace K.EntityFrameworkCore.Middlewares.Core;
+namespace K.EntityFrameworkCore.Middlewares.Producer;
 
 internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class

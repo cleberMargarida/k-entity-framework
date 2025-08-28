@@ -1,7 +1,9 @@
 ﻿using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Core.Consumer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using K.EntityFrameworkCore.Middlewares.Producer;
 
 namespace K.EntityFrameworkCore.Extensions;
 

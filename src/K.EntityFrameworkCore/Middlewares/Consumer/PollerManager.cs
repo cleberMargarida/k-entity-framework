@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace K.EntityFrameworkCore.Middlewares.Core
+namespace K.EntityFrameworkCore.Middlewares.Consumer
 {
     internal interface IPollerManager
     {

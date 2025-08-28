@@ -1,9 +1,10 @@
 using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Middlewares.Core;
 
-namespace K.EntityFrameworkCore.Middlewares.Core;
+namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
 internal class ConsumerMiddlewareSettings<T>(
-      IConsumerProcessingConfig globalProcessingConfig) 
+      IConsumerProcessingConfig globalProcessingConfig)
     : MiddlewareSettings<T>(isMiddlewareEnabled: true)
     , IConsumerProcessingConfig
     where T : class

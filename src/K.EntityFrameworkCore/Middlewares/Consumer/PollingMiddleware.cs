@@ -1,8 +1,9 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace K.EntityFrameworkCore.Middlewares.Core;
+namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
 /// <summary>
 /// Middleware responsible for managing polling lifecycle.

@@ -1,4 +1,5 @@
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Core.Producer;
 using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Outbox;
 

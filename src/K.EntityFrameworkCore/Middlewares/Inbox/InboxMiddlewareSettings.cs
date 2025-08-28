@@ -1,4 +1,5 @@
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Core.Producer;
 using System.IO.Hashing;
 using System.Linq.Expressions;
 using System.Text;

@@ -11,6 +11,8 @@ using K.EntityFrameworkCore.Middlewares.Outbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Inbox;
+using K.EntityFrameworkCore.Middlewares.Producer;
+using K.EntityFrameworkCore.Middlewares.Consumer;
 
 
 namespace K.EntityFrameworkCore.Extensions

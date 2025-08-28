@@ -1,10 +1,11 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Middlewares.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 
-namespace K.EntityFrameworkCore.Middlewares.Core;
+namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
 internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : Middleware<T>(settings), IConsumeResultChannel
     where T : class

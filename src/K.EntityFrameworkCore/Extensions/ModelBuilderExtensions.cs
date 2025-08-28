@@ -15,6 +15,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Text.Json;
+using K.EntityFrameworkCore.Middlewares.Producer;
+using K.EntityFrameworkCore.Middlewares.Consumer;
 
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "EF1001:Internal EF Core API usage.", Justification = "<Pending>")]
 

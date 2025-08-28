@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Producer;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
 {

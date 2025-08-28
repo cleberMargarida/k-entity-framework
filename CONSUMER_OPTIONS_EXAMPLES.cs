@@ -4,6 +4,7 @@
 using Microsoft.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Core.Consumer;
 
 namespace K.EntityFrameworkCore.Examples;
 

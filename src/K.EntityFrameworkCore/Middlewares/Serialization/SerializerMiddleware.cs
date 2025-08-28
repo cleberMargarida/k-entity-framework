@@ -1,8 +1,10 @@
 ﻿using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
+using Confluent.Kafka;
 using K.EntityFrameworkCore.Middlewares.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using K.EntityFrameworkCore.Middlewares.Producer;
 
 namespace K.EntityFrameworkCore.Middlewares.Serialization;
 

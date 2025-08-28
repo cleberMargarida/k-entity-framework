@@ -3,8 +3,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Diagnostics.CodeAnalysis;
+using K.EntityFrameworkCore.Middlewares.Core;
 
-namespace K.EntityFrameworkCore.Middlewares.Core;
+namespace K.EntityFrameworkCore.Middlewares.Producer;
 
 /// <summary>
 /// Helper class to replace parameter expressions in expression trees.
@@ -35,7 +36,7 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
         set
         {
             hasNoKey = false; // Reset the no key flag when setting a new accessor
-            
+
             if (value == null)
             {
                 keyAccessor = null;
@@ -115,11 +116,11 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
     /// Finds a suitable key property by looking for 'Id' property or KeyAttribute.
     /// </summary>
     /// <returns>The PropertyInfo of the key property, or null if not found.</returns>
-    private static PropertyInfo? FindKeyProperty() => 
+    private static PropertyInfo? FindKeyProperty() =>
         typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .SingleOrDefault(p => p.GetCustomAttribute<KeyAttribute>() != null)
-            ?? 
+            ??
         typeof(T)
             .GetProperty("Id", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
 

@@ -1,4 +1,5 @@
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Core.Consumer;
 using K.EntityFrameworkCore.Middlewares.Inbox;
 using System.Linq.Expressions;
 

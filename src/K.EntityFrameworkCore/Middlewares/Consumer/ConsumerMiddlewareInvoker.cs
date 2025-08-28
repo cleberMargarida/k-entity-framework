@@ -1,8 +1,9 @@
-﻿using K.EntityFrameworkCore.Middlewares.Inbox;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Inbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace K.EntityFrameworkCore.Middlewares.Core;
+namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
 internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
