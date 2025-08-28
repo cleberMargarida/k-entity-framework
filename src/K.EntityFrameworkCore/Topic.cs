@@ -63,6 +63,7 @@ public sealed class Topic<T>(DbContext context)
         public ValueTask DisposeAsync()
         {
             // Middleware lifecycle is handled by the DI container
+
             return ValueTask.CompletedTask;
         }
     }

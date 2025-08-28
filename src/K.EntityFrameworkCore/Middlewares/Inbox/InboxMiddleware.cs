@@ -56,6 +56,7 @@ internal class InboxMiddleware<T>(
 
             if (settings.ExclusiveConnection)
             {
+                //var consumerC = serviceProvider.GetRequiredKeyedService<ConsumerConfig>(typeof(T));
                 consumer = serviceProvider.GetRequiredKeyedService<IConsumer>(typeof(T));
             }
             else

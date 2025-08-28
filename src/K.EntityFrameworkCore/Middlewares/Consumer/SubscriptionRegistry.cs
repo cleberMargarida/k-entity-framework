@@ -1,8 +1,6 @@
-using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer
 {
@@ -11,9 +9,9 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
         where T : class
     {
 #if NET9_0_OR_GREATER
-        private static readonly Lock gate = new();
+        private readonly Lock gate = new();
 #else
-        private static readonly object gate = new();
+        private readonly object gate = new();
 #endif
 
         private static int refCount;
@@ -23,7 +21,7 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
             // Resolve required settings lazily inside activation
             var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
             var clientSettings = serviceProvider.GetRequiredService<ClientSettings<T>>();
-            var pollers = serviceProvider.GetRequiredService<IPollerManager>();
+            var pollers = serviceProvider.GetRequiredService<PollerManager>();
 
             // Choose shared or dedicated resources
             IConsumer consumer;
@@ -50,10 +48,14 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
                 refCount++;
             }
 
-            return new DeactivationToken(serviceProvider, clientSettings.TopicName);
+            return new DeactivationToken(serviceProvider, gate, clientSettings.TopicName);
         }
 
-        private sealed class DeactivationToken(IServiceProvider serviceProvider, string topic) : IDisposable
+#if NET9_0_OR_GREATER
+        private sealed class DeactivationToken(IServiceProvider serviceProvider, Lock gate, string topic) : IDisposable
+#else
+        private sealed class DeactivationToken(IServiceProvider serviceProvider, object gate, string topic) : IDisposable
+#endif
         {
             private bool disposed;
 
@@ -101,7 +103,7 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
                     // If using a dedicated poller for this type, stop it to release resources
                     if (settings.ExclusiveConnection)
                     {
-                        serviceProvider.GetRequiredService<IPollerManager>().StopDedicated(typeof(T));
+                        serviceProvider.GetRequiredService<PollerManager>().StopDedicated(typeof(T));
                     }
                 }
             }

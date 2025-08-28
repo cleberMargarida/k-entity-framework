@@ -84,7 +84,7 @@ namespace K.EntityFrameworkCore.Extensions
 
             // Register the central Kafka consumer poll service (shared) with lazy consumer factory
             services.AddSingleton(provider => new KafkaConsumerPollService(provider, () => provider.GetRequiredService<IConsumer>()));
-            services.AddSingleton<IPollerManager, PollerManager>();
+            services.AddSingleton<PollerManager>();
 
             // https://github.com/confluentinc/confluent-kafka-dotnet/issues/1346
             // One producer per process
@@ -99,11 +99,10 @@ namespace K.EntityFrameworkCore.Extensions
             {
                 Type consumerMiddlewareType = typeof(ConsumerMiddleware<>).MakeGenericType(type!);
 
-                services.AddKeyedSingleton(type, (_,_) => new ConsumerConfig((ConsumerConfig)client.Consumer));
-                services.AddKeyedSingleton<IConsumerConfig>(type, (_,_) => new ConsumerConfigInternal(client.ClientConfig));
+                services.AddKeyedSingleton(type, (provider, _) => (ConsumerConfig)provider.GetRequiredKeyedService<IConsumerConfig>(type));
+                services.AddKeyedSingleton<IConsumerConfig>(type, (_, _) => new ConsumerConfigInternal(client.ClientConfig));
                 services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredService(consumerMiddlewareType));
                 services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
-                // Do not pre-register keyed pollers; PollerManager will create per-type pollers on demand
             }
         }
 

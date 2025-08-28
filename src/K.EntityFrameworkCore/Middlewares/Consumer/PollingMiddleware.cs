@@ -21,7 +21,7 @@ internal class PollingMiddleware<T>(IServiceProvider serviceProvider, PollingMid
         if (!pollingStarted)
         {
             var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
-            var pollerManager = serviceProvider.GetRequiredService<IPollerManager>();
+            var pollerManager = serviceProvider.GetRequiredService<PollerManager>();
 
             if (settings.ExclusiveConnection)
             {

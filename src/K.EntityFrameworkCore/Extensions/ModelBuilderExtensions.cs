@@ -17,6 +17,8 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using K.EntityFrameworkCore.Middlewares.Producer;
 using K.EntityFrameworkCore.Middlewares.Consumer;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using System;
 
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "EF1001:Internal EF Core API usage.", Justification = "<Pending>")]
 
@@ -253,11 +255,18 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasMaxBufferedMessages(int maxMessages)
     {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerMiddlewareSettings<T>>();
+        IServiceProvider serviceProvider = ServiceProviderCache.Instance.GetOrAdd(KafkaOptionsExtension.CachedOptions!, true);
 
+        var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
         settings.MaxBufferedMessages = maxMessages;
+
+        // handle dedicated case enabled
+        if (settings.ExclusiveConnection)
+        {
+            var consumerConfig = serviceProvider.GetRequiredKeyedService<IConsumerConfig>(typeof(T));
+            consumerConfig.MaxBufferedMessages = maxMessages;
+        }
+
         return this;
     }
 
@@ -269,11 +278,18 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasBackpressureMode(ConsumerBackpressureMode mode)
     {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ConsumerMiddlewareSettings<T>>();
+        IServiceProvider serviceProvider = ServiceProviderCache.Instance.GetOrAdd(KafkaOptionsExtension.CachedOptions!, true);
 
+        var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
         settings.BackpressureMode = mode;
+
+        // handle dedicated case enabled
+        if (settings.ExclusiveConnection)
+        {
+            var consumerConfig = serviceProvider.GetRequiredKeyedService<IConsumerConfig>(typeof(T));
+            consumerConfig.BackpressureMode = mode;
+        }
+
         return this;
     }
 

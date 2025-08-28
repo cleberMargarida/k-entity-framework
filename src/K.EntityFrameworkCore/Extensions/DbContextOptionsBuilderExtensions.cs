@@ -1088,5 +1088,10 @@ namespace K.EntityFrameworkCore.Extensions
 
         // All consumer-specific properties are automatically implemented through inheritance from ConsumerConfig
         // All shared operational properties are automatically implemented through inheritance from ClientConfig
+
+        public ConsumerConfigInternal Clone()
+        {
+            return (ConsumerConfigInternal)this.MemberwiseClone();
+        }
     }
 }

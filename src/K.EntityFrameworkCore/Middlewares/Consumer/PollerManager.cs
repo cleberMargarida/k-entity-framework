@@ -4,15 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer
 {
-    internal interface IPollerManager
-    {
-        void EnsureSharedStarted();
-        void EnsureDedicatedStarted(Type type);
-        void StopDedicated(Type type);
-    }
-
     [SingletonService]
-    internal sealed class PollerManager(IServiceProvider serviceProvider) : IPollerManager
+    internal sealed class PollerManager(IServiceProvider serviceProvider)
     {
         private readonly ConcurrentDictionary<Type, KafkaConsumerPollService> dedicated = new();
 
