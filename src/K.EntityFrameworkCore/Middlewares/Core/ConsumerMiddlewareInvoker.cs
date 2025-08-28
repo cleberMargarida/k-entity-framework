@@ -8,14 +8,11 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ConsumerMiddlewareInvoker(
-          IServiceProvider serviceProvider
+          ConsumerMiddleware<T> consumerMiddleware
         , DeserializerMiddleware<T> deserializationMiddleware
         , InboxMiddleware<T> inboxMiddleware
         )
     {
-        // Get the correct keyed ConsumerMiddleware instance
-        var consumerMiddleware = serviceProvider.GetRequiredKeyedService<ConsumerMiddleware<T>>(typeof(T));
-        
         Use(consumerMiddleware);
         Use(deserializationMiddleware);
         Use(inboxMiddleware);

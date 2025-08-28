@@ -15,14 +15,20 @@ namespace K.EntityFrameworkCore
     /// Initializes a new instance of the KafkaConsumerPollService.
     /// </remarks>
     /// <param name="serviceProvider">Service provider for resolving dependencies</param>
-    /// <param name="consumer">Kafka consumer instance</param>
+    /// <param name="consumerFactory">Factory to lazily create a Kafka consumer instance</param>
     public sealed class KafkaConsumerPollService(
         IServiceProvider serviceProvider,
-        IConsumer consumer) : IDisposable
+        Func<IConsumer> consumerFactory) : IDisposable
     {
-        private readonly CancellationTokenSource cts = new();
+#if NET9_0_OR_GREATER
+        private readonly Lock startLock = new();
+#else
         private readonly object startLock = new();
-        
+#endif
+        private CancellationTokenSource? cts = null;
+        private readonly Func<IConsumer> consumerFactory = consumerFactory;
+        private IConsumer? consumer;
+
         private Task? pollTask;
         private bool isStarted;
         private bool disposed;
@@ -44,8 +50,53 @@ namespace K.EntityFrameworkCore
                 if (isStarted)
                     return;
 
+                // Lazy-create the consumer only when we actually start polling
+                consumer ??= consumerFactory();
+
+                cts = new CancellationTokenSource();
                 pollTask = PollLoopAsync(cts.Token);
                 isStarted = true;
+            }
+        }
+
+        /// <summary>
+        /// Stops the polling loop if running and disposes the underlying consumer. Safe to call multiple times.
+        /// On subsequent EnsureStarted(), a new consumer will be created lazily.
+        /// </summary>
+        public void Stop()
+        {
+            lock (startLock)
+            {
+                if (!isStarted)
+                    return;
+
+                try
+                {
+                    cts?.Cancel();
+                    pollTask?.Wait(TimeSpan.FromSeconds(5));
+                }
+                catch
+                {
+                    // swallow stop exceptions
+                }
+                finally
+                {
+                    try
+                    {
+                        consumer?.Close();
+                        consumer?.Dispose();
+                    }
+                    catch
+                    {
+                        // ignore dispose failures
+                    }
+
+                    consumer = null;
+                    pollTask = null;
+                    cts?.Dispose();
+                    cts = null;
+                    isStarted = false;
+                }
             }
         }
 
@@ -58,8 +109,8 @@ namespace K.EntityFrameworkCore
                 {
                     try
                     {
-                        var result = consumer.Consume(cancellationToken);
-                        if (result?.Message == null) 
+                        var result = consumer!.Consume(cancellationToken);
+                        if (result?.Message == null)
                             continue;
 
                         // Extract the type information from the message
@@ -109,22 +160,15 @@ namespace K.EntityFrameworkCore
                 return;
 
             disposed = true;
-            
-            cts.Cancel();
-            
-            if (pollTask != null)
+
+            try
             {
-                try
-                {
-                    pollTask.Wait(TimeSpan.FromSeconds(5));
-                }
-                catch (Exception)
-                {
-                    // Error waiting for poll task to complete during disposal
-                }
+                Stop();
             }
-            
-            cts.Dispose();
+            catch
+            {
+                // ignore dispose-time stop errors
+            }
         }
     }
 }
