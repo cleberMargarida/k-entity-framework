@@ -30,7 +30,6 @@ public sealed class Topic<T>(DbContext context)
 
     private class ConsumerEnumerator : IAsyncEnumerator<T?>
     {
-            private readonly IDisposable activationToken;
         private readonly ConsumerMiddlewareInvoker<T> middleware;
         private readonly CancellationToken cancellationToken;
 
@@ -39,7 +38,6 @@ public sealed class Topic<T>(DbContext context)
 
         internal ConsumerEnumerator(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            activationToken = serviceProvider.GetRequiredService<ISubscriptionRegistry<T>>().Activate();
             middleware = serviceProvider.GetRequiredService<ConsumerMiddlewareInvoker<T>>();
             this.cancellationToken = cancellationToken;
         }
@@ -62,7 +60,7 @@ public sealed class Topic<T>(DbContext context)
 
         public ValueTask DisposeAsync()
         {
-            activationToken.Dispose();
+            // Middleware lifecycle is handled by the DI container
             return ValueTask.CompletedTask;
         }
     }

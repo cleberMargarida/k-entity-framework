@@ -46,8 +46,12 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(InboxMiddlewareSettings<>));
             services.AddScoped(typeof(InboxMiddleware<>));
 
-            // Activation and subscription lifecycle via SubscriptionRegistry
-            services.AddSingleton(typeof(ISubscriptionRegistry<>), typeof(SubscriptionRegistry<>));
+            services.AddSingleton(typeof(SubscriptionMiddlewareSettings<>));
+            services.AddScoped(typeof(SubscriptionMiddleware<>));
+            services.AddSingleton(typeof(PollingMiddlewareSettings<>));
+            services.AddScoped(typeof(PollingMiddleware<>));
+
+            services.AddSingleton(typeof(SubscriptionRegistry<>));
             services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
             services.AddSingleton(typeof(ConsumerMiddleware<>));
 

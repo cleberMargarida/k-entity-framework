@@ -5,13 +5,7 @@ using System.Collections.Concurrent;
 
 namespace K.EntityFrameworkCore.Middlewares.Core
 {
-    internal interface ISubscriptionRegistry<T>
-        where T : class
-    {
-        IDisposable Activate();
-    }
-
-    internal sealed class SubscriptionRegistry<T>(IServiceProvider serviceProvider) : ISubscriptionRegistry<T>
+    internal sealed class SubscriptionRegistry<T>(IServiceProvider serviceProvider)
         where T : class
     {
 #if NET9_0_OR_GREATER
