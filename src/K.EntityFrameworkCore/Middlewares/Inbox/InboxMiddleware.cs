@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -48,7 +49,20 @@ internal class InboxMiddleware<T>(
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            var consumer = serviceProvider.GetRequiredKeyedService<IConsumer>(typeof(T));
+            // We need to resolve settings again to choose the correct consumer
+            var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
+
+            IConsumer consumer;
+
+            if (settings.ExclusiveConnection)
+            {
+                consumer = serviceProvider.GetRequiredKeyedService<IConsumer>(typeof(T));
+            }
+            else
+            {
+                consumer = serviceProvider.GetRequiredService<IConsumer>();
+            }
+
             consumer.StoreOffset(new TopicPartitionOffset(topicPartitionOffset.Topic, topicPartitionOffset.Partition, topicPartitionOffset.Offset + 1, topicPartitionOffset.LeaderEpoch));
             return ValueTask.CompletedTask;
         }

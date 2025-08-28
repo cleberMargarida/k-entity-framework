@@ -3,7 +3,6 @@ using K.EntityFrameworkCore.Interfaces;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
-[ScopedService]
 internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddleware<T>
     where T : class
 {
