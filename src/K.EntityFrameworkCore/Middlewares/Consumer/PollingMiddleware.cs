@@ -43,6 +43,7 @@ internal class PollingMiddleware<T>(IServiceProvider serviceProvider, PollingMid
 /// <summary>
 /// Settings for the polling middleware.
 /// </summary>
+[SingletonService]
 internal class PollingMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {

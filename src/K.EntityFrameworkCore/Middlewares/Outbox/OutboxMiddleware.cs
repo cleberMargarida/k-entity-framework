@@ -1,9 +1,11 @@
-﻿using K.EntityFrameworkCore.Middlewares.Core;
+﻿using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 
+[ScopedService]
 internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentDbContext dbContext) : Middleware<T>(outbox)
     where T : class
 {

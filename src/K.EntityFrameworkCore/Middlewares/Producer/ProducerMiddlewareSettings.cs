@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Diagnostics.CodeAnalysis;
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
@@ -18,7 +19,7 @@ internal class ParameterReplacer(ParameterExpression oldParameter, ParameterExpr
     }
 }
 
-
+[SingletonService]
 internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) : MiddlewareSettings<T>(true)
     where T : class
 {

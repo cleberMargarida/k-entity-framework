@@ -1,9 +1,11 @@
 ﻿using Confluent.Kafka;
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Producer;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
 {
+    [SingletonService]
     internal class OutboxProducerMiddleware<T>(
         IProducer producer, 
         OutboxMiddlewareSettings<T> settings,

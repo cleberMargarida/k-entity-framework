@@ -1,5 +1,6 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Text;
@@ -16,6 +17,7 @@ namespace K.EntityFrameworkCore
     /// </remarks>
     /// <param name="serviceProvider">Service provider for resolving dependencies</param>
     /// <param name="consumerFactory">Factory to lazily create a Kafka consumer instance</param>
+    [SingletonService]
     public sealed class KafkaConsumerPollService(
         IServiceProvider serviceProvider,
         Func<IConsumer> consumerFactory) : IDisposable

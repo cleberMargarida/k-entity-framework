@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
 using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Core.Producer;
-using K.EntityFrameworkCore.Middlewares.Core.Consumer;
+using K.EntityFrameworkCore.Middlewares.Producer;
+using K.EntityFrameworkCore.Middlewares.Consumer;
 using System.Threading.Channels;
 #pragma warning disable EF1001
 

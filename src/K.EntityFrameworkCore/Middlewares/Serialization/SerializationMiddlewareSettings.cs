@@ -1,5 +1,6 @@
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Extensions;
 using System.Text.Json;
 
 namespace K.EntityFrameworkCore.Middlewares.Serialization;
@@ -9,6 +10,7 @@ namespace K.EntityFrameworkCore.Middlewares.Serialization;
 /// Uses compile-time type as strategy identifier - no strings needed.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
+[SingletonService]
 internal class SerializationMiddlewareSettings<T>() : MiddlewareSettings<T>(isMiddlewareEnabled: true)
     where T : class
 {

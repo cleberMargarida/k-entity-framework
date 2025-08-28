@@ -1,10 +1,12 @@
 ﻿using Confluent.Kafka;
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer
 {
+    [ScopedService]
     internal class ProducerMiddleware<T>(IProducer producer, ICurrentDbContext dbContext, ProducerMiddlewareSettings<T> settings)
         : Middleware<T>(settings)
         where T : class

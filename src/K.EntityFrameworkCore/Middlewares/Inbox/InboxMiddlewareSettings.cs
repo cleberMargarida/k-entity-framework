@@ -1,5 +1,6 @@
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Core.Producer;
+using K.EntityFrameworkCore.Middlewares.Producer;
 using System.IO.Hashing;
 using System.Linq.Expressions;
 using System.Text;
@@ -11,6 +12,7 @@ namespace K.EntityFrameworkCore.Middlewares.Inbox;
 /// Configuration options for the InboxMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
+[SingletonService]
 public class InboxMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {

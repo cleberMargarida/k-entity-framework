@@ -1,5 +1,4 @@
 ﻿using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Core.Consumer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +28,7 @@ public static class DbContextExtensions
     }
 }
 
+[ScopedService]
 internal class ScopedCommandRegistry
 {
     private readonly Queue<ScopedCommand> commands = new(3);

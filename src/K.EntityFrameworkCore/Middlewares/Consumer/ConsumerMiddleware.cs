@@ -7,6 +7,7 @@ using System.Threading.Channels;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
+[SingletonService]
 internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : Middleware<T>(settings), IConsumeResultChannel
     where T : class
 {

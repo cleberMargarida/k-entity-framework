@@ -1,3 +1,4 @@
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -8,6 +9,7 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox;
 /// Configuration options for the OutboxMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
+[SingletonService]
 public class OutboxMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {

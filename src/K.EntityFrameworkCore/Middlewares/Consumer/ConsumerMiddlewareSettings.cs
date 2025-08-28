@@ -3,6 +3,7 @@ using K.EntityFrameworkCore.Middlewares.Core;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
+[SingletonService]
 internal class ConsumerMiddlewareSettings<T>(
       IConsumerProcessingConfig globalProcessingConfig)
     : MiddlewareSettings<T>(isMiddlewareEnabled: true)

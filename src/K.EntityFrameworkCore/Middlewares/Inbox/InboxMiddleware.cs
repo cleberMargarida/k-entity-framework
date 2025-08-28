@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Inbox;
 
+[ScopedService]
 internal class InboxMiddleware<T>(
       ICurrentDbContext currentDbContext
     , ScopedCommandRegistry scopedCommandRegistry

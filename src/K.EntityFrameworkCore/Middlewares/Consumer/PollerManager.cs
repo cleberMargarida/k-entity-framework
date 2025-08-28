@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using K.EntityFrameworkCore.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer
@@ -10,6 +11,7 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
         void StopDedicated(Type type);
     }
 
+    [SingletonService]
     internal sealed class PollerManager(IServiceProvider serviceProvider) : IPollerManager
     {
         private readonly ConcurrentDictionary<Type, KafkaConsumerPollService> dedicated = new();

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer
 {
+    [SingletonService]
     internal sealed class SubscriptionRegistry<T>(IServiceProvider serviceProvider)
         where T : class
     {

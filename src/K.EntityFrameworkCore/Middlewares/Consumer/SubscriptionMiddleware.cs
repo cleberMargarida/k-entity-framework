@@ -41,6 +41,7 @@ internal class SubscriptionMiddleware<T>(IServiceProvider serviceProvider, Subsc
 /// <summary>
 /// Settings for the subscription middleware.
 /// </summary>
+[SingletonService]
 internal class SubscriptionMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {

@@ -7,7 +7,7 @@ namespace K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Core.Producer;
+using K.EntityFrameworkCore.Middlewares.Producer;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
