@@ -802,6 +802,8 @@ namespace K.EntityFrameworkCore.Extensions
     /// </summary>
     public enum ConsumerBackpressureMode
     {
+        //TODO: when applying backpressure, consider pausing the consumer when the buffer is full and resuming when space is available.
+
         /// <summary>
         /// Applies backpressure by slowing down message consumption.
         /// This is the recommended mode for most scenarios as it prevents message loss.
