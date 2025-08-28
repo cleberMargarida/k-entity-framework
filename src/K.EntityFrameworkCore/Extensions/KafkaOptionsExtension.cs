@@ -95,7 +95,7 @@ namespace K.EntityFrameworkCore.Extensions
 
                 services.AddKeyedSingleton(type, (_,_) => new ConsumerConfig((ConsumerConfig)client.Consumer));
                 services.AddKeyedSingleton<IConsumerConfig>(type, (_,_) => new ConsumerConfigInternal(client.ClientConfig));
-                services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredKeyedService(consumerMiddlewareType, type));
+                services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredService(consumerMiddlewareType));
                 services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
                 // Do not pre-register keyed pollers; PollerManager will create per-type pollers on demand
             }
