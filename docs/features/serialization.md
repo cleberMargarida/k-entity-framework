@@ -21,7 +21,7 @@ The framework includes System.Text.Json as the default serializer, providing hig
 ```csharp
 modelBuilder.Topic<OrderCreated>(topic =>
 {
-    topic.UseJsonSerializer(options =>
+    topic.UseSystemTextJson(options =>
     {
         options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.WriteIndented = false;
@@ -36,7 +36,7 @@ modelBuilder.Topic<OrderCreated>(topic =>
 ```csharp
 modelBuilder.Topic<Order>(topic =>
 {
-    topic.UseJsonSerializer(options =>
+    topic.UseSystemTextJson(options =>
     {
         // Modern JSON naming conventions
         options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -57,113 +57,74 @@ modelBuilder.Topic<Order>(topic =>
 });
 ```
 
-### Newtonsoft.Json
+### Custom Serializers
 
-For compatibility with existing systems or advanced JSON features:
+The framework provides a generic interface for implementing custom serializers. Here's how to create and use a custom serializer:
 
 ```csharp
-// Requires: Install-Package Newtonsoft.Json
+// Example: Newtonsoft.Json serializer implementation
+public class NewtonsoftJsonSerializer<T> 
+    : IMessageSerializer<T, JsonSerializerSettings>
+    , IMessageDeserializer<T, JsonSerializerSettings>
+    where T : class
+{
+    public JsonSerializerSettings Options { get; } = new();
+
+    public byte[] Serialize(in T message)
+    {
+        var json = JsonConvert.SerializeObject(message, Options);
+        return System.Text.Encoding.UTF8.GetBytes(json);
+    }
+
+    public T? Deserialize(byte[] data)
+    {
+        var json = System.Text.Encoding.UTF8.GetString(data);
+        return JsonConvert.DeserializeObject<T>(json, Options);
+    }
+}
+
+// Usage
 modelBuilder.Topic<OrderCreated>(topic =>
 {
-    topic.UseNewtonsoftJson(settings =>
+    topic.UseSerializer<NewtonsoftJsonSerializer<OrderCreated>, JsonSerializerSettings>(settings =>
     {
         settings.NullValueHandling = NullValueHandling.Ignore;
-        settings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
         settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-        settings.Formatting = Formatting.None;
     });
 });
 ```
 
-#### Advanced Newtonsoft.Json Configuration
+#### MessagePack Serializer Example
 
 ```csharp
-modelBuilder.Topic<ComplexOrder>(topic =>
+// Example: MessagePack serializer implementation
+public class MessagePackSerializer<T> 
+    : IMessageSerializer<T, MessagePackSerializerOptions>
+    , IMessageDeserializer<T, MessagePackSerializerOptions>
+    where T : class
 {
-    topic.UseNewtonsoftJson(settings =>
+    public MessagePackSerializerOptions Options { get; } = MessagePackSerializerOptions.Standard;
+
+    public byte[] Serialize(in T message)
     {
-        // Custom contract resolver
-        settings.ContractResolver = new DefaultContractResolver
-        {
-            NamingStrategy = new CamelCaseNamingStrategy()
-        };
-        
-        // Handle missing members
-        settings.MissingMemberHandling = MissingMemberHandling.Ignore;
-        settings.NullValueHandling = NullValueHandling.Ignore;
-        
-        // Custom date handling
-        settings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
-        settings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
-        
-        // Error handling
-        settings.Error = (sender, args) =>
-        {
-            Console.WriteLine($"JSON Error: {args.ErrorContext.Error.Message}");
-            args.ErrorContext.Handled = true;
-        };
-        
-        // Custom converters
-        settings.Converters.Add(new StringEnumConverter());
-        settings.Converters.Add(new CustomDecimalConverter());
-    });
-});
-```
+        return MessagePack.MessagePackSerializer.Serialize(message, Options);
+    }
 
-### MessagePack
+    public T? Deserialize(byte[] data)
+    {
+        return MessagePack.MessagePackSerializer.Deserialize<T>(data, Options);
+    }
+}
 
-For high-performance binary serialization:
-
-```csharp
-// Requires: Install-Package MessagePack
+// Usage
 modelBuilder.Topic<HighVolumeEvent>(topic =>
 {
-    topic.UseMessagePack(options =>
+    topic.UseSerializer<MessagePackSerializer<HighVolumeEvent>, MessagePackSerializerOptions>(options =>
     {
-        options.Compression = MessagePackCompression.Lz4BlockArray;
-        options.Security.HashCollisionResistant = true;
-        options.Security.MaximumObjectGraphDepth = 64;
+        options = MessagePackSerializerOptions.Standard
+            .WithCompression(MessagePackCompression.Lz4BlockArray)
+            .WithSecurity(MessagePackSecurity.UntrustedData);
     });
-});
-```
-
-#### MessagePack with Custom Resolvers
-
-```csharp
-modelBuilder.Topic<BinaryData>(topic =>
-{
-    topic.UseMessagePack(options =>
-    {
-        // Use custom resolver for better performance
-        options.Resolver = MessagePack.Resolvers.CompositeResolver.Create(
-            new[] { new CustomResolver() },
-            new[] { MessagePack.Resolvers.StandardResolver.Instance }
-        );
-        
-        // Enable compression for large messages
-        options.Compression = MessagePackCompression.Lz4BlockArray;
-        
-        // Security settings
-        options.Security.MaximumObjectGraphDepth = 32;
-        options.Security.HashCollisionResistant = true;
-    });
-});
-```
-
-### Generic Serializer Usage
-
-For dynamic serializer selection or plugin-based scenarios:
-
-```csharp
-modelBuilder.Topic<Order>(topic =>
-{
-    topic.UseSerializer("NewtonsoftJson", options =>
-    {
-        var settings = (JsonSerializerSettings)options;
-        settings.DateFormatString = "yyyy-MM-dd";
-        settings.NullValueHandling = NullValueHandling.Ignore;
-    });
-});
 ```
 
 ## Mixed Serialization Strategies
@@ -177,9 +138,10 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     modelBuilder.Topic<HighVolumeEvent>(topic =>
     {
         topic.HasName("high-volume-events");
-        topic.UseMessagePack(options =>
+        topic.UseSerializer<MessagePackSerializer<HighVolumeEvent>, MessagePackSerializerOptions>(options =>
         {
-            options.Compression = MessagePackCompression.Lz4BlockArray;
+            options = MessagePackSerializerOptions.Standard
+                .WithCompression(MessagePackCompression.Lz4BlockArray);
         });
     });
 
@@ -187,7 +149,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     modelBuilder.Topic<ApiEvent>(topic =>
     {
         topic.HasName("api-events");
-        topic.UseJsonSerializer(options =>
+        topic.UseSystemTextJson(options =>
         {
             options.WriteIndented = true; // Pretty print for debugging
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -285,15 +247,16 @@ public class HighPerformanceEvent
 The serialization system follows a strategy pattern with these key components:
 
 1. **`SerializationMiddleware<T>`** - Unified middleware handling both serialization and deserialization
-2. **`IMessageSerializer<T>`** - Strategy interface for different serialization implementations
-3. **`SerializationStrategyRegistry`** - Registry for managing available serialization strategies
-4. **Strategy Implementations** - Framework-specific serializers using reflection to avoid hard dependencies
+2. **`IMessageSerializer<T>`** - Strategy interface for different serialization implementations  
+3. **`IMessageDeserializer<T>`** - Strategy interface for deserialization
+4. **`SerializationMiddlewareSettings<T>`** - Per-type serialization configuration
+5. **Strategy Implementations** - Built-in and custom serializers implementing the interfaces
 
 ### Pipeline Integration
 
 ```mermaid
 graph TD
-    A[Message Input] --> B[SerializationMiddleware]
+    A[Message Input] --> B[SerializerMiddleware]
     B --> C{Producer or Consumer?}
     C -->|Producer| D[Serialize Message]
     C -->|Consumer| E[Deserialize Message]
@@ -308,11 +271,11 @@ graph TD
 
 ### Key Design Principles
 
-- **Single Middleware**: One `SerializationMiddleware<T>` handles both producer serialization and consumer deserialization
-- **Strategy Pattern**: Framework-specific serializers implement `IMessageSerializer<T>` interface
-- **Reflection-Based**: External dependencies accessed via reflection to avoid hard dependencies
+- **Single Middleware**: One `SerializerMiddleware<T>` handles both producer serialization and consumer deserialization
+- **Strategy Pattern**: Serializers implement `IMessageSerializer<T>` and `IMessageDeserializer<T>` interfaces
 - **Type Safety**: Generic `<T>` ensures compile-time type validation
-- **Auto-Enablement**: Calling any `UseXXX()` method automatically enables the middleware
+- **Configuration-Based**: Settings configured per message type through `SerializationMiddlewareSettings<T>`
+- **Auto-Enablement**: Calling any `UseSystemTextJson()` or `UseSerializer<>()` method automatically enables the middleware
 
 ## Performance Considerations
 
@@ -329,20 +292,21 @@ graph TD
 #### 1. Choose the Right Serializer
 
 ```csharp
-// For high-throughput scenarios
-topic.UseMessagePack(options =>
+// For high-throughput scenarios (custom implementation)
+topic.UseSerializer<MessagePackSerializer<T>, MessagePackSerializerOptions>(options =>
 {
-    options.Compression = MessagePackCompression.Lz4BlockArray;
+    options = MessagePackSerializerOptions.Standard
+        .WithCompression(MessagePackCompression.Lz4BlockArray);
 });
 
 // For development/debugging
-topic.UseJsonSerializer(options =>
+topic.UseSystemTextJson(options =>
 {
     options.WriteIndented = true; // Only in development
 });
 
 // For production JSON
-topic.UseJsonSerializer(options =>
+topic.UseSystemTextJson(options =>
 {
     options.WriteIndented = false;
     options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -367,12 +331,7 @@ public class OptimizedMessage
 
 #### 3. Serializer Caching
 
-The framework automatically caches serializers per message type for optimal performance:
-
-```csharp
-// Serializers are cached and reused
-private static readonly ConcurrentDictionary<Type, IMessageSerializer<object>> _serializerCache = new();
-```
+The framework automatically caches serializers per message type for optimal performance through the `SerializationMiddlewareSettings<T>` singleton.
 
 ## Error Handling
 
@@ -381,9 +340,10 @@ private static readonly ConcurrentDictionary<Type, IMessageSerializer<object>> _
 ```csharp
 try
 {
-    topic.UseNewtonsoftJson();
+    // Using custom serializer that might not be available
+    topic.UseSerializer<CustomSerializer<T>, CustomOptions>();
 }
-catch (InvalidOperationException ex)
+catch (Exception ex)
 {
     // "Newtonsoft.Json is not available. Please install the Newtonsoft.Json NuGet package."
     Console.WriteLine(ex.Message);

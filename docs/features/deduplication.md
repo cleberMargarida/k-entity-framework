@@ -50,7 +50,7 @@ modelBuilder.Topic<OrderCreated>(topic =>
     {
         consumer.HasInbox(inbox =>
         {
-            inbox.DeduplicateBy(order => order.OrderId);
+            inbox.HasDeduplicateProperties(order => order.OrderId);
         });
     });
 });
@@ -67,7 +67,7 @@ modelBuilder.Topic<PaymentProcessed>(topic =>
     {
         consumer.HasInbox(inbox =>
         {
-            inbox.DeduplicateBy(payment => new { 
+            inbox.HasDeduplicateProperties(payment => new { 
                 payment.OrderId, 
                 payment.Amount,
                 payment.PaymentMethod 
@@ -88,7 +88,7 @@ modelBuilder.Topic<UserActivity>(topic =>
     {
         consumer.HasInbox(inbox =>
         {
-            inbox.DeduplicateBy(activity => new { 
+            inbox.HasDeduplicateProperties(activity => new { 
                 activity.UserId,
                 activity.ActivityType,
                 DateOnly = activity.Timestamp.Date  // Only date, ignore time
@@ -109,8 +109,8 @@ modelBuilder.Topic<OrderCreated>(topic =>
     {
         consumer.HasInbox(inbox =>
         {
-            inbox.DeduplicateBy(order => order.OrderId)
-                 .UseDeduplicationTimeWindow(TimeSpan.FromHours(24));
+            inbox.HasDeduplicateProperties(order => order.OrderId);
+            inbox.UseDeduplicationTimeWindow(TimeSpan.FromHours(24));
         });
     });
 });

@@ -39,9 +39,33 @@ K-Entity-Framework is a lightweight .NET library for working with Apache Kafka. 
 - [Testing](docs/guides/testing.md) - Testing strategies and patterns
 - [Deployment](docs/guides/deployment.md) - Production deployment considerations
 
-## 🚀 Quick Example
+## 🚀 Quick Start
 
-### Setup DbContext with Kafka Integration
+### 1. Service Registration
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<MyDbContext>(options => options
+    .UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=MyApp;Trusted_Connection=true")
+    .UseKafkaExtensibility(kafka =>
+    {
+        kafka.BootstrapServers = "localhost:9092";
+    }))
+    .AddOutboxKafkaWorker<MyDbContext>();
+
+var app = builder.Build();
+```
+
+### 2. Define Your Message Types
+```csharp
+public class OrderCreated
+{
+    public int OrderId { get; set; }
+    public string Status { get; set; }
+}
+```
+
+### 3. Setup DbContext with Kafka Topics
 ```csharp
 public class MyDbContext : DbContext
 {
@@ -50,96 +74,30 @@ public class MyDbContext : DbContext
 
     public MyDbContext(DbContextOptions options) : base(options) { }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Topic<OrderCreated>(topic =>
-        {
-            topic.HasName("order-created-topic");
-            
-            topic.UseSystemTextJson(settings =>
-            {
-                settings.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-            });
-            
-            topic.HasProducer(producer =>
-            {
-                producer.HasKey(o => o.OrderId);
-                producer.HasOutbox(outbox =>
-                {
-                    outbox.UseBackgroundOnly();
-                });
-            });
-            
-            topic.HasConsumer(consumer =>
-            {
-                consumer.HasExclusiveConnection(connection =>
-                {
-                    connection.GroupId = "order-created-dedicated";
-                    connection.MaxPollIntervalMs = 300000;
-                });
-                
-                consumer.HasMaxBufferedMessages(2000);
-                consumer.HasBackpressureMode(ConsumerBackpressureMode.ApplyBackpressure);
-                
-                consumer.HasInbox(inbox =>
-                {
-                    inbox.HasDeduplicateProperties(o => new { o.OrderId, o.Status });
-                    inbox.UseDeduplicationTimeWindow(TimeSpan.FromHours(1));
-                });
-            });
-        });
-    }
-}
 
 public class Order
 {
     public int Id { get; set; }
     public string Status { get; set; }
 }
-
-public class OrderCreated
-{
-    public int OrderId { get; set; }
-    public string Status { get; set; }
-}
 ```
 
-### Service Configuration
-```csharp
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddDbContext<MyDbContext>(options => options
-    .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
-    .UseKafkaExtensibility(client =>
-    {
-        client.BootstrapServers = "localhost:9092";
-        client.Consumer.MaxBufferedMessages = 1000;
-        client.Consumer.BackpressureMode = ConsumerBackpressureMode.ApplyBackpressure;
-    }))
-    .AddOutboxKafkaWorker<MyDbContext>(outbox => outbox
-        .WithMaxMessagesPerPoll(100)
-        .WithPollingInterval(4000)
-        .UseSingleNode());
-
-var app = builder.Build();
-```
-
-### Producer
+### 4. Producing Messages
 ```csharp
 using var scope = app.Services.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
 // Add entity to database
-dbContext.Orders.Add(new Order { Status = "New" });
+dbContext.Orders.Add(new Order { Status = "Created" });
 
-// Publish event (stored in outbox for reliable delivery)
-dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, Status = Guid.NewGuid().ToString() });
+// Publish event
+dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 123, Status = "Created" });
 
-// Save both entity and outbox message in same transaction
+// Save entity and ensure publication
 await dbContext.SaveChangesAsync();
 ```
 
-### Consumer
+### 5. Consuming Messages
 ```csharp
 using var scope = app.Services.CreateScope();
 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
@@ -153,6 +111,10 @@ await foreach (var orderEvent in dbContext.OrderEvents.WithCancellation(app.Life
     await dbContext.SaveChangesAsync();
 }
 ```
+
+That's it! You now have a working Kafka producer and consumer integrated with Entity Framework Core.
+
+For advanced configuration options like serialization settings, outbox configuration, consumer settings, and deduplication strategies, see the detailed documentation sections below.
 
 ## 🏗️ Key Features
 

@@ -34,7 +34,7 @@ graph LR
 
 ```mermaid
 graph TD
-    A[Message Input] --> B[MiddlewareInvoker&lt;T&gt;]
+    A[Message Input] --> B[ProducerMiddlewareInvoker&lt;T&gt; / ConsumerMiddlewareInvoker&lt;T&gt;]
     B --> C[Middleware Stack LIFO]
     C --> D[Middleware 1]
     D --> E[Middleware 2]

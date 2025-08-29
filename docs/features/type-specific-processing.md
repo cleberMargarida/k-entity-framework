@@ -50,9 +50,8 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
         client.BootstrapServers = "localhost:9092";
         
         // Global defaults for all message types
-        client.Consumer.Processing.MaxBufferedMessages = 1000;
-        client.Consumer.Processing.BackpressureMode = ConsumerBackpressureMode.ApplyBackpressure;
-        client.Consumer.Processing.MaxConcurrency = Environment.ProcessorCount;
+        client.Consumer.MaxBufferedMessages = 1000;
+        client.Consumer.BackpressureMode = ConsumerBackpressureMode.ApplyBackpressure;
     }));
 ```
 
