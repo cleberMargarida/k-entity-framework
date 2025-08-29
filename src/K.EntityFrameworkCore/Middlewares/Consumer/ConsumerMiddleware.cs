@@ -27,7 +27,6 @@ internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : M
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            throw;
         }
     }
 

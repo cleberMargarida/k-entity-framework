@@ -16,7 +16,90 @@ Add the K-Entity-Framework package to your project:
 dotnet add package K.EntityFrameworkCore
 ```
 
-## Basic Setup
+## Hello World Example
+
+Here's a complete working example that demonstrates the core functionality:
+
+```csharp
+using HelloWorld;
+using K.EntityFrameworkCore;
+using K.EntityFrameworkCore.Extensions;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<OrderContext>(optionsBuilder => optionsBuilder
+    // Configure EF Core to use SQL Server
+    .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
+    // Enable Kafka extensibility for EF Core (publishing/consuming integration)
+    .UseKafkaExtensibility(client => client.BootstrapServers = "localhost:9092"));
+
+using var app = builder.Build();
+app.Start();
+
+var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<OrderContext>();
+
+// here you're intending to mark the entity to be persisted.
+dbContext.Orders.Add(new Order { Status = "New" });
+
+// here you're signing the event to be published.
+// not a block calling, the event will be published when SaveChangesAsync is called.
+dbContext.OrderEvents.Publish(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
+
+await dbContext.SaveChangesAsync();
+
+// here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
+await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopping))
+{
+    // here you're commiting the offset of the current event.
+    await dbContext.SaveChangesAsync();
+}
+
+app.WaitForShutdown();
+
+namespace HelloWorld
+{
+    public class OrderContext(DbContextOptions options) : DbContext(options)
+    {
+        public DbSet<Order> Orders { get; set; }
+        public Topic<OrderEvent> OrderEvents { get; set; }
+    }
+
+    public class Order
+    {
+        public int Id { get; set; }
+        public string Status { get; set; }
+    }
+
+    public class OrderEvent
+    {
+        public int Id { get; set; }
+        public string Status { get; set; }
+    }
+}
+```
+
+### What's Happening?
+
+1. **Setup**: Configure your DbContext with both Entity Framework and Kafka integration
+2. **Entities**: Define regular EF Core entities (`Order`) and event types (`OrderEvent`)  
+3. **Topics**: Use `Topic<T>` properties to represent Kafka topics in your DbContext
+4. **Publishing**: Call `Publish()` to queue events for publishing (happens on `SaveChangesAsync()`)
+5. **Consuming**: Use `await foreach` to consume events with automatic offset management
+6. **Transactions**: Database operations and Kafka publishing happen together for consistency
+
+### Key Features Demonstrated
+
+- **Transactional Consistency**: Database operations and Kafka publishing happen together
+- **Non-blocking Publishing**: Events are queued and published asynchronously  
+- **Automatic Offset Management**: Kafka offsets are committed with `SaveChangesAsync()`
+- **Cancellation Support**: Graceful shutdown with cancellation tokens
+- **EF Core Integration**: Works seamlessly with existing EF Core patterns
+
+## Advanced Configuration
+
+For more complex scenarios, you can configure topics with additional options:
 
 ### 1. Define Your Message Types
 

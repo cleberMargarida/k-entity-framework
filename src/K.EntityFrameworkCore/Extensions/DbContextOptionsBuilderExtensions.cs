@@ -1467,8 +1467,8 @@ namespace K.EntityFrameworkCore.Extensions
             EnableAutoOffsetStore = false;
         }
 
-        public int MaxBufferedMessages { get; set; }
-        public ConsumerBackpressureMode BackpressureMode { get; set; }
+        public int MaxBufferedMessages { get; set; } = 10_000;
+        public ConsumerBackpressureMode BackpressureMode { get; set; } = ConsumerBackpressureMode.ApplyBackpressure;
 
         // ISharedOperationalConfig implementation - properties that can be configured separately for consumers
         // These delegate to the underlying ConsumerConfig which inherits from ClientConfig

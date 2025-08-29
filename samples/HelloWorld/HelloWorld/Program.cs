@@ -2,60 +2,33 @@
 using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
+builder.Services.AddDbContext<OrderContext>(optionsBuilder => optionsBuilder
 
     // Configure EF Core to use SQL Server
     .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
 
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
-    .UseKafkaExtensibility(client =>
-    {
-        client.BootstrapServers = "localhost:9092";
-        client.Consumer.MaxBufferedMessages = 1000;
-        client.Consumer.BackpressureMode = ConsumerBackpressureMode.ApplyBackpressure;
-        //...
-    }))
-
-    // Add the outbox worker (used when topics are outbox-enabled)
-    .AddOutboxKafkaWorker<MyDbContext>(outbox => outbox
-
-    // Configure the worker to poll 100 messages per poll
-    .WithMaxMessagesPerPoll(100)
-
-    // Configure the worker to poll every 1000 milliseconds (1 second)
-    .WithPollingInterval(4_000)
-
-    // Configure the worker to use a single node
-    .UseSingleNode());
+    .UseKafkaExtensibility(client => client.BootstrapServers = "localhost:9092"));
 
 using var app = builder.Build();
 
 app.Start();
 
-//Console.ReadLine();
-
 var scope = app.Services.CreateScope();
 
-var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-
-// testing purposes only
-//dbContext.Database.EnsureDeleted();
-//dbContext.Database.EnsureCreated();
+var dbContext = scope.ServiceProvider.GetRequiredService<OrderContext>();
 
 // here you're intending to mark the entity to be persisted.
-//dbContext.Orders.Add(new Order { Status = "New" });
+dbContext.Orders.Add(new Order { Status = "New" });
 
 // here you're signing the event to be published.
-//dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, Status = Guid.NewGuid().ToString() });
+// not a block calling, the event will be published when SaveChangesAsync is called.
+dbContext.OrderEvents.Publish(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
 
-// here you're saving the changes to the database and publishing the event.
-//await dbContext.SaveChangesAsync();
-
-//Console.ReadLine();
+await dbContext.SaveChangesAsync();
 
 // here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.
 await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.ApplicationStopping))
@@ -68,61 +41,11 @@ app.WaitForShutdown();
 
 namespace HelloWorld
 {
-    public class MyDbContext(DbContextOptions options) : DbContext(options)
+    public class OrderContext(DbContextOptions options) : DbContext(options)
     {
         public DbSet<Order> Orders { get; set; }
 
-        public Topic<OrderCreated> OrderEvents { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer();
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            //modelBuilder.Broker
-            modelBuilder.Topic<OrderCreated>(topic =>
-            {
-                topic.HasName("order-created-topic");
-
-                topic.UseSystemTextJson(settings =>
-                {
-                    settings.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                });
-
-                topic.HasProducer(producer =>
-                {
-                    producer.HasKey(o => o.OrderId);
-                    producer.HasOutbox(outbox =>
-                    {
-                        outbox.UseBackgroundOnly();
-                    });
-                });
-
-                topic.HasConsumer(consumer =>
-                {
-                    consumer.HasExclusiveConnection(connection =>
-                    {
-                        connection.GroupId = "order-created-dedicated";
-                        connection.MaxPollIntervalMs = 300000;
-                    });
-
-                    consumer.HasMaxBufferedMessages(2000);
-                    consumer.HasBackpressureMode(ConsumerBackpressureMode.ApplyBackpressure);
-
-                    consumer.HasInbox(inbox =>
-                    {
-                        inbox.HasDeduplicateProperties(o => new { o.OrderId, o.Status });
-                        inbox.UseDeduplicationTimeWindow(TimeSpan.FromHours(1));
-                    });
-                });
-
-                topic.HasSetting(_ => { });
-            });
-
-            base.OnModelCreating(modelBuilder);
-        }
+        public Topic<OrderEvent> OrderEvents { get; set; }
     }
 
     public class Order
@@ -131,15 +54,9 @@ namespace HelloWorld
         public string Status { get; set; }
     }
 
-    public class OrderCreated
-    {
-        public int OrderId { get; set; }
-        public string Status { get; set; }
-    }
-
-    public class Foo
+    public class OrderEvent
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Status { get; set; }
     }
 }
