@@ -1,224 +1,105 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Testcontainers.Kafka;
-using Testcontainers.PostgreSql;
-using Testcontainers.MsSql;
-using Xunit;
-using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
+using System.Reflection;
+using Xunit.Abstractions;
 
-namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure
+namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
+
+/// <summary>
+/// Base class for integration tests that uses shared TestContainers via fixture
+/// </summary>
+public abstract class IntegrationTestBase(KafkaFixture kafka, PostgreSqlFixture postgreSql, WebApplicationBuilder builder) : IAsyncDisposable
 {
-    /// <summary>
-    /// Base class for integration tests that provides TestContainers for Kafka and database
-    /// </summary>
-    public abstract class IntegrationTestBase : IAsyncLifetime
+    protected IntegrationTestBase(KafkaFixture kafka, PostgreSqlFixture postgreSql) : this(kafka, postgreSql, CreateDefaultBuilder())
     {
-        protected readonly KafkaContainer KafkaContainer;
-        protected readonly PostgreSqlContainer PostgreSqlContainer;
-        protected readonly MsSqlContainer MsSqlContainer;
-        protected IServiceProvider ServiceProvider { get; private set; } = null!;
-        protected string KafkaBootstrapServers => KafkaContainer.GetBootstrapAddress();
-        protected string PostgreSqlConnectionString => PostgreSqlContainer.GetConnectionString();
-        protected string MsSqlConnectionString => MsSqlContainer.GetConnectionString();
-
-        protected IntegrationTestBase()
-        {
-            // Configure Kafka container
-            KafkaContainer = new KafkaBuilder()
-                .WithImage("confluentinc/cp-kafka:7.4.0")
-                .WithEnvironment("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "true")
-                .WithEnvironment("KAFKA_NUM_PARTITIONS", "1")
-                .WithEnvironment("KAFKA_DEFAULT_REPLICATION_FACTOR", "1")
-                .Build();
-
-            // Configure PostgreSQL container
-            PostgreSqlContainer = new PostgreSqlBuilder()
-                .WithImage("postgres:15")
-                .WithDatabase("testdb")
-                .WithUsername("testuser")
-                .WithPassword("testpass")
-                .Build();
-
-            // Configure SQL Server container
-            MsSqlContainer = new MsSqlBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-                .WithPassword("TestPass123!")
-                .Build();
-        }
-
-        public virtual async Task InitializeAsync()
-        {
-            // Start all containers in parallel
-            await Task.WhenAll(
-                KafkaContainer.StartAsync(),
-                PostgreSqlContainer.StartAsync(),
-                MsSqlContainer.StartAsync()
-            );
-
-            // Set up services after containers are ready
-            await SetupServicesAsync();
-        }
-
-        protected virtual async Task SetupServicesAsync()
-        {
-            var services = new ServiceCollection();
-            
-            // Add logging
-            services.AddLogging(builder => builder
-                .AddConsole()
-                .SetMinimumLevel(LogLevel.Debug));
-
-            // Configure services
-            await ConfigureServicesAsync(services);
-            
-            ServiceProvider = services.BuildServiceProvider();
-        }
-
-        protected abstract Task ConfigureServicesAsync(IServiceCollection services);
-
-        public virtual async Task DisposeAsync()
-        {
-            (ServiceProvider as IDisposable)?.Dispose();
-            
-            // Stop all containers in parallel
-            await Task.WhenAll(
-                KafkaContainer.DisposeAsync().AsTask(),
-                PostgreSqlContainer.DisposeAsync().AsTask(),
-                MsSqlContainer.DisposeAsync().AsTask()
-            );
-        }
-
-        /// <summary>
-        /// Creates a scoped service provider for test isolation
-        /// </summary>
-        protected IServiceScope CreateScope() => ServiceProvider.CreateScope();
-
-        /// <summary>
-        /// Gets a service from the container
-        /// </summary>
-        protected T GetService<T>() where T : notnull => ServiceProvider.GetRequiredService<T>();
-
-        /// <summary>
-        /// Gets a service from a specific scope
-        /// </summary>
-        protected T GetService<T>(IServiceScope scope) where T : notnull => scope.ServiceProvider.GetRequiredService<T>();
     }
 
-    /// <summary>
-    /// Test context for PostgreSQL database scenarios
-    /// </summary>
-    public class PostgreSqlTestDbContext : DbContext
+    private WebApplication host;
+    private IServiceProvider services;
+
+    protected IServiceProvider Services
     {
-        public PostgreSqlTestDbContext(DbContextOptions<PostgreSqlTestDbContext> options) : base(options) { }
-
-        public DbSet<TestMessage> Messages => Set<TestMessage>();
-        public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
-        public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        get
         {
-            base.OnModelCreating(modelBuilder);
-            
-            // Configure entities for testing
-            modelBuilder.Entity<TestMessage>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Content).IsRequired();
-                entity.Property(e => e.CreatedAt).IsRequired();
-                entity.Property(e => e.MessageType).IsRequired();
-            });
+            EnsureInitialized();
+            return services;
         }
     }
 
-    /// <summary>
-    /// Test context for SQL Server database scenarios
-    /// </summary>
-    public class SqlServerTestDbContext : DbContext
+    protected WebApplicationBuilder Builder { get; } = builder;
+
+    private static WebApplicationBuilder CreateDefaultBuilder()
     {
-        public SqlServerTestDbContext(DbContextOptions<SqlServerTestDbContext> options) : base(options) { }
+        var builder = WebApplication.CreateEmptyBuilder(new WebApplicationOptions { ApplicationName = "TestHost" });
+        builder.WebHost.UseTestServer();
 
-        public DbSet<TestMessage> Messages => Set<TestMessage>();
-        public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
-        public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+        return builder;
+    }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected DbContext Context
+    {
+        get
         {
-            base.OnModelCreating(modelBuilder);
-            
-            // Configure entities for testing
-            modelBuilder.Entity<TestMessage>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Content).IsRequired();
-                entity.Property(e => e.CreatedAt).IsRequired();
-                entity.Property(e => e.MessageType).IsRequired();
-            });
+            EnsureInitialized();
+            return field;
         }
+        private set => field = value;
     }
 
-    /// <summary>
-    /// Test message entity for integration tests
-    /// </summary>
-    public class TestMessage
+    protected void OnModelCreating(Action<ModelBuilder> action)
     {
-        public int Id { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public string MessageType { get; set; } = string.Empty;
+        var contextType = Builder.Services.SingleOrDefault(sd => typeof(DbContext).IsAssignableFrom(sd.ServiceType))?.ServiceType
+            ?? throw new InvalidOperationException("No DbContext registered in the service collection. Did you forget to add one in your test?");
+
+        contextType.GetProperty(nameof(IModelCreatingExternal.OnModelCreatingExternal), BindingFlags.Public | BindingFlags.Static).SetValue(null, action);
     }
 
-    /// <summary>
-    /// Configuration options for integration tests
-    /// </summary>
-    public class IntegrationTestOptions
+    protected bool TopicExist(string topicName, int timoutMilliseconds = 1000)
     {
-        public bool EnableOutbox { get; set; } = true;
-        public bool EnableInbox { get; set; } = true;
-        public bool EnableImmediateProcessing { get; set; } = false;
-        public string DatabaseProvider { get; set; } = "PostgreSQL"; // PostgreSQL or SqlServer
+        using var adminClient = new Confluent.Kafka.AdminClientBuilder(new Confluent.Kafka.AdminClientConfig { BootstrapServers = kafka.BootstrapAddress }).Build();
+        var metadata = adminClient.GetMetadata(topicName, TimeSpan.FromMilliseconds(timoutMilliseconds));
+        return metadata.Topics.Any(t => t.Topic == topicName);
     }
 
-    /// <summary>
-    /// Test scenario configurations
-    /// </summary>
-    public static class TestScenarios
+    public async ValueTask DisposeAsync()
     {
-        public static IntegrationTestOptions OutboxOnly => new()
-        {
-            EnableOutbox = true,
-            EnableInbox = false,
-            EnableImmediateProcessing = false
-        };
+        await host.StopAsync();
+        await host.DisposeAsync();
+    }
 
-        public static IntegrationTestOptions InboxOnly => new()
-        {
-            EnableOutbox = false,
-            EnableInbox = true,
-            EnableImmediateProcessing = false
-        };
+    private void EnsureInitialized()
+    {
+        if (Builder.Services.IsReadOnly)
+            return;
 
-        public static IntegrationTestOptions OutboxAndInbox => new()
-        {
-            EnableOutbox = true,
-            EnableInbox = true,
-            EnableImmediateProcessing = false
-        };
+        Environment.SetEnvironmentVariable("ConnectionStrings:kafka", kafka.BootstrapAddress);
+        Environment.SetEnvironmentVariable("ConnectionStrings:postgres", postgreSql.Connection);
+        Builder.Configuration.AddEnvironmentVariables();
 
-        public static IntegrationTestOptions ImmediateProcessing => new()
-        {
-            EnableOutbox = true,
-            EnableInbox = true,
-            EnableImmediateProcessing = true
-        };
+        this.host = Builder.Build();
+        this.host.Start();
+        this.services = host.Services;
 
-        public static IntegrationTestOptions Disabled => new()
-        {
-            EnableOutbox = false,
-            EnableInbox = false,
-            EnableImmediateProcessing = false
-        };
+        var contextType = Builder.Services.SingleOrDefault(sd => typeof(DbContext).IsAssignableFrom(sd.ServiceType))?.ServiceType
+                ?? throw new InvalidOperationException("No DbContext registered in the service collection. Did you forget to add one in your test?");
+
+        Context = services.GetService(contextType) as DbContext;
+        Context.Database.EnsureCreated();
+    }
+}
+
+internal static class ModelBuilderExtensions
+{
+    public static WebApplicationBuilder AddSingleTopicDbContextWithKafka(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddDbContext<SingleTopicDbContext>(options => options
+                        .UseNpgsql(builder.Configuration.GetConnectionString("postgres"))
+                        .UseKafkaExtensibility(builder.Configuration.GetConnectionString("kafka")));
+
+        return builder;
     }
 }

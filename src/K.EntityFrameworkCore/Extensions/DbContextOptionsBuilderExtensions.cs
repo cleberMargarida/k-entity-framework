@@ -16,6 +16,18 @@ namespace K.EntityFrameworkCore.Extensions
     public static class DbContextOptionsBuilderExtensions
     {
         /// <summary>
+        /// Configures the DbContext to use Kafka extensibility features with the specified bootstrap servers.
+        /// This enables message production and consumption capabilities through middleware pipelines.
+        /// </summary>
+        /// <param name="optionsBuilder">The options builder for the DbContext.</param>
+        /// <param name="bootstrapServers">Comma-separated list of Kafka bootstrap servers (e.g., "localhost:9092").</param>
+        /// <returns>The same options builder instance for method chaining.</returns>
+        public static DbContextOptionsBuilder UseKafkaExtensibility(this DbContextOptionsBuilder optionsBuilder, string bootstrapServers)
+        {
+            return UseKafkaExtensibility(optionsBuilder, client => client.BootstrapServers = bootstrapServers);
+        }
+
+        /// <summary>
         /// Configures the DbContext to use Kafka extensibility features with the specified client configuration.
         /// This enables message production and consumption capabilities through middleware pipelines.
         /// </summary>

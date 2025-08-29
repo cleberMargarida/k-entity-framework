@@ -9,5 +9,5 @@ internal class ClientSettings<T>(ClientConfig clientConfig) : MiddlewareSettings
 {
     public virtual ClientConfig ClientConfig => clientConfig;
 
-    public string TopicName { get; set; } = typeof(T).FullName ?? typeof(T).Name;
+    public string TopicName { get; set; } = typeof(T).IsNested ? typeof(T).FullName!.Replace('+','.') : typeof(T).FullName;
 }

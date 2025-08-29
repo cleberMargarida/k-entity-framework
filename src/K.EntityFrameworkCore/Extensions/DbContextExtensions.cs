@@ -26,4 +26,16 @@ public static class DbContextExtensions
 
         commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);
     }
+
+    /// <summary>
+    /// Gets a topic for producing and consuming messages of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="dbContext"></param>
+    /// <returns></returns>
+    public static Topic<T> Topic<T>(this DbContext dbContext)
+        where T : class
+    {
+        return new Topic<T>(dbContext);
+    }
 }
