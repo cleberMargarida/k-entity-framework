@@ -7,7 +7,7 @@ namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
 
 public class KafkaFixture : IAsyncLifetime
 {
-    public KafkaContainer Container => field ??= new KafkaBuilder().Build();
+    public KafkaContainer Container => field ??= new KafkaBuilder().WithPortBinding(9092).Build();
 
     public string BootstrapAddress => Container.GetBootstrapAddress();
 

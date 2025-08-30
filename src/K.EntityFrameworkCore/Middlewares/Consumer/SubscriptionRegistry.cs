@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer
 {
-    [SingletonService]
+    [ScopedService]
     internal sealed class SubscriptionRegistry<T>(IServiceProvider serviceProvider)
         where T : class
     {
@@ -13,8 +13,6 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
 #else
         private readonly object gate = new();
 #endif
-
-        private static int refCount;
 
         public IDisposable Activate()
         {
@@ -39,22 +37,18 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
             // Subscribe or bump ref-count
             lock (gate)
             {
-                if (refCount == 0)
-                {
-                    var assignments = consumer.Assignment.Select(tp => tp.Topic).ToHashSet();
-                    assignments.Add(clientSettings.TopicName);
-                    consumer.Subscribe(assignments);
-                }
-                refCount++;
+                var assignments = consumer.Assignment.Select(tp => tp.Topic).ToHashSet();
+                assignments.Add(clientSettings.TopicName);
+                consumer.Subscribe(assignments);
             }
 
-            return new DeactivationToken(serviceProvider, gate, clientSettings.TopicName);
+            return new DeactivationToken(consumer, pollers, gate, clientSettings.TopicName, settings.ExclusiveConnection, typeof(T));
         }
 
 #if NET9_0_OR_GREATER
-        private sealed class DeactivationToken(IServiceProvider serviceProvider, Lock gate, string topic) : IDisposable
+        private sealed class DeactivationToken(IConsumer consumer, PollerManager pollerManager, Lock gate, string topic, bool exclusiveConnection, Type consumerType) : IDisposable
 #else
-        private sealed class DeactivationToken(IServiceProvider serviceProvider, object gate, string topic) : IDisposable
+        private sealed class DeactivationToken(IConsumer consumer, PollerManager pollerManager, object gate, string topic, bool exclusiveConnection, Type consumerType) : IDisposable
 #endif
         {
             private bool disposed;
@@ -66,29 +60,8 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
 
                 disposed = true;
 
-                // We need to resolve settings again to choose the correct consumer
-                var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
-
-                IConsumer consumer;
-
-                if (settings.ExclusiveConnection)
-                {
-                    consumer = serviceProvider.GetRequiredKeyedService<IConsumer>(typeof(T));
-                }
-                else
-                {
-                    consumer = serviceProvider.GetRequiredService<IConsumer>();
-                }
-
                 lock (gate)
                 {
-                    refCount = Math.Max(0, refCount - 1);
-
-                    if (refCount > 0)
-                    {
-                        return;
-                    }
-
                     var assignments = consumer.Assignment.Select(tp => tp.Topic).ToHashSet();
                     assignments.Remove(topic);
                     if (assignments.Count > 0)
@@ -101,9 +74,9 @@ namespace K.EntityFrameworkCore.Middlewares.Consumer
                     }
 
                     // If using a dedicated poller for this type, stop it to release resources
-                    if (settings.ExclusiveConnection)
+                    if (exclusiveConnection)
                     {
-                        serviceProvider.GetRequiredService<PollerManager>().StopDedicated(typeof(T));
+                        pollerManager.StopDedicated(consumerType);
                     }
                 }
             }

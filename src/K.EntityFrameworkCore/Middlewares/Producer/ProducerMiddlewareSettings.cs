@@ -5,6 +5,10 @@ using System.Linq.Expressions;
 using System.Diagnostics.CodeAnalysis;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
@@ -19,62 +23,20 @@ internal class ParameterReplacer(ParameterExpression oldParameter, ParameterExpr
     }
 }
 
-[SingletonService]
-internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) : MiddlewareSettings<T>(true)
+[ScopedService]
+internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, IServiceProvider serviceProvider) : MiddlewareSettings<T>(true)
     where T : class
 {
     private Func<T, string>? keyAccessor;
     private bool hasNoKey = false;
+    private Lazy<DbContext> dbContext = new(() => serviceProvider.GetRequiredService<ICurrentDbContext>().Context);
 
     private readonly ProducerConfig producerConfig = new(clientSettings.ClientConfig);
+
     public IEnumerable<KeyValuePair<string, string>> ProducerConfig => producerConfig;
 
-    [field: AllowNull]
-    public string TopicName => field ??= clientSettings.TopicName;
-
-    public Expression KeyPropertyAccessor
-    {
-        set
-        {
-            hasNoKey = false; // Reset the no key flag when setting a new accessor
-
-            if (value == null)
-            {
-                keyAccessor = null;
-                return;
-            }
-
-            var parameter = Expression.Parameter(typeof(T), "entity");
-
-            Expression propertyExpression;
-            if (value is LambdaExpression lambda)
-            {
-                // Replace the lambda's parameter with our new parameter
-                var parameterReplacer = new ParameterReplacer(lambda.Parameters[0], parameter);
-                propertyExpression = parameterReplacer.Visit(lambda.Body);
-            }
-            else
-            {
-                propertyExpression = value;
-            }
-
-            var toStringMethod = typeof(object).GetMethod("ToString")!;
-            var toStringCall = Expression.Call(propertyExpression, toStringMethod);
-            var lambdaExpression = Expression.Lambda<Func<T, string>>(toStringCall, parameter);
-
-            keyAccessor = lambdaExpression.Compile();
-        }
-    }
-
-    /// <summary>
-    /// Configures the producer to have no key (returns null for all messages).
-    /// This disables automatic key discovery and key-based partitioning.
-    /// </summary>
-    public void SetNoKey()
-    {
-        hasNoKey = true;
-        keyAccessor = null;
-    }
+    public string TopicName => dbContext.Value.Model.GetTopicName<T>() ?? 
+        clientSettings.TopicName;
 
     /// <summary>
     /// Gets the key value for the specified entity instance.
@@ -89,7 +51,44 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings) :
             throw new InvalidOperationException("Entity cannot be null when extracting key.");
         }
 
-        // If explicitly configured to have no key, return null
+        // Check model annotations first
+        var model = this.dbContext.Value.Model;
+        
+        // Check if configured to have no key
+        if (model.HasNoKey<T>())
+        {
+            return null;
+        }
+
+        // Check if there's a key property accessor in the model annotations
+        var keyPropertyAccessorExpression = model.GetKeyPropertyAccessor<T>();
+        if (keyPropertyAccessorExpression != null)
+        {
+            // Compile the expression if we haven't already
+            if (keyAccessor == null)
+            {
+                var parameter = Expression.Parameter(typeof(T), "entity");
+                Expression propertyExpression;
+                if (keyPropertyAccessorExpression is LambdaExpression lambda)
+                {
+                    var parameterReplacer = new ParameterReplacer(lambda.Parameters[0], parameter);
+                    propertyExpression = parameterReplacer.Visit(lambda.Body);
+                }
+                else
+                {
+                    propertyExpression = keyPropertyAccessorExpression;
+                }
+
+                var toStringMethod = typeof(object).GetMethod("ToString")!;
+                var toStringCall = Expression.Call(propertyExpression, toStringMethod);
+                var lambdaExpression = Expression.Lambda<Func<T, string>>(toStringCall, parameter);
+                keyAccessor = lambdaExpression.Compile();
+            }
+            
+            return keyAccessor(entity);
+        }
+
+        // If explicitly configured to have no key (legacy check), return null
         if (hasNoKey)
         {
             return null;

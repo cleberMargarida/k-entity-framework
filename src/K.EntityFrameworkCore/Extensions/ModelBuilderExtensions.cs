@@ -19,6 +19,9 @@ using K.EntityFrameworkCore.Middlewares.Producer;
 using K.EntityFrameworkCore.Middlewares.Consumer;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "EF1001:Internal EF Core API usage.", Justification = "<Pending>")]
 
@@ -39,6 +42,20 @@ namespace K.EntityFrameworkCore.Extensions
         public static ModelBuilder Topic<T>(this ModelBuilder modelBuilder, Action<TopicTypeBuilder<T>> topic) where T : class
         {
             topic(new TopicTypeBuilder<T>(modelBuilder));
+            return modelBuilder;
+        }
+
+        /// <summary>
+        /// Configures both outbox and inbox tables for message processing.
+        /// </summary>
+        /// <param name="modelBuilder"></param>
+        /// <remarks>
+        /// Not needed, this will happen when you configure outbox/inbox on specific topics via <see cref="Topic{T}(ModelBuilder, Action{TopicTypeBuilder{T}})"/>.
+        /// </remarks>
+        /// <returns></returns>
+        public static ModelBuilder HasOutboxInboxTables(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Topic<object>(topic => topic.HasProducer(producer => producer.HasOutbox()).HasConsumer(consumer => consumer.HasInbox()));
             return modelBuilder;
         }
     }
@@ -69,6 +86,8 @@ namespace K.EntityFrameworkCore.Extensions
         /// <returns>The topic builder instance for method chaining.</returns>
         public TopicTypeBuilder<T> HasName(string name)
         {
+            modelBuilder.Model.SetTopicName<T>(name);
+
             return this;
         }
 
@@ -104,15 +123,11 @@ namespace K.EntityFrameworkCore.Extensions
             where TOptions : class, new()
             where TSerializer : class, IMessageSerializer<T, TOptions>, IMessageDeserializer<T>, new()
         {
-            var settings = ServiceProviderCache.Instance
-                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<SerializationMiddlewareSettings<T>>();
+            modelBuilder.Model.SetSerializer<T, TSerializer>();
 
-            TSerializer serializer = new();
-            configure?.Invoke(serializer.Options);
-            settings.Deserializer = serializer;
-            settings.Serializer = serializer;
-
+            // TODO: Serializer configuration needs to be handled differently
+            // For now, serializer instances will be created at runtime
+            
             return this;
         }
 
@@ -148,11 +163,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns></returns>
     public ProducerBuilder<T> HasKey<TProp>(Expression<Func<T, TProp>> keyPropertyAccessor)
     {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerMiddlewareSettings<T>>();
-
-        settings.KeyPropertyAccessor = keyPropertyAccessor;
+        modelBuilder.Model.SetKeyPropertyAccessor<T>(keyPropertyAccessor);
 
         return this;
     }
@@ -167,11 +178,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance for method chaining.</returns>
     public ProducerBuilder<T> HasNoKey()
     {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerMiddlewareSettings<T>>();
-
-        settings.SetNoKey();
+        modelBuilder.Model.SetNoKey<T>();
 
         return this;
     }
@@ -186,16 +193,9 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasOutbox(Action<OutboxBuilder<T>>? configure = null)
     {
-        var outboxSettings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<OutboxMiddlewareSettings<T>>();
+        modelBuilder.Model.SetOutboxEnabled<T>();
 
-        outboxSettings.EnableMiddleware();
-
-        var builder = new OutboxBuilder<T>(outboxSettings);
-
-        configure?.Invoke(builder);
-
+        // Still need to configure entity for OutboxMessage table
         modelBuilder.Entity<OutboxMessage>(outbox =>
         {
             outbox.HasQueryFilter(outbox => !outbox.IsSuccessfullyProcessed);
@@ -209,16 +209,9 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
                   .IsRequired();
         });
 
-        if (outboxSettings.Strategy is OutboxPublishingStrategy.ImmediateWithFallback)
-        {
-            // Ensure that forget middleware is enabled when using ImmediateWithFallback strategy
-            var forgetSettings = ServiceProviderCache.Instance
-                .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-                .GetRequiredService<ProducerForgetMiddlewareSettings<T>>();
-
-            forgetSettings.EnableMiddleware();
-        }
-
+        // TODO: Strategy configuration needs to be handled differently
+        // For now, middleware settings will be configured at runtime
+        
         return this;
     }
 
@@ -230,15 +223,11 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The producer builder instance.</returns>
     public ProducerBuilder<T> HasForget(Action<ProducerForgetBuilder<T>>? configure = null)
     {
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<ProducerForgetMiddlewareSettings<T>>();
+        modelBuilder.Model.SetProducerForgetEnabled<T>();
 
-        // Enable the middleware by default when HasForget is called
-        settings.IsMiddlewareEnabled = true;
-
-        var builder = new ProducerForgetBuilder<T>(settings);
-        configure?.Invoke(builder);
+        // TODO: Forget builder configuration needs to be handled differently
+        // For now, middleware settings will be configured at runtime
+        
         return this;
     }
 
@@ -260,7 +249,7 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasInbox(Action<InboxBuilder<T>>? configure = null)
     {
-        modelBuilder.Entity<InboxMessage>(entity => 
+        modelBuilder.Entity<InboxMessage>(entity =>
         {
             entity.HasKey(entity => entity.HashId);
 
@@ -269,14 +258,11 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
             entity.HasIndex(entity => entity.ReceivedAt);
         });
 
-        var settings = ServiceProviderCache.Instance
-            .GetOrAdd(KafkaOptionsExtension.CachedOptions!, true)
-            .GetRequiredService<InboxMiddlewareSettings<T>>();
+        modelBuilder.Model.SetInboxEnabled<T>();
 
-        settings.EnableMiddleware();
-
-        var builder = new InboxBuilder<T>(settings);
-        configure?.Invoke(builder);
+        // TODO: Builder configuration needs to be handled differently
+        // For now, middleware settings will be configured at runtime
+        
         return this;
     }
 
@@ -290,18 +276,11 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasMaxBufferedMessages(int maxMessages)
     {
-        IServiceProvider serviceProvider = ServiceProviderCache.Instance.GetOrAdd(KafkaOptionsExtension.CachedOptions!, true);
+        modelBuilder.Model.SetMaxBufferedMessages<T>(maxMessages);
 
-        var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
-        settings.MaxBufferedMessages = maxMessages;
-
-        // handle dedicated case enabled
-        if (settings.ExclusiveConnection)
-        {
-            var consumerConfig = serviceProvider.GetRequiredKeyedService<IConsumerConfig>(typeof(T));
-            consumerConfig.MaxBufferedMessages = maxMessages;
-        }
-
+        // TODO: Dedicated consumer config needs to be handled differently
+        // For now, these settings will be configured at runtime
+        
         return this;
     }
 
@@ -313,18 +292,11 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasBackpressureMode(ConsumerBackpressureMode mode)
     {
-        IServiceProvider serviceProvider = ServiceProviderCache.Instance.GetOrAdd(KafkaOptionsExtension.CachedOptions!, true);
+        modelBuilder.Model.SetBackpressureMode<T>(mode);
 
-        var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
-        settings.BackpressureMode = mode;
-
-        // handle dedicated case enabled
-        if (settings.ExclusiveConnection)
-        {
-            var consumerConfig = serviceProvider.GetRequiredKeyedService<IConsumerConfig>(typeof(T));
-            consumerConfig.BackpressureMode = mode;
-        }
-
+        // TODO: Dedicated consumer config needs to be handled differently
+        // For now, these settings will be configured at runtime
+        
         return this;
     }
 
@@ -337,14 +309,11 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The consumer builder instance.</returns>
     public ConsumerBuilder<T> HasExclusiveConnection(Action<IConsumerConfig>? connection = null)
     {
-        IServiceProvider serviceProvider = ServiceProviderCache.Instance.GetOrAdd(KafkaOptionsExtension.CachedOptions!, true);
+        modelBuilder.Model.SetExclusiveConnection<T>();
 
-        var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
-        settings.ExclusiveConnection = true;
-
-        var consumerConfig = serviceProvider.GetRequiredKeyedService<IConsumerConfig>(typeof(T));
-        connection?.Invoke(consumerConfig);
-
+        // TODO: Consumer config action needs to be handled differently
+        // For now, consumer config will be configured at runtime
+        
         return this;
     }
 }

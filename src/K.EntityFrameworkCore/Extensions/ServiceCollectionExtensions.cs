@@ -24,6 +24,7 @@ namespace K.EntityFrameworkCore.Extensions
             where DbContext : Microsoft.EntityFrameworkCore.DbContext
         {
             var builder = new OutboxWorkerBuilder<DbContext>(services);
+            builder.UseSingleNode();
             configureWorker?.Invoke(builder);
             services.TryAddSingleton(builder);
             services.AddHostedService<OutboxPollingWorker<DbContext>>();

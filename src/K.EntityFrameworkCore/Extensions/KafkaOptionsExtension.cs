@@ -13,6 +13,7 @@ using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Inbox;
 using K.EntityFrameworkCore.Middlewares.Producer;
 using K.EntityFrameworkCore.Middlewares.Consumer;
+using System.Collections.Concurrent;
 
 
 namespace K.EntityFrameworkCore.Extensions
@@ -20,8 +21,6 @@ namespace K.EntityFrameworkCore.Extensions
     internal class KafkaOptionsExtension : IDbContextOptionsExtension
     {
         // TODO dictionary of context types to options
-        internal static IDbContextOptions? CachedOptions;
-
         private readonly KafkaClientBuilder client;
         private readonly Type contextType;
 
@@ -42,7 +41,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
 
             services.AddSingleton(typeof(SerializationMiddlewareSettings<>));
-            services.AddSingleton(typeof(ClientSettings<>));
+            services.AddScoped(typeof(ClientSettings<>));
 
             // Consumer-specific middleware options and classes
             services.AddSingleton(typeof(InboxMiddlewareSettings<>));
@@ -53,7 +52,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(PollingMiddlewareSettings<>));
             services.AddScoped(typeof(PollingMiddleware<>));
 
-            services.AddSingleton(typeof(SubscriptionRegistry<>));
+            services.AddScoped(typeof(SubscriptionRegistry<>));
             services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
             services.AddSingleton(typeof(ConsumerMiddleware<>));
 
@@ -61,7 +60,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(DeserializerMiddleware<>));
 
             // Producer-specific middleware options and classes
-            services.AddSingleton(typeof(ProducerMiddlewareSettings<>));
+            services.AddScoped(typeof(ProducerMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerMiddleware<>));
 
             services.AddScoped(typeof(SerializerMiddleware<>));
@@ -71,7 +70,7 @@ namespace K.EntityFrameworkCore.Extensions
 
             services.AddSingleton(typeof(OutboxMiddlewareSettings<>));
             services.AddScoped(typeof(OutboxMiddleware<>));
-            services.AddSingleton(typeof(OutboxProducerMiddleware<>));
+            services.AddScoped(typeof(OutboxProducerMiddleware<>));
 
             services.AddSingleton(_ => client.ClientConfig);
             services.AddSingleton(_ => (ProducerConfig)client.Producer);
@@ -123,7 +122,6 @@ namespace K.EntityFrameworkCore.Extensions
 
         public void Validate(IDbContextOptions options)
         {
-            CachedOptions = options;
         }
     }
 }

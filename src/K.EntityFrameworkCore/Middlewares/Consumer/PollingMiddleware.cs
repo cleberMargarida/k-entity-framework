@@ -44,12 +44,7 @@ internal class PollingMiddleware<T>(IServiceProvider serviceProvider, PollingMid
 /// Settings for the polling middleware.
 /// </summary>
 [SingletonService]
-internal class PollingMiddlewareSettings<T> : MiddlewareSettings<T>
+internal class PollingMiddlewareSettings<T>() : MiddlewareSettings<T>(isMiddlewareEnabled: true)
     where T : class
 {
-    public PollingMiddlewareSettings()
-    {
-        // Polling middleware should always be enabled as it's core functionality
-        IsMiddlewareEnabled = true;
-    }
 }

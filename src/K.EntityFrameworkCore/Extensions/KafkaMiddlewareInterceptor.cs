@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading;
 
 namespace K.EntityFrameworkCore.Extensions
 {
@@ -8,7 +9,21 @@ namespace K.EntityFrameworkCore.Extensions
     {
         public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
         {
-            return base.SavingChanges(eventData, result);
+            var dbContext = eventData.Context;
+            if (dbContext == null)
+            {
+                return base.SavingChanges(eventData, result);
+            }
+
+            IServiceProvider serviceProvider = dbContext.GetInfrastructure();
+
+            // first database operation result
+            result = base.SavingChanges(eventData, result);
+
+            // second kafka operation
+            serviceProvider.GetRequiredService<ScopedCommandRegistry>().ExecuteAsync(serviceProvider).AsTask().GetAwaiter().GetResult();
+
+            return result;
         }
 
         public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)

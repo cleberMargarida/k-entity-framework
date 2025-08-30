@@ -1,14 +1,13 @@
 using Xunit;
-using K.EntityFrameworkCore.IntegrationTests.Infrastructure;
 
-namespace K.EntityFrameworkCore.IntegrationTests
+namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure
 {
     /// <summary>
     /// Collection definition for integration tests to ensure proper isolation and resource management.
     /// Uses a shared fixture to initialize TestContainers once for all test classes in the collection.
     /// </summary>
     [CollectionDefinition("IntegrationTests", DisableParallelization = true)]
-    public class IntegrationTestCollection 
+    public class IntegrationTestCollection
         : ICollectionFixture<PostgreSqlFixture>
         , ICollectionFixture<KafkaFixture>
         , ICollectionFixture<WebApplicationFixture>

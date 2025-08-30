@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
-#pragma warning disable IDE0079
-#pragma warning disable EF1001
 
 namespace K.EntityFrameworkCore.Extensions
 {

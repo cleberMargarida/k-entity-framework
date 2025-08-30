@@ -42,12 +42,7 @@ internal class SubscriptionMiddleware<T>(IServiceProvider serviceProvider, Subsc
 /// Settings for the subscription middleware.
 /// </summary>
 [SingletonService]
-internal class SubscriptionMiddlewareSettings<T> : MiddlewareSettings<T>
+internal class SubscriptionMiddlewareSettings<T>() : MiddlewareSettings<T>(isMiddlewareEnabled: true)
     where T : class
 {
-    public SubscriptionMiddlewareSettings()
-    {
-        // Subscription middleware should always be enabled as it's core functionality
-        IsMiddlewareEnabled = true;
-    }
 }

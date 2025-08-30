@@ -5,7 +5,7 @@ using K.EntityFrameworkCore.Middlewares.Producer;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
 {
-    [SingletonService]
+    [ScopedService]
     internal class OutboxProducerMiddleware<T>(
         IProducer producer, 
         OutboxMiddlewareSettings<T> settings,

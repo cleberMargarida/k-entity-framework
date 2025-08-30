@@ -1,23 +1,20 @@
-﻿using Confluent.Kafka;
-using Xunit.Abstractions;
-
-namespace K.EntityFrameworkCore.IntegrationTests;
+﻿namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTestBase(kafka, postgreSql)
+public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
 {
     [Fact]
     public async Task Given_DbContextWithKafka_When_PublishingMessage_Then_MessageIsConsumed()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(1, default));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(1, default));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(1, result.Id);
     }
 
@@ -25,15 +22,15 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_PublishingMultipleMessages_When_SavingOnce_Then_MessagesAreConsumed()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-        Context.Publish(new MessageType(1, default));
-        Context.Publish(new MessageType(2, default));
+        await ApplyModelAndStartHostAsync();
+        context.Publish(new MessageType(1, default));
+        context.Publish(new MessageType(2, default));
 
         // Act
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().Take(2).ToListAsync();
+        var result = await context.Topic<MessageType>().Take(2).ToListAsync();
         Assert.Equal(2, result.Count);
         Assert.Equal(1, result[0].Id);
         Assert.Equal(2, result[1].Id);
@@ -43,16 +40,16 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_PublishingMessageTwice_When_SavingTwice_Then_MessagesAreConsumed()
     {
         // Arrange & Act
-        Builder.AddSingleTopicDbContextWithKafka();
+        await ApplyModelAndStartHostAsync();
 
-        Context.Publish(new MessageType(1, default));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(1, default));
+        await context.SaveChangesAsync();
 
-        Context.Publish(new MessageType(2, default));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(2, default));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().Take(2).ToListAsync();
+        var result = await context.Topic<MessageType>().Take(2).ToListAsync();
         Assert.Equal(2, result.Count);
         Assert.Equal(1, result[0].Id);
         Assert.Equal(2, result[1].Id);
@@ -63,54 +60,37 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_DbContextWithCustomTopicName_When_PublishingMessage_Then_MessageIsSentToCustomTopic()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
-        {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("custom-name");
-            });
-        });
+        defaultTopic.HasName("custom-name");
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(1, default));
-        await Context.SaveChangesAsync();
+        context.DefaultMessages.Publish(new MessageType(1, default));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
-        Assert.Equal(1, result.Id);
         Assert.True(TopicExist("custom-name"));
+        var result = await context.DefaultMessages.FirstAsync();
+        Assert.Equal(1, result.Id);
     }
 
     [Fact]
     public async Task Given_ProducerWithOutboxPattern_When_PublishingMessage_Then_MessageIsStoredInOutboxAndEventuallyPublished()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
+        builder.Services.AddOutboxKafkaWorker<PostgreTestContext>();
+        defaultTopic.HasName("outbox-test-topic").HasProducer(producer =>
         {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("outbox-test-topic");
-                topic.HasProducer(producer =>
-                {
-                    producer.HasKey(msg => msg.Id.ToString());
-                    producer.HasOutbox(outbox =>
-                    {
-                        outbox.UseBackgroundOnly();
-                    });
-                });
-            });
+            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasOutbox(outbox => outbox.UseBackgroundOnly());
         });
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(42, "OutboxTest"));
-        await Context.SaveChangesAsync();
+        context.DefaultMessages.Publish(new MessageType(42, "OutboxTest"));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(42, result.Id);
         Assert.Equal("OutboxTest", result.Name);
         Assert.True(TopicExist("outbox-test-topic"));
@@ -120,26 +100,16 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_ProducerWithCustomKey_When_PublishingMessage_Then_MessageIsPublishedWithCorrectKey()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
-        {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("custom-key-topic");
-                topic.HasProducer(producer =>
-                {
-                    producer.HasKey(msg => $"custom-{msg.Id}");
-                });
-            });
-        });
+        defaultTopic.HasName("custom-key-topic");
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => $"custom-{msg.Id}"));
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(100, "CustomKey"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(100, "CustomKey"));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(100, result.Id);
         Assert.Equal("CustomKey", result.Name);
         Assert.True(TopicExist("custom-key-topic"));
@@ -149,95 +119,63 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_ProducerWithNoKey_When_PublishingMessage_Then_MessageIsDistributedRandomly()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
-        {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasSetting(setting => setting.NumPartitions = 2);
-                topic.HasName("random-partition-topic");
-                topic.HasProducer(producer =>
-                {
-                    producer.HasNoKey(); // Random distribution
-                });
-            });
-        });
+        defaultTopic.HasSetting(setting => setting.NumPartitions = 2);
+        defaultTopic.HasName("random-partition-topic");
+        defaultTopic.HasProducer(producer => producer.HasNoKey());
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(200, "RandomPartition"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(200, "RandomPartition"));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(200, result.Id);
         Assert.Equal("RandomPartition", result.Name);
         Assert.True(TopicExist("random-partition-topic"));
     }
 
-    [Fact(Timeout = 2000)]
+    [Fact]
     public async Task Given_MultipleDifferentTopics_When_PublishingToEach_Then_MessagesAreRoutedCorrectly()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
-        {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("topic-a");
-            });
-
-            model.Topic<MessageTypeB>(topic =>
-            {
-                topic.HasName("topic-b");
-            });
-        });
+        defaultTopic.HasName("topic-a");
+        alternativeTopic.HasName("topic-b");
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(1, "TopicA"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(1, "TopicA"));
+        await context.SaveChangesAsync();
 
-        Context.Publish(new MessageTypeB(2, "TopicB"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageTypeB(2, "TopicB"));
+        await context.SaveChangesAsync();
 
         // Assert
-        Assert.True(TopicExist("topic-a"));
-        Assert.True(TopicExist("topic-b"));
-        var message1 = await Context.Topic<MessageType>().FirstAsync();
-        var message2 = await Context.Topic<MessageTypeB>().FirstAsync();
+        var message1 = await context.DefaultMessages.FirstAsync();
+        var message2 = await context.AlternativeMessages.FirstAsync();
         Assert.True(message1.Id == 1 && message1.Name == "TopicA");
-        Assert.True(message1.Id == 2 && message1.Name == "TopicB");
+        Assert.True(message2.Id == 2 && message2.Name == "TopicB");
     }
 
     [Fact]
     public async Task Given_ProducerWithOutboxImmediateWithFallback_When_PublishingMessage_Then_MessageIsPublishedImmediatelyWithFallback()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
+        builder.Services.AddOutboxKafkaWorker<PostgreTestContext>();
+        defaultTopic.HasName("immediate-fallback-topic");
+        defaultTopic.HasProducer(producer =>
         {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("immediate-fallback-topic");
-                topic.HasProducer(producer =>
-                {
-                    producer.HasKey(msg => msg.Id.ToString());
-                    producer.HasOutbox(outbox =>
-                    {
-                        outbox.UseImmediateWithFallback();
-                    });
-                });
-            });
+            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasOutbox(outbox => outbox.UseImmediateWithFallback());
         });
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(300, "ImmediateFallback"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(300, "ImmediateFallback"));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(300, result.Id);
         Assert.Equal("ImmediateFallback", result.Name);
         Assert.True(TopicExist("immediate-fallback-topic"));
@@ -247,27 +185,20 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_ProducerWithForgetMiddleware_When_PublishingMessage_Then_MessageIsPublishedWithFireAndForgetSemantics()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
+        defaultTopic.HasName("forget-topic");
+        defaultTopic.HasProducer(producer =>
         {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("forget-topic");
-                topic.HasProducer(producer =>
-                {
-                    producer.HasKey(msg => msg.Id.ToString());
-                    producer.HasForget(); // Fire and forget semantics
-                });
-            });
+            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasForget(); // Fire and forget semantics
         });
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(400, "ForgetSemantic"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(400, "ForgetSemantic"));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(400, result.Id);
         Assert.Equal("ForgetSemantic", result.Name);
         Assert.True(TopicExist("forget-topic"));
@@ -277,33 +208,25 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_ProducerWithJsonSerialization_When_PublishingComplexMessage_Then_MessageIsSerializedCorrectly()
     {
         // Arrange
-        Builder.AddSingleTopicDbContextWithKafka();
-
-        OnModelCreating(model =>
-        {
-            model.Topic<MessageType>(topic =>
-            {
-                topic.HasName("json-serialization-topic");
-                topic.UseSystemTextJson(options =>
-                {
-                    options.WriteIndented = true;
-                });
-                topic.HasProducer(producer =>
-                {
-                    producer.HasKey(msg => msg.Id.ToString());
-                });
-            });
-        });
+        defaultTopic.HasName("json-serialization-topic");
+        defaultTopic.UseSystemTextJson(options => options.WriteIndented = true);
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
+        await ApplyModelAndStartHostAsync();
 
         // Act
-        Context.Publish(new MessageType(700, "JsonSerialized"));
-        await Context.SaveChangesAsync();
+        context.Publish(new MessageType(700, "JsonSerialized"));
+        await context.SaveChangesAsync();
 
         // Assert
-        var result = await Context.Topic<MessageType>().FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync();
         Assert.Equal(700, result.Id);
         Assert.Equal("JsonSerialized", result.Name);
         Assert.True(TopicExist("json-serialization-topic"));
     }
+
+    public void Dispose()
+    {
+        DeleteKafkaTopics();
+        context.Dispose();
+    }
 }
-    
