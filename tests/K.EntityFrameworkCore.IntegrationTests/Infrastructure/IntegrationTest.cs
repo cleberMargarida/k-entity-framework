@@ -52,7 +52,7 @@ public abstract class IntegrationTest
         alternativeTopic = new TopicTypeBuilder<MessageTypeB>(internalModelBuilder);
     }
 
-    protected async Task ApplyModelAndStartHostAsync()
+    protected async Task StartHostAsync()
     {
         host = builder.Build();
 

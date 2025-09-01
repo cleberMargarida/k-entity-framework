@@ -10,7 +10,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_DbContextWithKafka_When_PublishingMessage_Then_MessageIsConsumed()
     {
         // Arrange
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1, default));
@@ -25,7 +25,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_PublishingMultipleMessages_When_SavingOnce_Then_MessagesAreConsumed()
     {
         // Arrange
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
         context.DefaultMessages.Publish(new MessageType(1, default));
         context.DefaultMessages.Publish(new MessageType(2, default));
 
@@ -43,7 +43,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     public async Task Given_PublishingMessageTwice_When_SavingTwice_Then_MessagesAreConsumed()
     {
         // Arrange & Act
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         context.DefaultMessages.Publish(new MessageType(1, default));
         await context.SaveChangesAsync();
@@ -64,7 +64,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
     {
         // Arrange
         defaultTopic.HasName("custom-name");
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1, default));
@@ -86,7 +86,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             producer.HasKey(msg => msg.Id.ToString());
             producer.HasOutbox(outbox => outbox.UseBackgroundOnly());
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(42, "OutboxTest"));
@@ -105,7 +105,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("custom-key-topic");
         defaultTopic.HasProducer(producer => producer.HasKey(msg => $"custom-{msg.Id}"));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(100, "CustomKey"));
@@ -125,7 +125,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         defaultTopic.HasSetting(setting => setting.NumPartitions = 2);
         defaultTopic.HasName("random-partition-topic");
         defaultTopic.HasProducer(producer => producer.HasNoKey());
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(200, "RandomPartition"));
@@ -144,7 +144,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("topic-a");
         alternativeTopic.HasName("topic-b");
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1, "TopicA"));
@@ -171,7 +171,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             producer.HasKey(msg => msg.Id.ToString());
             producer.HasOutbox(outbox => outbox.UseImmediateWithFallback());
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(300, "ImmediateFallback"));
@@ -194,7 +194,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             producer.HasKey(msg => msg.Id.ToString());
             producer.HasForget(); // Fire and forget semantics
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(400, "ForgetSemantic"));
@@ -214,7 +214,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         defaultTopic.HasName("json-serialization-topic");
         defaultTopic.UseSystemTextJson(options => options.WriteIndented = true);
         defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(700, "JsonSerialized"));
@@ -233,7 +233,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("batch-processing-topic");
         defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         for (int i = 1; i <= 50; i++)
@@ -257,7 +257,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         defaultTopic.HasName("multiple-partitions-topic");
         defaultTopic.HasSetting(setting => setting.NumPartitions = 4);
         defaultTopic.HasProducer(producer => producer.HasKey(msg => "fixed-key"));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(800, "SameKeyMessage1"));
@@ -278,7 +278,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("complex-key-topic");
         defaultTopic.HasProducer(producer => producer.HasKey(msg => $"{msg.Id}_{msg.Name}_{DateTime.UtcNow:yyyyMM}"));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(900, "ComplexKeyTest"));
@@ -301,7 +301,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         alternativeTopic.HasName("topic-without-key")
                        .HasProducer(producer => producer.HasNoKey());
         
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1000, "WithKey"));
@@ -332,7 +332,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         {
             consumer.HasInbox(inbox => inbox.HasDeduplicateProperties(msg => msg.Id));
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         for (int i = 1100; i <= 1105; i++)
@@ -360,7 +360,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         });
         defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1200, "CustomJsonOptions"));
@@ -384,7 +384,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             producer.HasKey(msg => msg.Id.ToString());
             producer.HasOutbox(outbox => outbox.UseImmediateWithFallback());
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         for (int i = 1400; i <= 1403; i++)
@@ -407,7 +407,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("special-chars_topic.test-123");
         defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1600, "SpecialCharsTest"));
@@ -427,7 +427,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         defaultTopic.HasName("sequential-order-topic");
         defaultTopic.HasSetting(setting => setting.NumPartitions = 1); // Single partition for order
         defaultTopic.HasProducer(producer => producer.HasKey(msg => "order-key"));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(1800, "First"));
@@ -456,7 +456,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("large-message-topic");
         defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         var largeContent = new string('X', 10000); // 10KB content
 
@@ -487,7 +487,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
                 inbox.UseDeduplicationTimeWindow(TimeSpan.FromMinutes(5));
             });
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(2000, "DeduplicationTest"));
@@ -515,7 +515,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             consumer.HasMaxBufferedMessages(5);
             consumer.HasBackpressureMode(ConsumerBackpressureMode.DropOldestMessage);
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act - Publish more messages than buffer size
         for (int i = 2100; i <= 2110; i++)
@@ -540,7 +540,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         {
             consumer.HasExclusiveConnection();
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(2200, "ExclusiveConnectionTest"));
@@ -563,7 +563,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             producer.HasKey(msg => msg.Id.ToString());
             producer.HasForget(forget => forget.UseAwaitForget(TimeSpan.FromSeconds(10)));
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(2300, "AwaitForgetTest"));
@@ -586,7 +586,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             producer.HasKey(msg => msg.Id.ToString());
             producer.HasForget(forget => forget.UseFireForget());
         });
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(2400, "FireForgetTest"));
@@ -610,7 +610,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
             setting.ReplicationFactor = 1;
         });
         defaultTopic.HasProducer(producer => producer.HasKey(msg => $"partition-{msg.Id % 3}"));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         for (int i = 2500; i <= 2505; i++)
@@ -645,7 +645,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
                        })
                        .HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
 
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         context.DefaultMessages.Publish(new MessageType(2600, "CamelCaseJson"));
@@ -669,7 +669,7 @@ public class ProducerIntegrationTests(KafkaFixture kafka, PostgreSqlFixture post
         defaultTopic.HasSetting(setting => setting.NumPartitions = 4);
         defaultTopic.HasProducer(producer => producer.HasKey(msg => 
             $"{msg.Id % 2}_{(msg.Name != null ? msg.Name.GetHashCode() : 0)}_{DateTime.UtcNow:yyyyMMdd}"));
-        await ApplyModelAndStartHostAsync();
+        await StartHostAsync();
 
         // Act
         for (int i = 2800; i <= 2810; i++)
