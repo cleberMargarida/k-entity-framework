@@ -207,10 +207,11 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
             outbox.Property(outbox => outbox.SequenceNumber)
                   .ValueGeneratedOnAdd()
                   .IsRequired();
+
+            outbox.HasIndex(x => x.SequenceNumber);
         });
 
-        // TODO: Strategy configuration needs to be handled differently
-        // For now, middleware settings will be configured at runtime
+        configure?.Invoke(new OutboxBuilder<T>(modelBuilder.Model));
         
         return this;
     }
@@ -260,8 +261,8 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
 
         modelBuilder.Model.SetInboxEnabled<T>();
 
-        // TODO: Builder configuration needs to be handled differently
-        // For now, middleware settings will be configured at runtime
+        // Configure using the inbox builder
+        configure?.Invoke(new InboxBuilder<T>(modelBuilder));
         
         return this;
     }

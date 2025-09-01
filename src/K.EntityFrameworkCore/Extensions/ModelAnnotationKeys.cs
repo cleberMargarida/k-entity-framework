@@ -53,6 +53,11 @@ internal static class ModelAnnotationKeys
     public static string OutboxEnabled(Type messageType) => $"{BasePrefix}OutboxEnabled[{messageType.FullName}]";
     
     /// <summary>
+    /// Annotation key for storing the publishing strategy for an outbox message type.
+    /// </summary>
+    public static string OutboxPublishingStrategy(Type messageType) => $"{BasePrefix}OutboxPublishingStrategy[{messageType.FullName}]";
+    
+    /// <summary>
     /// Annotation key for storing ProducerForgetMiddlewareSettings by message type.
     /// </summary>
     public static string ProducerForgetMiddlewareSettings(Type messageType) => $"{BasePrefix}ProducerForgetMiddlewareSettings[{messageType.FullName}]";
@@ -71,6 +76,21 @@ internal static class ModelAnnotationKeys
     /// Annotation key for storing whether inbox middleware is enabled for a message type.
     /// </summary>
     public static string InboxEnabled(Type messageType) => $"{BasePrefix}InboxEnabled[{messageType.FullName}]";
+    
+    /// <summary>
+    /// Annotation key for storing the deduplication value accessor for an inbox message type.
+    /// </summary>
+    public static string InboxDeduplicationValueAccessor(Type messageType) => $"{BasePrefix}InboxDeduplicationValueAccessor[{messageType.FullName}]";
+    
+    /// <summary>
+    /// Annotation key for storing the deduplication time window for an inbox message type.
+    /// </summary>
+    public static string InboxDeduplicationTimeWindow(Type messageType) => $"{BasePrefix}InboxDeduplicationTimeWindow[{messageType.FullName}]";
+    
+    /// <summary>
+    /// Annotation key for storing the cleanup interval for an inbox message type.
+    /// </summary>
+    public static string InboxCleanupInterval(Type messageType) => $"{BasePrefix}InboxCleanupInterval[{messageType.FullName}]";
     
     /// <summary>
     /// Annotation key for storing ConsumerMiddlewareSettings by message type.

@@ -38,11 +38,15 @@ public abstract class IntegrationTest
 
         builder.Configuration.AddEnvironmentVariables();
 
-        builder.Services.AddDbContext<PostgreTestContext>(options => options
-            .UseNpgsql(builder.Configuration.GetConnectionString("postgres"))
-            .EnableServiceProviderCaching(false)
-            .UseKafkaExtensibility(builder.Configuration.GetConnectionString("kafka"))
-            .ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>());
+        builder.Services.AddDbContext<PostgreTestContext>(
+            options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("postgres"))
+                       .EnableServiceProviderCaching(false)
+                       .UseKafkaExtensibility(kafka =>
+                        {
+                            kafka.BootstrapServers = builder.Configuration.GetConnectionString("kafka");
+                            kafka.Producer.EnableIdempotence = true;
+                        }));
 
         defaultTopic = new TopicTypeBuilder<MessageType>(internalModelBuilder);
         alternativeTopic = new TopicTypeBuilder<MessageTypeB>(internalModelBuilder);
@@ -53,7 +57,7 @@ public abstract class IntegrationTest
         host = builder.Build();
 
         context = host.Services.GetService<PostgreTestContext>();
-        context.Annotations = internalModelBuilder.Model.GetAnnotations();
+        PostgreTestContext.Annotations.AddRange(internalModelBuilder.Model.GetAnnotations());
 
         await context.Database.EnsureCreatedAsync();
         await host.StartAsync();
@@ -83,25 +87,4 @@ public abstract class IntegrationTest
         await adminClient.DeleteTopicsAsync(metadata.Topics.Where(t => !t.Topic.StartsWith("__")).Select(t => t.Topic), options);
         metadata = adminClient.GetMetadata(TimeSpan.FromMilliseconds(timoutMilliseconds));
     }
-}
-
-public class DynamicModelCacheKeyFactory : IModelCacheKeyFactory
-{
-    public object Create(DbContext context, bool designTime)
-    {
-        return new DynamicModelCacheKey(context, designTime, Guid.NewGuid());
-    }
-}
-
-public class DynamicModelCacheKey(DbContext context, bool designTime, Guid uniqueKey) : ModelCacheKey(context, designTime)
-{
-    private readonly Guid uniqueKey = uniqueKey;
-
-    public override bool Equals(object obj)
-        => obj is DynamicModelCacheKey other
-           && base.Equals(other)
-           && uniqueKey == other.uniqueKey;
-
-    public override int GetHashCode()
-        => HashCode.Combine(base.GetHashCode(), uniqueKey);
 }

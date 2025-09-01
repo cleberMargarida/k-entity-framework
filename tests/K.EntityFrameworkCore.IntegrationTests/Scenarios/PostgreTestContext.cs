@@ -2,15 +2,28 @@
 
 namespace K.EntityFrameworkCore.IntegrationTests.Scenarios;
 
-public sealed class PostgreTestContext(DbContextOptions options) : DbContext(options)
+public sealed class PostgreTestContext(DbContextOptions options) : DbContext(options), IDisposable, IAsyncDisposable
 {
-    public IEnumerable<IAnnotation> Annotations = [];
+    public static List<IAnnotation> Annotations = [];
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasOutboxInboxTables();
         modelBuilder.Model.AddAnnotations(Annotations);
     }
 
     public Topic<MessageType> DefaultMessages { get; set; }
     public Topic<MessageTypeB> AlternativeMessages { get; set; }
+
+    public override void Dispose()
+    {
+        Annotations.Clear();
+        base.Dispose();
+    }
+
+    public override ValueTask DisposeAsync()
+    {
+        Annotations.Clear();
+        return base.DisposeAsync();
+    }
 }

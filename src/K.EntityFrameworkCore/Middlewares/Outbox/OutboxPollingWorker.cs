@@ -72,8 +72,16 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
                 {
                     var outboxMessages = context.Set<OutboxMessage>();
                     var query = coordination.ApplyScope(outboxMessages);
+
                     var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
+
                     var outboxFinishedTasks = new Task[outboxMessageArray.Length];
+
+                    if (outboxMessageArray.Length == 0)
+                    {
+                        continue;
+                    }
+
                     var dbContextServiceProvider = context.GetInfrastructure();
 
                     for (int i = 0; i < outboxMessageArray.Length; i++)

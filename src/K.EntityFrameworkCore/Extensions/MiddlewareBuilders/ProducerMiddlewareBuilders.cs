@@ -1,7 +1,6 @@
-using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Producer;
 using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Outbox;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 
@@ -9,7 +8,7 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// Fluent builder for configuring OutboxMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class OutboxBuilder<T>(OutboxMiddlewareSettings<T> settings) where T : class
+public class OutboxBuilder<T>(IMutableModel model) where T : class
 {
     /// <summary>
     /// Configures immediate publishing strategy with fallback to background processing.
@@ -19,7 +18,7 @@ public class OutboxBuilder<T>(OutboxMiddlewareSettings<T> settings) where T : cl
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseImmediateWithFallback()
     {
-        settings.Strategy = OutboxPublishingStrategy.ImmediateWithFallback;
+        model.SetOutboxPublishingStrategy<T>(OutboxPublishingStrategy.ImmediateWithFallback);
         return this;
     }
 
@@ -30,16 +29,10 @@ public class OutboxBuilder<T>(OutboxMiddlewareSettings<T> settings) where T : cl
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseBackgroundOnly()
     {
-        settings.Strategy = OutboxPublishingStrategy.BackgroundOnly;
+        model.SetOutboxPublishingStrategy<T>(OutboxPublishingStrategy.BackgroundOnly);
         return this;
     }
 }
-
-
-
-
-
-
 
 /// <summary>
 /// Fluent builder for configuring producer ForgetMiddleware settings.

@@ -1,6 +1,10 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Producer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.DependencyInjection;
 using System.IO.Hashing;
 using System.Linq.Expressions;
 using System.Text;
@@ -12,54 +16,61 @@ namespace K.EntityFrameworkCore.Middlewares.Inbox;
 /// Configuration options for the InboxMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-[SingletonService]
-public class InboxMiddlewareSettings<T> : MiddlewareSettings<T>
+/// <remarks>
+/// Initializes a new instance of the InboxMiddlewareSettings class.
+/// </remarks>
+[ScopedService]
+public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(model.IsInboxEnabled<T>())
     where T : class
 {
-    private Func<T, object>? deduplicationValueAccessor;
     private static readonly byte[] TypeSalt = Encoding.UTF8.GetBytes(typeof(T).FullName ?? typeof(T).Name);
+    private Func<T, object>? deduplicationValueAccessor;
 
     /// <summary>
-    /// Gets or sets the timeout for duplicate message detection.
+    /// Gets the timeout for duplicate message detection.
     /// Messages older than this timeout will be considered safe to process again.
     /// Default is 24 hours.
     /// </summary>
-    public TimeSpan DeduplicationTimeWindow { get; set; } = TimeSpan.FromHours(24);
+    public TimeSpan DeduplicationTimeWindow => model.GetInboxDeduplicationTimeWindow<T>() ?? TimeSpan.FromHours(24);
 
     /// <summary>
-    /// Gets or sets the interval for automatic cleanup operations.
+    /// Gets the interval for automatic cleanup operations.
     /// Default is 1 hour.
     /// </summary>
-    public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);
+    public TimeSpan CleanupInterval => model.GetInboxCleanupInterval<T>() ?? TimeSpan.FromHours(1);
 
     /// <summary>
-    /// Gets or sets the expression used to extract values for deduplication.
+    /// Gets the compiled deduplication value accessor from model annotations.
     /// </summary>
-    public Expression<Func<T, object>>? DeduplicationValueAccessor
+    private Func<T, object>? DeduplicationValueAccessor
     {
-        set
+        get
         {
-            if (value == null)
-            {
-                deduplicationValueAccessor = null;
-                return;
-            }
+            if (deduplicationValueAccessor != null)
+                return deduplicationValueAccessor;
+
+            var valueAccessorExpression = model.GetInboxDeduplicationValueAccessor<T>();
+            
+            if (valueAccessorExpression == null)
+                return null;
 
             var parameter = Expression.Parameter(typeof(T), "message");
 
             Expression propertyExpression;
-            if (value is LambdaExpression lambda)
+            if (valueAccessorExpression is LambdaExpression lambda)
             {
                 var parameterReplacer = new ParameterReplacer(lambda.Parameters[0], parameter);
                 propertyExpression = parameterReplacer.Visit(lambda.Body);
             }
             else
             {
-                propertyExpression = value;
+                propertyExpression = valueAccessorExpression;
             }
 
             var lambdaExpression = Expression.Lambda<Func<T, object>>(propertyExpression, parameter);
             deduplicationValueAccessor = lambdaExpression.Compile();
+
+            return deduplicationValueAccessor;
         }
     }
 
@@ -78,9 +89,10 @@ public class InboxMiddlewareSettings<T> : MiddlewareSettings<T>
 
         byte[] dataToHash;
 
-        if (deduplicationValueAccessor != null)
+        var accessor = DeduplicationValueAccessor;
+        if (accessor != null)
         {
-            var value = deduplicationValueAccessor(envelope.Message);
+            var value = accessor(envelope.Message);
             var jsonValue = JsonSerializer.Serialize(value);
             dataToHash = Encoding.UTF8.GetBytes(jsonValue);
         }

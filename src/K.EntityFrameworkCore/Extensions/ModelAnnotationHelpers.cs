@@ -1,3 +1,4 @@
+using K.EntityFrameworkCore.Middlewares.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
@@ -117,6 +118,32 @@ internal static class ModelAnnotationHelpers
     }
 
     /// <summary>
+    /// Sets the publishing strategy for an outbox message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="strategy">The outbox publishing strategy.</param>
+    public static void SetOutboxPublishingStrategy<T>(this IMutableModel model, OutboxPublishingStrategy strategy)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.OutboxPublishingStrategy(typeof(T));
+        model.SetAnnotation(annotationKey, strategy);
+    }
+
+    /// <summary>
+    /// Gets the publishing strategy for an outbox message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The outbox publishing strategy, or null if not set.</returns>
+    public static OutboxPublishingStrategy? GetOutboxPublishingStrategy<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.OutboxPublishingStrategy(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as OutboxPublishingStrategy?;
+    }
+
+    /// <summary>
     /// Sets the inbox middleware enabled state for a message type in the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
@@ -140,6 +167,84 @@ internal static class ModelAnnotationHelpers
     {
         var annotationKey = ModelAnnotationKeys.InboxEnabled(typeof(T));
         return model.FindAnnotation(annotationKey)?.Value as bool? ?? false;
+    }
+
+    /// <summary>
+    /// Sets the deduplication value accessor for an inbox message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="valueAccessor">The expression that defines how to extract values for deduplication.</param>
+    public static void SetInboxDeduplicationValueAccessor<T>(this IMutableModel model, Expression valueAccessor)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.InboxDeduplicationValueAccessor(typeof(T));
+        model.SetAnnotation(annotationKey, valueAccessor);
+    }
+
+    /// <summary>
+    /// Gets the deduplication value accessor for an inbox message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The deduplication value accessor expression, or null if not set.</returns>
+    public static Expression? GetInboxDeduplicationValueAccessor<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.InboxDeduplicationValueAccessor(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as Expression;
+    }
+
+    /// <summary>
+    /// Sets the deduplication time window for an inbox message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="timeWindow">The deduplication time window.</param>
+    public static void SetInboxDeduplicationTimeWindow<T>(this IMutableModel model, TimeSpan timeWindow)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.InboxDeduplicationTimeWindow(typeof(T));
+        model.SetAnnotation(annotationKey, timeWindow);
+    }
+
+    /// <summary>
+    /// Gets the deduplication time window for an inbox message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The deduplication time window, or null if not set.</returns>
+    public static TimeSpan? GetInboxDeduplicationTimeWindow<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.InboxDeduplicationTimeWindow(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as TimeSpan?;
+    }
+
+    /// <summary>
+    /// Sets the cleanup interval for an inbox message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="cleanupInterval">The cleanup interval.</param>
+    public static void SetInboxCleanupInterval<T>(this IMutableModel model, TimeSpan cleanupInterval)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.InboxCleanupInterval(typeof(T));
+        model.SetAnnotation(annotationKey, cleanupInterval);
+    }
+
+    /// <summary>
+    /// Gets the cleanup interval for an inbox message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The cleanup interval, or null if not set.</returns>
+    public static TimeSpan? GetInboxCleanupInterval<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.InboxCleanupInterval(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as TimeSpan?;
     }
 
     /// <summary>

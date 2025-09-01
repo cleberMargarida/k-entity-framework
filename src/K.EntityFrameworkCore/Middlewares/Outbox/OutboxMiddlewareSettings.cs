@@ -2,6 +2,7 @@ using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 
@@ -9,15 +10,15 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox;
 /// Configuration options for the OutboxMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-[SingletonService]
-public class OutboxMiddlewareSettings<T> : MiddlewareSettings<T>
+[ScopedService]
+public class OutboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(model.IsOutboxEnabled<T>())
     where T : class
 {
     /// <summary>
-    /// Gets or sets the outbox publishing strategy.
-    /// Default is ImmediateWithFallback.
+    /// Gets the outbox publishing strategy from model annotations.
+    /// Default is BackgroundOnly.
     /// </summary>
-    public OutboxPublishingStrategy Strategy { get; set; } = OutboxPublishingStrategy.BackgroundOnly;
+    public OutboxPublishingStrategy Strategy => model.GetOutboxPublishingStrategy<T>() ?? OutboxPublishingStrategy.BackgroundOnly;
 }
 
 /// <summary>

@@ -1,6 +1,7 @@
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Inbox;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
@@ -9,7 +10,7 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 /// Fluent builder for configuring InboxMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class InboxBuilder<T>(InboxMiddlewareSettings<T> settings) where T : class
+public class InboxBuilder<T>(ModelBuilder modelBuilder) where T : class
 {
     /// <summary>
     /// Configures the deduplication strategy by specifying which properties or values to use for duplicate detection.
@@ -19,7 +20,7 @@ public class InboxBuilder<T>(InboxMiddlewareSettings<T> settings) where T : clas
     /// <returns>The builder instance.</returns>
     public InboxBuilder<T> HasDeduplicateProperties(Expression<Func<T, object>> valueAccessor)
     {
-        settings.DeduplicationValueAccessor = valueAccessor;
+        modelBuilder.Model.SetInboxDeduplicationValueAccessor<T>(valueAccessor);
         return this;
     }
 
@@ -30,7 +31,18 @@ public class InboxBuilder<T>(InboxMiddlewareSettings<T> settings) where T : clas
     /// <returns>The builder instance.</returns>
     public InboxBuilder<T> UseDeduplicationTimeWindow(TimeSpan timeout)
     {
-        settings.DeduplicationTimeWindow = timeout;
+        modelBuilder.Model.SetInboxDeduplicationTimeWindow<T>(timeout);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the interval for automatic cleanup operations.
+    /// </summary>
+    /// <param name="cleanupInterval">The cleanup interval.</param>
+    /// <returns>The builder instance.</returns>
+    public InboxBuilder<T> UseCleanupInterval(TimeSpan cleanupInterval)
+    {
+        modelBuilder.Model.SetInboxCleanupInterval<T>(cleanupInterval);
         return this;
     }
 }

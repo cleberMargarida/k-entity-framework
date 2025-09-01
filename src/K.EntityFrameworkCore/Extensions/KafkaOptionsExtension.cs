@@ -44,7 +44,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(ClientSettings<>));
 
             // Consumer-specific middleware options and classes
-            services.AddSingleton(typeof(InboxMiddlewareSettings<>));
+            services.AddScoped(typeof(InboxMiddlewareSettings<>));
             services.AddScoped(typeof(InboxMiddleware<>));
 
             services.AddSingleton(typeof(SubscriptionMiddlewareSettings<>));
@@ -68,7 +68,7 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddSingleton(typeof(ProducerForgetMiddlewareSettings<>));
             services.AddScoped(typeof(ProducerForgetMiddleware<>));
 
-            services.AddSingleton(typeof(OutboxMiddlewareSettings<>));
+            services.AddScoped(typeof(OutboxMiddlewareSettings<>));
             services.AddScoped(typeof(OutboxMiddleware<>));
             services.AddScoped(typeof(OutboxProducerMiddleware<>));
 
