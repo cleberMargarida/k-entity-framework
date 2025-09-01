@@ -12,8 +12,8 @@ public sealed class PostgreTestContext(DbContextOptions options) : DbContext(opt
         modelBuilder.Model.AddAnnotations(Annotations);
     }
 
-    public Topic<MessageType> DefaultMessages { get; set; }
-    public Topic<MessageTypeB> AlternativeMessages { get; set; }
+    public Topic<DefaultMessage> DefaultMessages { get; set; }
+    public Topic<AlternativeMessage> AlternativeMessages { get; set; }
 
     public override void Dispose()
     {

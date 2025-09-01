@@ -21,8 +21,8 @@ public abstract class IntegrationTest
 
     protected WebApplicationBuilder builder;
     protected PostgreTestContext context;
-    protected TopicTypeBuilder<MessageType> defaultTopic;
-    protected TopicTypeBuilder<MessageTypeB> alternativeTopic;
+    protected TopicTypeBuilder<DefaultMessage> defaultTopic;
+    protected TopicTypeBuilder<AlternativeMessage> alternativeTopic;
 
     
     public IntegrationTest(KafkaFixture kafka, PostgreSqlFixture postgreSql)
@@ -42,14 +42,10 @@ public abstract class IntegrationTest
             options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("postgres"))
                        .EnableServiceProviderCaching(false)
-                       .UseKafkaExtensibility(kafka =>
-                        {
-                            kafka.BootstrapServers = builder.Configuration.GetConnectionString("kafka");
-                            kafka.Producer.EnableIdempotence = true;
-                        }));
+                       .UseKafkaExtensibility(builder.Configuration.GetConnectionString("kafka")));
 
-        defaultTopic = new TopicTypeBuilder<MessageType>(internalModelBuilder);
-        alternativeTopic = new TopicTypeBuilder<MessageTypeB>(internalModelBuilder);
+        defaultTopic = new TopicTypeBuilder<DefaultMessage>(internalModelBuilder);
+        alternativeTopic = new TopicTypeBuilder<AlternativeMessage>(internalModelBuilder);
     }
 
     protected async Task StartHostAsync()
