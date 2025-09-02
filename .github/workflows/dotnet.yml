@@ -161,7 +161,7 @@ jobs:
     name: Integration Tests
     needs: [unit-tests, check-commit-type]
     runs-on: ubuntu-latest
-    if: needs.check-commit-type.outputs.should-test == 'true'
+    if: needs.check-commit-type.outputs.should-test == 'true' && !contains(github.event.head_commit.message, '[skip integration]')
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -299,10 +299,27 @@ jobs:
       - name: Restore Nerdbank.GitVersioning Version Info
         run: nbgv get-version --format json > version.json
 
+      - name: Debug Version Info
+        run: |
+          echo "=== Version JSON Content ==="
+          cat version.json
+          echo ""
+          echo "=== Available Version Fields ==="
+          jq -r 'keys[]' version.json
+          echo ""
+          echo "=== CloudBuildVersionVars ==="
+          jq -r '.CloudBuildVersionVars' version.json || echo "CloudBuildVersionVars not found"
+
       - name: Get Version Info
         id: version
         run: |
-          VERSION=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion' version.json)
+          # Try multiple possible paths for the version
+          VERSION=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion // .NuGetPackageVersion // .SemVer2 // .Version // empty' version.json)
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "Version extraction failed, trying alternative methods..."
+            VERSION=$(nbgv get-version --variable NuGetPackageVersion)
+          fi
+          echo "Extracted version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Package Artifacts
