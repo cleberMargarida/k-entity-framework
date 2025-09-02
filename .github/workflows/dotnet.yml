@@ -310,29 +310,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Nerdbank.GitVersioning Tool
-        run: dotnet tool install --global nbgv || dotnet tool update --global nbgv
-
-      - name: Copy version.json to root
-        run: cp src/K.EntityFrameworkCore/version.json ./version.json
-
-      - name: Restore Nerdbank.GitVersioning Version Info
-        run: nbgv get-version --format json > nbgv-version.json
-
-      - name: Debug Version Info
-        run: |
-          echo "=== Original version.json ==="
-          cat version.json
-          echo ""
-          echo "=== NBGV Version JSON Content ==="
-          cat nbgv-version.json
-          echo ""
-          echo "=== NuGetPackageVersion ==="
-          jq -r '.NuGetPackageVersion' nbgv-version.json || echo "Not found"
-
-      - name: Get Version Info
+      - name: Extract Version from NuGet Package
         id: version
-        run: echo "version=$(jq -r '.NuGetPackageVersion' nbgv-version.json)" >> $GITHUB_OUTPUT
+        run: |
+          # Find the .nupkg file and extract version from filename
+          PACKAGE_FILE=$(find ./packages -name "*.nupkg" | head -1)
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "No .nupkg file found!"
+            exit 1
+          fi
+          
+          # Extract version from filename (e.g., K.EntityFrameworkCore.1.0.16.nupkg -> 1.0.16)
+          VERSION=$(basename "$PACKAGE_FILE" | sed 's/.*\.\([0-9]\+\.[0-9]\+\.[0-9]\+.*\)\.nupkg$/\1/')
+          echo "Extracted version: $VERSION from package: $PACKAGE_FILE"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Package Artifacts
         uses: actions/download-artifact@v4
@@ -359,7 +350,7 @@ jobs:
           echo "" >> changelog.md
           echo "$CHANGELOG" >> changelog.md
           echo "" >> changelog.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v${{ steps.version.outputs.version }}" >> changelog.md
+                    echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v${{ steps.version.outputs.version }}" >> changelog.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
