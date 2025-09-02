@@ -19,7 +19,6 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox;
 public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     where TDbContext : DbContext
 {
-    public static int debugMarker = 0;
     private static ILogger<OutboxPollingWorker<TDbContext>> logger = default!;
     private readonly IServiceScope scope = default!;
     private readonly TDbContext context;

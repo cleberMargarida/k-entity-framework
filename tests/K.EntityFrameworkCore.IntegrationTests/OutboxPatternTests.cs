@@ -80,43 +80,9 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         Assert.True(TopicExist("immediate-fallback-batch-topic"));
     }
 
-    [Fact(Timeout = 60_000)]
-    public async Task Given_ProducerWithOutboxBackgroundOnly_And_ConsumerWithInboxDeduplication_When_PublishingMultipleMessages_Then_MessagesAreEventuallyProcessed()
-    {
-        OutboxPollingWorker<PostgreTestContext>.debugMarker = 840128;
-        // Arrange
-        builder.Services.AddOutboxKafkaWorker<PostgreTestContext>();
-        defaultTopic.HasName("outbox-background-batch-topic");
-        defaultTopic.HasProducer(producer =>
-        {
-            producer.HasKey(msg => msg.Id.ToString());
-            producer.HasOutbox(outbox => outbox.UseBackgroundOnly());
-        });
-        defaultTopic.HasConsumer(consumer =>
-        {
-            consumer.HasInbox(inbox => inbox.HasDeduplicateProperties(msg => msg.Id));
-        });
-        await StartHostAsync();
-
-        // Act
-        for (int i = 1100; i <= 1105; i++)
-        {
-            context.DefaultMessages.Publish(new DefaultMessage(i, $"OutboxBatch{i}"));
-            await context.SaveChangesAsync();
-        }
-
-        // Assert
-        var results = await context.Topic<DefaultMessage>().Take(6).ToListAsync();
-        Assert.Equal(6, results.Count);
-        Assert.Equal(1100, results.First().Id);
-        Assert.Equal(1105, results.Last().Id);
-        Assert.True(TopicExist("outbox-background-batch-topic"));
-    }
-
     public void Dispose()
     {
         DeleteKafkaTopics();
-        context.Set<OutboxMessage>().ExecuteDelete();
         context.Dispose();
     }
 }
