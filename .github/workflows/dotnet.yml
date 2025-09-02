@@ -296,7 +296,11 @@ jobs:
     name: Create GitHub Release
     needs: [publish, check-commit-type]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && needs.check-commit-type.outputs.should-publish == 'true'
+    if: |
+      github.ref == 'refs/heads/master' && 
+      github.event_name == 'push' && 
+      needs.check-commit-type.outputs.should-publish == 'true' &&
+      (always() && needs.publish.result == 'success')
     permissions:
       contents: write
       pull-requests: read
