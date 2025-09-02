@@ -161,7 +161,7 @@ jobs:
             9.0.x
 
       - name: Install Nerdbank.GitVersioning Tool
-        run: dotnet tool install --global nbgv
+        run: dotnet tool install --global nbgv || dotnet tool update --global nbgv
 
       - name: Restore Nerdbank.GitVersioning Version Info
         run: nbgv get-version --format json > version.json
@@ -211,7 +211,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Nerdbank.GitVersioning Tool
-        run: dotnet tool install --global nbgv
+        run: dotnet tool install --global nbgv || dotnet tool update --global nbgv
 
       - name: Get Version Info
         id: version
