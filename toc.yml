@@ -1,0 +1,48 @@
+- name: Home
+  href: index.md
+- name: Getting Started
+  href: docs/getting-started/
+  items:
+    - name: Installation
+      href: docs/getting-started/installation.md
+    - name: Quick Start
+      href: docs/getting-started/quick-start.md
+    - name: Basic Usage
+      href: docs/getting-started/basic-usage.md
+- name: Features
+  href: docs/features/
+  items:
+    - name: Connection Management
+      href: docs/features/connection-management.md
+    - name: Serialization
+      href: docs/features/serialization.md
+    - name: Inbox Pattern
+      href: docs/features/inbox.md
+    - name: Outbox Pattern
+      href: docs/features/outbox.md
+    - name: Deduplication
+      href: docs/features/deduplication.md
+    - name: Type-Specific Processing
+      href: docs/features/type-specific-processing.md
+- name: Examples
+  href: docs/examples/
+  items:
+    - name: Basic Examples
+      href: docs/examples/basic-examples.md
+- name: Architecture
+  href: docs/architecture/
+  items:
+    - name: Middleware Architecture
+      href: docs/architecture/middleware-architecture.md
+    - name: Plugin Serialization
+      href: docs/architecture/plugin-serialization.md
+    - name: Service Attributes
+      href: docs/architecture/service-attributes.md
+- name: Guides
+  href: docs/guides/
+  items:
+    - name: Kafka Configuration
+      href: docs/guides/kafka-configuration.md
+- name: API Reference
+  href: api/
+  homepage: api/index.md
