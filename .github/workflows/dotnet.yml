@@ -155,7 +155,15 @@ jobs:
       - name: Pack NuGet package
         run: |
              dotnet restore
-             dotnet pack src/K.EntityFrameworkCore/K.EntityFrameworkCore.csproj -c Release -p:Version=${{ steps.get_version.outputs.version }} --no-restore
+             dotnet pack src/K.EntityFrameworkCore/K.EntityFrameworkCore.csproj -c Release -p:Version=${{ steps.get_version.outputs.version }} --no-restore --include-symbols -p:SymbolPackageFormat=snupkg
+
+      - name: Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            src/K.EntityFrameworkCore/bin/Release/*.nupkg
+            src/K.EntityFrameworkCore/bin/Release/*.snupkg
 
       - name: Find and push NuGet package
         run: |
@@ -172,3 +180,168 @@ jobs:
           
           # Push the package
           dotnet nuget push "$PACKAGE_FILE" -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+
+  release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nerdbank.GitVersioning Tool
+        run: dotnet tool install --global nbgv
+
+      - name: Get Version Info
+        id: version
+        run: |
+          VERSION=$(nbgv get-version -f json | jq -r '.NuGetPackageVersion')
+          SIMPLE_VERSION=$(nbgv get-version -f json | jq -r '.SimpleVersion')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "simple_version=$SIMPLE_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # First release
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # Generate changelog since last tag
+            CHANGELOG=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # Save changelog to file
+          echo "## What's Changed" > changelog.md
+          echo "" >> changelog.md
+          echo "$CHANGELOG" >> changelog.md
+          echo "" >> changelog.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v${{ steps.version.outputs.simple_version }}" >> changelog.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.simple_version }}
+          name: Release v${{ steps.version.outputs.simple_version }}
+          body_path: changelog.md
+          files: |
+            packages/*.nupkg
+            packages/*.snupkg
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  documentation:
+    name: Build and Deploy Documentation
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build for Documentation
+        run: dotnet build -c Release --no-restore
+
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
+
+      - name: Setup DocFX Project
+        run: |
+          # Create docfx.json if it doesn't exist
+          if [ ! -f "docfx.json" ]; then
+            cat > docfx.json << 'EOF'
+          {
+            "metadata": [
+              {
+                "src": [
+                  {
+                    "files": ["src/K.EntityFrameworkCore/**/*.csproj"],
+                    "exclude": ["**/bin/**", "**/obj/**"]
+                  }
+                ],
+                "dest": "api",
+                "disableGitFeatures": false,
+                "disableDefaultFilter": false
+              }
+            ],
+            "build": {
+              "content": [
+                {
+                  "files": ["api/**.yml", "api/index.md"]
+                },
+                {
+                  "files": ["docs/**.md", "*.md"],
+                  "exclude": ["docs-backup/**"]
+                }
+              ],
+              "resource": [
+                {
+                  "files": ["images/**"]
+                }
+              ],
+              "overwrite": [
+                {
+                  "files": ["apidoc/**.md"],
+                  "exclude": ["obj/**", "_site/**"]
+                }
+              ],
+              "dest": "_site",
+              "globalMetadataFiles": [],
+              "fileMetadataFiles": [],
+              "template": ["default"],
+              "postProcessors": [],
+              "markdownEngineName": "markdig",
+              "noLangKeyword": false,
+              "keepFileLink": false,
+              "cleanupCacheHistory": false,
+              "disableGitFeatures": false,
+              "globalMetadata": {
+                "_appTitle": "K.EntityFrameworkCore Documentation",
+                "_appName": "K.EntityFrameworkCore",
+                "_gitContribute": {
+                  "repo": "https://github.com/cleberMargarida/k-entity-framework",
+                  "branch": "master"
+                }
+              }
+            }
+          }
+          EOF
+          fi
+
+      - name: Build Documentation
+        run: |
+          # Generate metadata and build docs
+          docfx metadata docfx.json
+          docfx build docfx.json
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          force_orphan: true
