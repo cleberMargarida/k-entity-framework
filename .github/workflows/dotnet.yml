@@ -16,6 +16,7 @@ jobs:
       should-publish: ${{ steps.commit-type.outputs.should-publish }}
       should-skip-all: ${{ steps.commit-type.outputs.should-skip-all }}
       should-docs: ${{ steps.commit-type.outputs.should-docs }}
+      skip-integration: ${{ steps.commit-type.outputs.skip-integration }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,6 +29,13 @@ jobs:
           # Get the latest commit message
           COMMIT_MSG=$(git log -1 --pretty=format:"%s")
           echo "Commit message: $COMMIT_MSG"
+          
+          # Check for skip integration flag
+          SKIP_INTEGRATION="false"
+          if echo "$COMMIT_MSG" | grep -q "\[skip integration\]"; then
+            SKIP_INTEGRATION="true"
+            echo "Found [skip integration] flag in commit message"
+          fi
           
           # Extract commit type (everything before the colon or first word)
           COMMIT_TYPE=$(echo "$COMMIT_MSG" | sed -n 's/^\([a-zA-Z]*\).*$/\1/p')
@@ -82,6 +90,7 @@ jobs:
           echo "should-publish=$SHOULD_PUBLISH" >> $GITHUB_OUTPUT
           echo "should-skip-all=$SHOULD_SKIP_ALL" >> $GITHUB_OUTPUT
           echo "should-docs=$SHOULD_DOCS" >> $GITHUB_OUTPUT
+          echo "skip-integration=$SKIP_INTEGRATION" >> $GITHUB_OUTPUT
 
   build:
     name: Build
@@ -161,7 +170,7 @@ jobs:
     name: Integration Tests
     needs: [unit-tests, check-commit-type]
     runs-on: ubuntu-latest
-    if: needs.check-commit-type.outputs.should-test == 'true' && !contains(github.event.head_commit.message, '[skip integration]')
+    if: needs.check-commit-type.outputs.should-test == 'true' && needs.check-commit-type.outputs.skip-integration != 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
