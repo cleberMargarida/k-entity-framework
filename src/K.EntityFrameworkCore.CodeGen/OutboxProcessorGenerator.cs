@@ -3,9 +3,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 
@@ -15,7 +14,7 @@ namespace K.EntityFrameworkCore.CodeGen
     /// Source generator that creates middleware specifier implementations for DbContext types.
     /// Automatically generates code to handle type-specific outbox message processing.
     /// </summary>
-    [Generator]
+    [Generator, ExcludeFromCodeCoverage]
     public class OutboxProcessorGenerator : IIncrementalGenerator
     {
         /// <summary>
@@ -167,6 +166,7 @@ namespace K.EntityFrameworkCore.CodeGen
     }
 }
 
+[ExcludeFromCodeCoverage]
 internal static class SymbolExtensions
 {
     /// <summary>
