@@ -7,9 +7,87 @@ on:
     branches: [ "master" ]
 
 jobs:
+  check-commit-type:
+    name: Check Commit Type
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.commit-type.outputs.should-build }}
+      should-test: ${{ steps.commit-type.outputs.should-test }}
+      should-publish: ${{ steps.commit-type.outputs.should-publish }}
+      should-skip-all: ${{ steps.commit-type.outputs.should-skip-all }}
+      should-docs: ${{ steps.commit-type.outputs.should-docs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine commit type and actions
+        id: commit-type
+        run: |
+          # Get the latest commit message
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Extract commit type (everything before the colon or first word)
+          COMMIT_TYPE=$(echo "$COMMIT_MSG" | sed -n 's/^\([a-zA-Z]*\).*$/\1/p')
+          echo "Commit type: $COMMIT_TYPE"
+          
+          # Set defaults
+          SHOULD_BUILD="false"
+          SHOULD_TEST="false"
+          SHOULD_PUBLISH="false"
+          SHOULD_SKIP_ALL="false"
+          SHOULD_DOCS="false"
+          
+          case "$COMMIT_TYPE" in
+            "build"|"refactor"|"perf"|"fix"|"feat")
+              echo "Running full pipeline (build, test, publish)"
+              SHOULD_BUILD="true"
+              SHOULD_TEST="true"
+              SHOULD_PUBLISH="true"
+              SHOULD_DOCS="true"
+              ;;
+            "test")
+              echo "Running build and tests only"
+              SHOULD_BUILD="true"
+              SHOULD_TEST="true"
+              SHOULD_DOCS="true"
+              ;;
+            "ci")
+              echo "Running all jobs"
+              SHOULD_BUILD="true"
+              SHOULD_TEST="true"
+              SHOULD_PUBLISH="true"
+              SHOULD_DOCS="true"
+              ;;
+            "docs")
+              echo "Running docs only"
+              SHOULD_DOCS="true"
+              ;;
+            "chore")
+              echo "Skipping all jobs"
+              ;;
+            *)
+              echo "Unknown commit type, running full pipeline by default"
+              SHOULD_BUILD="true"
+              SHOULD_TEST="true"
+              SHOULD_PUBLISH="true"
+              SHOULD_DOCS="true"
+              ;;
+          esac
+          
+          echo "should-build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+          echo "should-test=$SHOULD_TEST" >> $GITHUB_OUTPUT
+          echo "should-publish=$SHOULD_PUBLISH" >> $GITHUB_OUTPUT
+          echo "should-skip-all=$SHOULD_SKIP_ALL" >> $GITHUB_OUTPUT
+          echo "should-docs=$SHOULD_DOCS" >> $GITHUB_OUTPUT
+
   build:
     name: Build
+    needs: check-commit-type
     runs-on: ubuntu-latest
+    if: needs.check-commit-type.outputs.should-build == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -31,8 +109,9 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    needs: build
+    needs: [build, check-commit-type]
     runs-on: ubuntu-latest
+    if: needs.check-commit-type.outputs.should-test == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -80,8 +159,9 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    needs: unit-tests
+    needs: [unit-tests, check-commit-type]
     runs-on: ubuntu-latest
+    if: needs.check-commit-type.outputs.should-test == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -144,9 +224,9 @@ jobs:
     
   publish:
     name: Publish to NuGet
-    needs: integration-tests
+    needs: [integration-tests, check-commit-type]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && needs.check-commit-type.outputs.should-publish == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -201,9 +281,9 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: publish
+    needs: [publish, check-commit-type]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && needs.check-commit-type.outputs.should-publish == 'true'
     permissions:
       contents: write
       pull-requests: read
@@ -216,10 +296,13 @@ jobs:
       - name: Install Nerdbank.GitVersioning Tool
         run: dotnet tool install --global nbgv || dotnet tool update --global nbgv
 
+      - name: Restore Nerdbank.GitVersioning Version Info
+        run: nbgv get-version --format json > version.json
+
       - name: Get Version Info
         id: version
         run: |
-          VERSION=$(nbgv get-version -f json | jq -r '.NuGetPackageVersion')
+          VERSION=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion' version.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Package Artifacts
@@ -264,9 +347,13 @@ jobs:
 
   documentation:
     name: Build and Deploy Documentation
-    needs: integration-tests
+    needs: [check-commit-type, integration-tests]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: |
+      github.ref == 'refs/heads/master' && 
+      github.event_name == 'push' && 
+      needs.check-commit-type.outputs.should-docs == 'true' &&
+      (always() && (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped'))
     permissions:
       contents: read
       pages: write
