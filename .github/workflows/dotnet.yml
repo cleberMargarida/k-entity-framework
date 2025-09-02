@@ -204,6 +204,9 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -266,6 +269,10 @@ jobs:
     needs: integration-tests
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -357,9 +364,14 @@ jobs:
           docfx metadata docfx.json
           docfx build docfx.json
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
-          force_orphan: true
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
