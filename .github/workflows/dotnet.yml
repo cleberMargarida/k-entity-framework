@@ -220,9 +220,7 @@ jobs:
         id: version
         run: |
           VERSION=$(nbgv get-version -f json | jq -r '.NuGetPackageVersion')
-          SIMPLE_VERSION=$(nbgv get-version -f json | jq -r '.SimpleVersion')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "simple_version=$SIMPLE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Download Package Artifacts
         uses: actions/download-artifact@v4
@@ -249,13 +247,13 @@ jobs:
           echo "" >> changelog.md
           echo "$CHANGELOG" >> changelog.md
           echo "" >> changelog.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v${{ steps.version.outputs.simple_version }}" >> changelog.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v${{ steps.version.outputs.version }}" >> changelog.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.simple_version }}
-          name: Release v${{ steps.version.outputs.simple_version }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
           body_path: changelog.md
           files: |
             packages/*.nupkg
