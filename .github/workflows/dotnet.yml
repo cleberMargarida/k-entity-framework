@@ -310,6 +310,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./packages
+
       - name: Extract Version from NuGet Package
         id: version
         run: |
@@ -324,12 +330,6 @@ jobs:
           VERSION=$(basename "$PACKAGE_FILE" | sed 's/.*\.\([0-9]\+\.[0-9]\+\.[0-9]\+.*\)\.nupkg$/\1/')
           echo "Extracted version: $VERSION from package: $PACKAGE_FILE"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Download Package Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: nuget-packages
-          path: ./packages
 
       - name: Generate Changelog
         id: changelog
