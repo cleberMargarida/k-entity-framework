@@ -1,5 +1,12 @@
 # K-Entity-Framework Documentation
 
+[![Build Status](https://github.com/cleberMargarida/k-entity-framework/actions/workflows/dotnet.yml/badge.svg)](https://github.com/cleberMargarida/k-entity-framework/actions/workflows/dotnet.yml)
+[![NuGet Version](https://img.shields.io/nuget/v/K.EntityFrameworkCore.svg)](https://www.nuget.org/packages/K.EntityFrameworkCore/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/K.EntityFrameworkCore.svg)](https://www.nuget.org/packages/K.EntityFrameworkCore/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://cleberMargarida.github.io/k-entity-framework/)
+[![GitHub Release](https://img.shields.io/github/v/release/cleberMargarida/k-entity-framework)](https://github.com/cleberMargarida/k-entity-framework/releases/latest)
+
 K-Entity-Framework is a lightweight .NET library for working with Apache Kafka. It provides a simple and efficient way to produce and consume messages in Kafka topics with a focus on Entity Framework integration and middleware-based extensibility.
 
 ## 📚 Table of Contents

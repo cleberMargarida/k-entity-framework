@@ -64,6 +64,15 @@ jobs:
         output: 'both'
         tag: 'unit-tests'
 
+    - name: Upload Unit Test Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: coverage/unit/**/*.cobertura.xml
+        flags: unit-tests
+        name: unit-tests
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+
     - name: Write Unit Test Summary
       run: |
         echo "## Unit Test Coverage" >> $GITHUB_STEP_SUMMARY
@@ -103,6 +112,15 @@ jobs:
         format: 'markdown'
         output: 'both'
         tag: 'integration-tests'
+
+    - name: Upload Integration Test Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: coverage/integration/**/*.cobertura.xml
+        flags: integration-tests
+        name: integration-tests
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
 
     - name: Write Integration Test Summary
       run: |
