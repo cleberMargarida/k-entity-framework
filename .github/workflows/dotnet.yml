@@ -261,7 +261,7 @@ jobs:
 
       - name: Extract Version Number
         id: get_version
-        run: echo "version=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion' version.json)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r '.NuGetPackageVersion' version.json)" >> $GITHUB_OUTPUT
 
       - name: Pack NuGet package
         run: |
@@ -327,12 +327,12 @@ jobs:
           echo "=== NBGV Version JSON Content ==="
           cat nbgv-version.json
           echo ""
-          echo "=== CloudBuildVersionVars.NuGetPackageVersion ==="
-          jq -r '.CloudBuildVersionVars.NuGetPackageVersion' nbgv-version.json || echo "Not found"
+          echo "=== NuGetPackageVersion ==="
+          jq -r '.NuGetPackageVersion' nbgv-version.json || echo "Not found"
 
       - name: Get Version Info
         id: version
-        run: echo "version=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion' nbgv-version.json)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r '.NuGetPackageVersion' nbgv-version.json)" >> $GITHUB_OUTPUT
 
       - name: Download Package Artifacts
         uses: actions/download-artifact@v4
