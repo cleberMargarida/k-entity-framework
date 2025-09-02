@@ -313,11 +313,11 @@ jobs:
       - name: Install Nerdbank.GitVersioning Tool
         run: dotnet tool install --global nbgv || dotnet tool update --global nbgv
 
+      - name: Copy version.json to root
+        run: cp src/K.EntityFrameworkCore/version.json ./version.json
+
       - name: Restore Nerdbank.GitVersioning Version Info
-        run: |
-          # Copy version.json to root so nbgv can find it
-          cp src/K.EntityFrameworkCore/version.json ./version.json
-          nbgv get-version --format json > nbgv-version.json
+        run: nbgv get-version --format json > nbgv-version.json
 
       - name: Debug Version Info
         run: |
@@ -327,23 +327,12 @@ jobs:
           echo "=== NBGV Version JSON Content ==="
           cat nbgv-version.json
           echo ""
-          echo "=== Available Version Fields ==="
-          jq -r 'keys[]' nbgv-version.json
-          echo ""
-          echo "=== CloudBuildVersionVars ==="
-          jq -r '.CloudBuildVersionVars' nbgv-version.json || echo "CloudBuildVersionVars not found"
+          echo "=== CloudBuildVersionVars.NuGetPackageVersion ==="
+          jq -r '.CloudBuildVersionVars.NuGetPackageVersion' nbgv-version.json || echo "Not found"
 
       - name: Get Version Info
         id: version
-        run: |
-          # Try multiple possible paths for the version
-          VERSION=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion // .NuGetPackageVersion // .SemVer2 // .Version // empty' nbgv-version.json)
-          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
-            echo "Version extraction failed, trying alternative methods..."
-            VERSION=$(nbgv get-version --variable NuGetPackageVersion)
-          fi
-          echo "Extracted version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r '.CloudBuildVersionVars.NuGetPackageVersion' nbgv-version.json)" >> $GITHUB_OUTPUT
 
       - name: Download Package Artifacts
         uses: actions/download-artifact@v4
