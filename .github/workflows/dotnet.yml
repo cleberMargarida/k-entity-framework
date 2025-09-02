@@ -233,9 +233,13 @@ jobs:
     
   publish:
     name: Publish to NuGet
-    needs: [integration-tests, check-commit-type]
+    needs: [integration-tests, check-commit-type, unit-tests]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && needs.check-commit-type.outputs.should-publish == 'true'
+    if: |
+      github.ref == 'refs/heads/master' && 
+      github.event_name == 'push' && 
+      needs.check-commit-type.outputs.should-publish == 'true' &&
+      (always() && (needs.integration-tests.result == 'success' || (needs.integration-tests.result == 'skipped' && needs.unit-tests.result == 'success')))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -373,13 +377,13 @@ jobs:
 
   documentation:
     name: Build and Deploy Documentation
-    needs: [check-commit-type, integration-tests]
+    needs: [check-commit-type, integration-tests, unit-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/master' && 
       github.event_name == 'push' && 
       needs.check-commit-type.outputs.should-docs == 'true' &&
-      (always() && (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped'))
+      (always() && (needs.integration-tests.result == 'success' || (needs.integration-tests.result == 'skipped' && needs.unit-tests.result == 'success')))
     permissions:
       contents: read
       pages: write
