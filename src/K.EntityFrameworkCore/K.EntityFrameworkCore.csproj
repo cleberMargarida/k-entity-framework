@@ -17,11 +17,16 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<RepositoryUrl>https://github.com/cleberMargarida/k-entity-framework</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/cleberMargarida/k-entity-framework</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
 		<Title>K.EntityFrameworkCore</Title>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
 	<PropertyGroup>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
