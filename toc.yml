@@ -1,7 +1,7 @@
 - name: Home
   href: index.md
 - name: Getting Started
-  href: docs/getting-started/
+  homepage: docs/getting-started/index.md
   items:
     - name: Installation
       href: docs/getting-started/installation.md
@@ -10,7 +10,7 @@
     - name: Basic Usage
       href: docs/getting-started/basic-usage.md
 - name: Features
-  href: docs/features/
+  homepage: docs/features/index.md
   items:
     - name: Connection Management
       href: docs/features/connection-management.md
@@ -25,12 +25,12 @@
     - name: Type-Specific Processing
       href: docs/features/type-specific-processing.md
 - name: Examples
-  href: docs/examples/
+  homepage: docs/examples/index.md
   items:
     - name: Basic Examples
       href: docs/examples/basic-examples.md
 - name: Architecture
-  href: docs/architecture/
+  homepage: docs/architecture/index.md
   items:
     - name: Middleware Architecture
       href: docs/architecture/middleware-architecture.md
@@ -39,7 +39,7 @@
     - name: Service Attributes
       href: docs/architecture/service-attributes.md
 - name: Guides
-  href: docs/guides/
+  homepage: docs/guides/index.md
   items:
     - name: Kafka Configuration
       href: docs/guides/kafka-configuration.md
