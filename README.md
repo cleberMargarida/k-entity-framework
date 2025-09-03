@@ -19,7 +19,9 @@ Imagine publishing events as naturally as saving entities, with built-in transac
 
 No more scattered configuration files or learning yet another messaging framework. *just the familiar DbContext semantics you already know.*
 
-## Quick Example
+#### For installation guides, tutorials, examples, and API reference, visit our [DOCUMENTATION](https://cleberMargarida.github.io/k-entity-framework/)
+
+## Quick Start
 
 ```csharp
 builder.Services.AddDbContext<MyDbContext>(options => options
@@ -45,9 +47,7 @@ await foreach (var order in dbContext.OrderEvents)
 }
 ```
 
-## Documentation
-
-For installation guides, tutorials, examples, and API reference, visit our [DOCUMENTATION](https://cleberMargarida.github.io/k-entity-framework/)
+> 💡 **Want to see more examples?** Check out our [comprehensive documentation](https://cleberMargarida.github.io/k-entity-framework/) for advanced scenarios, configuration options, and best practices.
 
 ## Why K-Entity-Framework?
 
