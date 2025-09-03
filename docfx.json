@@ -30,13 +30,13 @@
     "overwrite": [
       {
         "files": ["apidoc/**.md"],
-        "exclude": ["obj/**", "_site/**"]
+        "exclude": ["obj/**", "api/**", "_site/**"]
       }
     ],
-    "dest": "_site",
+    "dest": "bin/docs",
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
-    "template": ["default"],
+    "template": ["default", "modern"],
     "postProcessors": [],
     "markdownEngineName": "markdig",
     "noLangKeyword": false,

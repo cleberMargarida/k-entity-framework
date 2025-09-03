@@ -405,9 +405,8 @@ jobs:
 
       - name: Build Documentation
         run: |
-          # Generate metadata and build docs
-          docfx metadata docfx.json
-          docfx build docfx.json
+          # Build docs with the new output location
+          docfx docfx.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -415,7 +414,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./_site
+          path: ./bin/docs
 
       - name: Deploy to GitHub Pages
         id: deployment
