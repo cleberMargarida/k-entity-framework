@@ -4,19 +4,22 @@ on:
   push:
     branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "*" ]
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
     if: |
-      startsWith(github.event.head_commit.message, 'build') ||
-      startsWith(github.event.head_commit.message, 'refactor') ||
-      startsWith(github.event.head_commit.message, 'perf') ||
-      startsWith(github.event.head_commit.message, 'fix') ||
-      startsWith(github.event.head_commit.message, 'feat') ||
-      startsWith(github.event.head_commit.message, 'test')
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref != 'refs/heads/master') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' && 
+       (startsWith(github.event.head_commit.message, 'build') ||
+        startsWith(github.event.head_commit.message, 'refactor') ||
+        startsWith(github.event.head_commit.message, 'perf') ||
+        startsWith(github.event.head_commit.message, 'fix') ||
+        startsWith(github.event.head_commit.message, 'feat') ||
+        startsWith(github.event.head_commit.message, 'test')))
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -41,11 +44,14 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     if: |
-      startsWith(github.event.head_commit.message, 'refactor') ||
-      startsWith(github.event.head_commit.message, 'perf') ||
-      startsWith(github.event.head_commit.message, 'fix') ||
-      startsWith(github.event.head_commit.message, 'feat') ||
-      startsWith(github.event.head_commit.message, 'test')
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref != 'refs/heads/master') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' && 
+       (startsWith(github.event.head_commit.message, 'refactor') ||
+        startsWith(github.event.head_commit.message, 'perf') ||
+        startsWith(github.event.head_commit.message, 'fix') ||
+        startsWith(github.event.head_commit.message, 'feat') ||
+        startsWith(github.event.head_commit.message, 'test')))
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -96,12 +102,16 @@ jobs:
     needs: [unit-tests]
     runs-on: ubuntu-latest
     if: |
-      (startsWith(github.event.head_commit.message, 'refactor') ||
-       startsWith(github.event.head_commit.message, 'perf') ||
-       startsWith(github.event.head_commit.message, 'fix') ||
-       startsWith(github.event.head_commit.message, 'feat') ||
-       startsWith(github.event.head_commit.message, 'test')) &&
-      !contains(github.event.head_commit.message, '[skip-integration]')
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'push' && github.ref != 'refs/heads/master') ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/master' && 
+        (startsWith(github.event.head_commit.message, 'refactor') ||
+         startsWith(github.event.head_commit.message, 'perf') ||
+         startsWith(github.event.head_commit.message, 'fix') ||
+         startsWith(github.event.head_commit.message, 'feat') ||
+         startsWith(github.event.head_commit.message, 'test')))) &&
+      !(github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[skip-integration]')) &&
+      !(github.event_name == 'push' && contains(github.event.head_commit.message, '[skip-integration]'))
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -162,15 +172,77 @@ jobs:
           ### Integration Tests
           Please see the integration test coverage in the job summary.
     
+  check-commits:
+    name: Check All Commits
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    outputs:
+      has-release-commits: ${{ steps.check.outputs.has-release-commits }}
+      has-docs-commits: ${{ steps.check.outputs.has-docs-commits }}
+      is-merge-commit: ${{ steps.check.outputs.is-merge-commit }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        id: check
+        run: |
+          # Check if this is a merge commit (has more than one parent)
+          PARENT_COUNT=$(git rev-list --count --parents ${{ github.sha }} | head -1 | awk '{print NF-1}')
+          if [ "$PARENT_COUNT" -gt 1 ]; then
+            echo "This is a merge commit (PR merge)"
+            echo "is-merge-commit=true" >> $GITHUB_OUTPUT
+            echo "has-release-commits=true" >> $GITHUB_OUTPUT
+            echo "has-docs-commits=true" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "This is a regular commit"
+            echo "is-merge-commit=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Get the range of commits in this push
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            # First push to branch, check only the latest commit
+            COMMIT_RANGE="${{ github.sha }}"
+          else
+            # Normal push, check all commits in the range
+            COMMIT_RANGE="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          
+          echo "Checking commits in range: $COMMIT_RANGE"
+          
+          # Check for release-worthy commits (fix or feat)
+          RELEASE_COMMITS=$(git log --oneline $COMMIT_RANGE | grep -E "(fix|feat):" || true)
+          if [ -n "$RELEASE_COMMITS" ]; then
+            echo "Found release-worthy commits:"
+            echo "$RELEASE_COMMITS"
+            echo "has-release-commits=true" >> $GITHUB_OUTPUT
+          else
+            echo "No release-worthy commits found"
+            echo "has-release-commits=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Check for documentation commits (docs or feat)
+          DOCS_COMMITS=$(git log --oneline $COMMIT_RANGE | grep -E "(docs|feat):" || true)
+          if [ -n "$DOCS_COMMITS" ]; then
+            echo "Found documentation-worthy commits:"
+            echo "$DOCS_COMMITS"
+            echo "has-docs-commits=true" >> $GITHUB_OUTPUT
+          else
+            echo "No documentation-worthy commits found"
+            echo "has-docs-commits=false" >> $GITHUB_OUTPUT
+          fi
+
   publish:
     name: Publish to NuGet
-    needs: [integration-tests, unit-tests]
+    needs: [integration-tests, unit-tests, check-commits]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/master' && 
       github.event_name == 'push' && 
-      (startsWith(github.event.head_commit.message, 'fix') ||
-       startsWith(github.event.head_commit.message, 'feat')) &&
+      (needs.check-commits.outputs.is-merge-commit == 'true' || needs.check-commits.outputs.has-release-commits == 'true') &&
       (always() && (needs.integration-tests.result == 'success' || (needs.integration-tests.result == 'skipped' && needs.unit-tests.result == 'success')))
     steps:
       - name: Checkout code
@@ -226,13 +298,12 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: [publish]
+    needs: [publish, check-commits]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/master' && 
       github.event_name == 'push' && 
-      (startsWith(github.event.head_commit.message, 'fix') ||
-       startsWith(github.event.head_commit.message, 'feat')) &&
+      (needs.check-commits.outputs.is-merge-commit == 'true' || needs.check-commits.outputs.has-release-commits == 'true') &&
       (always() && needs.publish.result == 'success')
     permissions:
       contents: write
@@ -300,12 +371,12 @@ jobs:
 
   documentation:
     name: Build and Deploy Documentation
+    needs: [check-commits]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/master' && 
       github.event_name == 'push' && 
-      (startsWith(github.event.head_commit.message, 'docs') ||
-       startsWith(github.event.head_commit.message, 'feat'))
+      (needs.check-commits.outputs.is-merge-commit == 'true' || needs.check-commits.outputs.has-docs-commits == 'true')
     permissions:
       contents: read
       pages: write
