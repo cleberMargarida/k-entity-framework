@@ -24,7 +24,7 @@
     ],
     "resource": [
       {
-        "files": ["images/**"]
+        "files": ["docs/images/**"]
       }
     ],
     "overwrite": [
@@ -46,6 +46,7 @@
     "globalMetadata": {
       "_appTitle": "K.EntityFrameworkCore Documentation",
       "_appName": "K.EntityFrameworkCore",
+      "_appLogoPath": "docs/images/logo.png",
       "_gitContribute": {
         "repo": "https://github.com/cleberMargarida/k-entity-framework",
         "branch": "master"
