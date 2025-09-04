@@ -406,5 +406,5 @@ public static class ServiceDependencyAnalyzer
 ## Next Steps
 
 - [Middleware Architecture](middleware-architecture.md) - Understand how services fit into the middleware pipeline
-- [Performance Tuning](../guides/performance-tuning.md) - Optimize service registration and usage
-- [Testing](../guides/testing.md) - Test services with proper lifetime scoping
+
+- [Testing](../examples/basic-examples.md) - Test services with proper lifetime scoping

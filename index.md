@@ -29,7 +29,7 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 
 ## API Reference
 
-The complete API reference is under [API Documentation](api/) section.
+The complete API reference is under [API Documentation](api/index.md) section.
 
 ## Contributing
 
@@ -37,4 +37,4 @@ Please see our [Contributing Guide](CONTRIBUTING.md) for information on how to c
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details.
+This project is licensed under the MIT License.

@@ -19,4 +19,4 @@ Before getting started, make sure you have:
 
 ## Next Steps
 
-After completing the getting started guide, explore our [Features](../features/) section to learn about advanced capabilities like the Inbox/Outbox patterns, serialization, and middleware architecture.
+After completing the getting started guide, explore our [Features](../features/index.md) section to learn about advanced capabilities like the Inbox/Outbox patterns, serialization, and middleware architecture.

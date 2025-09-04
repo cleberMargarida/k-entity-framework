@@ -637,7 +637,4 @@ kafka.EnableDeliveryReports = true; // Track delivery success
 
 ## Next Steps
 
-- [Consumer Options](consumer-options.md) - Detailed consumer configuration
-- [Producer Options](producer-options.md) - Detailed producer configuration  
-- [Performance Tuning](performance-tuning.md) - Optimize for your use case
-- [Security Guide](security.md) - Secure your Kafka connections
+

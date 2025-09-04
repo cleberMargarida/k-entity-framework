@@ -353,4 +353,4 @@ public interface IMiddleware<T>
 
 - [Plugin System](plugin-serialization.md) - Learn about the extensible plugin architecture
 - [Service Attributes](service-attributes.md) - Understand service lifetime management
-- [Middleware Configuration](../guides/middleware-configuration.md) - Configure specific middleware components
+- [Middleware Configuration](../guides/kafka-configuration.md) - Configure specific middleware components

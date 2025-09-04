@@ -568,4 +568,4 @@ public void Plugin_IntegratesWithFramework()
 
 - [Serialization Features](../features/serialization.md) - Learn about available serialization options
 - [Middleware Architecture](middleware-architecture.md) - Understand how serialization fits into the middleware pipeline
-- [Performance Tuning](../guides/performance-tuning.md) - Optimize serialization performance
+- [Performance Tuning](../guides/kafka-configuration.md) - Optimize serialization performance

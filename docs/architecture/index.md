@@ -21,4 +21,4 @@ K.EntityFrameworkCore is built on several key design principles:
 
 ## Next Steps
 
-After understanding the architecture, explore the [Features](../features/) section to see these concepts in action, or check out the [Guides](../guides/) for configuration and best practices.
+After understanding the architecture, explore the [Features](../features/index.md) section to see these concepts in action, or check out the [Guides](../guides/index.md) for configuration and best practices.

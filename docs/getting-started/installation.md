@@ -28,24 +28,12 @@ Add the following to your `.csproj` file:
 
 K-Entity-Framework requires the following dependencies (automatically installed):
 
-- **.NET Standard 2.0** or later
-- **Microsoft.EntityFrameworkCore** (6.0+)
-- **Confluent.Kafka** (latest)
-- **System.Text.Json** (built-in)
+- **Microsoft.EntityFrameworkCore** (8.0+)
+- **Confluent.Kafka** (2.10.1)
 
 ## Optional Dependencies
 
 Depending on your needs, you may want to install additional packages:
-
-### For Newtonsoft.Json Serialization
-```bash
-dotnet add package Newtonsoft.Json
-```
-
-### For MessagePack Serialization
-```bash
-dotnet add package MessagePack
-```
 
 ### For SQL Server Integration
 ```bash
@@ -62,14 +50,11 @@ dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 Create a simple test to verify the installation:
 
 ```csharp
-using K.EntityFrameworkCore;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 public class TestDbContext : DbContext
 {
-    public Topic<TestMessage> TestTopic { get; set; }
-
     public TestDbContext(DbContextOptions options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -111,10 +96,8 @@ If this compiles without errors, your installation is successful.
 
 | Framework | Supported |
 |-----------|-----------|
-| .NET 6.0+ | ✅ |
-| .NET 5.0 | ✅ |
-| .NET Core 3.1 | ✅ |
-| .NET Framework 4.7.2+ | ✅ |
+| .NET 8.0+ | ✅         |
+| .NET 9.0+ | ✅         |
 
 ## Next Steps
 

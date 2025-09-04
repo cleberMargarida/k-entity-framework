@@ -10,12 +10,11 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 
 ## Features
 
-- [Connection Management](features/connection-management.md)
 - [Serialization](features/serialization.md)
 - [Inbox Pattern](features/inbox.md)
 - [Outbox Pattern](features/outbox.md)
-- [Deduplication](features/deduplication.md)
-- [Type-Specific Processing](features/type-specific-processing.md)
+- [Consumer Configuration](features/consumer-configuration.md)
+- [Connection Management](features/connection-management.md)
 
 ## Examples
 
@@ -29,7 +28,7 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 
 ## API Reference
 
-The complete API reference is under [API Documentation](api/) section.
+The complete API reference is under [API Documentation](../api/index.md) section.
 
 ## Contributing
 
@@ -37,4 +36,4 @@ Please see our [Contributing Guide](../CONTRIBUTING.md) for information on how t
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../LICENSE.txt) file for details.
+This project is licensed under the MIT License.
