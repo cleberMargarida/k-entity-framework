@@ -18,7 +18,7 @@ internal sealed class ExclusiveNodeCoordination<TDbContext>(TDbContext context) 
      string topic = $"__{AppDomain.CurrentDomain.FriendlyName.ToLower()}.{typeof(TDbContext).Name.ToLower()}.poll";
         Message<string, byte[]> emptyMessage = new();
 
-        //periodically publish to force poll.
+    //periodically produce to force poll.
         while (false) { }
         //await producer.ProduceAsync(topic, emptyMessage, cancellationToken);
      */

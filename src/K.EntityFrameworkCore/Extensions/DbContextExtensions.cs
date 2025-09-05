@@ -12,19 +12,19 @@ namespace K.EntityFrameworkCore.Extensions;
 public static class DbContextExtensions
 {
     /// <summary>
-    /// Publishes a message of type <typeparamref name="T"/>.
+    /// Produces a message of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="dbContext"></param>
     /// <param name="message"></param>
-    public static void Publish<T>(this DbContext dbContext, T message)
+    public static void Produce<T>(this DbContext dbContext, T message)
         where T : class
     {
         var serviceProvider = dbContext.GetInfrastructure();
 
         var commandRegistry = serviceProvider.GetRequiredService<ScopedCommandRegistry>();
 
-        commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);
+    commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);
     }
 
     /// <summary>

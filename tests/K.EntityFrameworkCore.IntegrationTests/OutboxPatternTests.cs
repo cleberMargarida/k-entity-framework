@@ -18,7 +18,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(42, "OutboxTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(42, "OutboxTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -42,7 +42,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(300, "ImmediateFallback"));
+    context.DefaultMessages.Produce(new DefaultMessage(300, "ImmediateFallback"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -68,7 +68,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         // Act
         for (int i = 1400; i <= 1403; i++)
         {
-            context.DefaultMessages.Publish(new DefaultMessage(i, $"ImmediateFallbackBatch{i}"));
+            context.DefaultMessages.Produce(new DefaultMessage(i, $"ImmediateFallbackBatch{i}"));
         }
         await context.SaveChangesAsync();
 

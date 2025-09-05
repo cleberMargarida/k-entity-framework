@@ -53,7 +53,7 @@ internal static class ModelAnnotationKeys
     public static string OutboxEnabled(Type messageType) => $"{BasePrefix}OutboxEnabled[{messageType.FullName}]";
     
     /// <summary>
-    /// Annotation key for storing the publishing strategy for an outbox message type.
+    /// Annotation key for storing the producing strategy for an outbox message type.
     /// </summary>
     public static string OutboxPublishingStrategy(Type messageType) => $"{BasePrefix}OutboxPublishingStrategy[{messageType.FullName}]";
     

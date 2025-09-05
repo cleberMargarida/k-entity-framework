@@ -7,7 +7,7 @@ namespace K.EntityFrameworkCore.IntegrationTests;
 public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
 {
     [Fact]
-    public async Task Given_ProducerWithJsonSerialization_When_PublishingComplexMessage_Then_MessageIsSerializedCorrectly()
+    public async Task Given_ProducerWithJsonSerialization_When_ProducingComplexMessage_Then_MessageIsSerializedCorrectly()
     {
         // Arrange
         defaultTopic.HasName("json-serialization-topic");
@@ -16,7 +16,7 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(700, "JsonSerialized"));
+    context.DefaultMessages.Produce(new DefaultMessage(700, "JsonSerialized"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -27,7 +27,7 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     }
 
     [Fact]
-    public async Task Given_ProducerWithJsonSerializationAndCustomOptions_When_PublishingMessage_Then_MessageUsesCustomJsonOptions()
+    public async Task Given_ProducerWithJsonSerializationAndCustomOptions_When_ProducingMessage_Then_MessageUsesCustomJsonOptions()
     {
         // Arrange
         defaultTopic.HasName("custom-json-topic");
@@ -40,7 +40,7 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1200, "CustomJsonOptions"));
+    context.DefaultMessages.Produce(new DefaultMessage(1200, "CustomJsonOptions"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -51,7 +51,7 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     }
 
     [Fact]
-    public async Task Given_ProducerWithMixedSerializationStrategies_When_PublishingToMultipleTopics_Then_EachUsesCorrectSerialization()
+    public async Task Given_ProducerWithMixedSerializationStrategies_When_ProducingToMultipleTopics_Then_EachUsesCorrectSerialization()
     {
         // Arrange
         defaultTopic.HasName("json-camel-case-topic")
@@ -73,8 +73,8 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(2600, "CamelCaseJson"));
-        context.AlternativeMessages.Publish(new AlternativeMessage(2601, "SnakeCaseJson"));
+    context.DefaultMessages.Produce(new DefaultMessage(2600, "CamelCaseJson"));
+    context.AlternativeMessages.Produce(new AlternativeMessage(2601, "SnakeCaseJson"));
         await context.SaveChangesAsync();
 
         // Assert

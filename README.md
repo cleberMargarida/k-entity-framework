@@ -15,7 +15,7 @@
 
 K-Entity-Framework brings the simplicity you love about EF Core directly to Apache Kafka.
 
-Imagine publishing events as naturally as saving entities, with built-in transactional safety through the outbox pattern.
+Imagine producing events as naturally as saving entities, with built-in transactional safety through the outbox pattern.
 
 No more scattered configuration files or learning yet another messaging framework. *just the familiar DbContext semantics you already know.*
 
@@ -34,10 +34,10 @@ builder.Services.AddDbContext<MyDbContext>(options => options
 
 dbContext.Orders.Add(new Order { Id = 1232 });
 
-// Not a block call, the event will be published when SaveChangesAsync is called.
-dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 123 });
+// Not a block call, the event will be produced when SaveChangesAsync is called.
+dbContext.OrderEvents.Produce(new OrderCreated { OrderId = 123 });
 
-// Save and publish both.
+// Save and produce both.
 await dbContext.SaveChangesAsync();
 
 // here you're starting to consume kafka and moving the iterator cursor to the next offset in the assigned partitions.

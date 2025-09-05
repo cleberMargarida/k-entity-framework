@@ -118,11 +118,11 @@ internal static class ModelAnnotationHelpers
     }
 
     /// <summary>
-    /// Sets the publishing strategy for an outbox message type in the model annotations.
+    /// Sets the producing strategy for an outbox message type in the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
-    /// <param name="strategy">The outbox publishing strategy.</param>
+    /// <param name="strategy">The outbox producing strategy.</param>
     public static void SetOutboxPublishingStrategy<T>(this IMutableModel model, OutboxPublishingStrategy strategy)
         where T : class
     {
@@ -131,11 +131,11 @@ internal static class ModelAnnotationHelpers
     }
 
     /// <summary>
-    /// Gets the publishing strategy for an outbox message type from the model annotations.
+    /// Gets the producing strategy for an outbox message type from the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
-    /// <returns>The outbox publishing strategy, or null if not set.</returns>
+    /// <returns>The outbox producing strategy, or null if not set.</returns>
     public static OutboxPublishingStrategy? GetOutboxPublishingStrategy<T>(this IModel model)
         where T : class
     {

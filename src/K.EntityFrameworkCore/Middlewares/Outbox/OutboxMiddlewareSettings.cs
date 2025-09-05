@@ -15,7 +15,7 @@ public class OutboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(m
     where T : class
 {
     /// <summary>
-    /// Gets the outbox publishing strategy from model annotations.
+    /// Gets the outbox producing strategy from model annotations.
     /// Default is BackgroundOnly.
     /// </summary>
     public OutboxPublishingStrategy Strategy => model.GetOutboxPublishingStrategy<T>() ?? OutboxPublishingStrategy.BackgroundOnly;
@@ -27,13 +27,13 @@ public class OutboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(m
 public enum OutboxPublishingStrategy
 {
     /// <summary>
-    /// Always publish messages in the background after saving.
+    /// Always produce messages in the background after saving.
     /// Messages are processed during the next polling cycle.
     /// </summary>
     BackgroundOnly,
 
     /// <summary>
-    /// Publish immediately after saving. If successful, remove the message.
+    /// Produce immediately after saving. If successful, remove the message.
     /// If immediate publishing fails, fall back to background processing.
     /// </summary>
     ImmediateWithFallback,

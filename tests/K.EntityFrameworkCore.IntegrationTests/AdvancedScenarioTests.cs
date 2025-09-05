@@ -4,7 +4,7 @@ namespace K.EntityFrameworkCore.IntegrationTests;
 public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
 {
     [Fact]
-    public async Task Given_PublishingLargeNumberOfMessages_When_SavingInBatches_Then_AllMessagesAreProcessed()
+    public async Task Given_ProducingLargeNumberOfMessages_When_SavingInBatches_Then_AllMessagesAreProcessed()
     {
         // Arrange
         defaultTopic.HasName("batch-processing-topic");
@@ -14,7 +14,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
         // Act
         for (int i = 1; i <= 50; i++)
         {
-            context.DefaultMessages.Publish(new DefaultMessage(i, $"BatchMessage{i}"));
+            context.DefaultMessages.Produce(new DefaultMessage(i, $"BatchMessage{i}"));
         }
         await context.SaveChangesAsync();
 
@@ -25,7 +25,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
     }
 
     [Fact]
-    public async Task Given_ProducerWithSequentialMessages_When_PublishingMessagesWithDelay_Then_MessagesMaintainOrder()
+    public async Task Given_ProducerWithSequentialMessages_When_ProducingMessagesWithDelay_Then_MessagesMaintainOrder()
     {
         // Arrange
         defaultTopic.HasName("sequential-order-topic");
@@ -34,15 +34,15 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1800, "First"));
+    context.DefaultMessages.Produce(new DefaultMessage(1800, "First"));
         await context.SaveChangesAsync();
         
         await Task.Delay(100); // Small delay
         
-        context.DefaultMessages.Publish(new DefaultMessage(1801, "Second"));
+    context.DefaultMessages.Produce(new DefaultMessage(1801, "Second"));
         await context.SaveChangesAsync();
         
-        context.DefaultMessages.Publish(new DefaultMessage(1802, "Third"));
+    context.DefaultMessages.Produce(new DefaultMessage(1802, "Third"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -55,7 +55,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
     }
 
     [Fact]
-    public async Task Given_ProducerWithLargeMessage_When_PublishingLargeContent_Then_MessageIsProcessedSuccessfully()
+    public async Task Given_ProducerWithLargeMessage_When_ProducingLargeContent_Then_MessageIsProcessedSuccessfully()
     {
         // Arrange
         defaultTopic.HasName("large-message-topic");
@@ -65,7 +65,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
         var largeContent = new string('X', 10000); // 10KB content
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1900, largeContent));
+    context.DefaultMessages.Produce(new DefaultMessage(1900, largeContent));
         await context.SaveChangesAsync();
 
         // Assert

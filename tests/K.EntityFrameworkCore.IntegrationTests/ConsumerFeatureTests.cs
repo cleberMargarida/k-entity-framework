@@ -21,10 +21,10 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(2000, "DeduplicationTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
         await context.SaveChangesAsync();
         
-        context.DefaultMessages.Publish(new DefaultMessage(2000, "DeduplicationTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -48,10 +48,10 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         });
         await StartHostAsync();
 
-        // Act - Publish more messages than buffer size
+    // Act - Produce more messages than buffer size
         for (int i = 2100; i <= 2110; i++)
         {
-            context.DefaultMessages.Publish(new DefaultMessage(i, $"BackpressureMessage{i}"));
+            context.DefaultMessages.Produce(new DefaultMessage(i, $"BackpressureMessage{i}"));
         }
         await context.SaveChangesAsync();
 
@@ -74,7 +74,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(2200, "ExclusiveConnectionTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(2200, "ExclusiveConnectionTest"));
         await context.SaveChangesAsync();
 
         // Assert

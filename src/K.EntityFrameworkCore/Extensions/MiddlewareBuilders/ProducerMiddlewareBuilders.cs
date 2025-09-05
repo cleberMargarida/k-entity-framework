@@ -11,9 +11,9 @@ namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 public class OutboxBuilder<T>(IMutableModel model) where T : class
 {
     /// <summary>
-    /// Configures immediate publishing strategy with fallback to background processing.
-    /// Messages are published immediately after saving. If successful, they are removed.
-    /// If immediate publishing fails, messages fall back to background processing.
+    /// Configures immediate producing strategy with fallback to background processing.
+    /// Messages are produced immediately after saving. If successful, they are removed.
+    /// If immediate producing fails, messages fall back to background processing.
     /// </summary>
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseImmediateWithFallback()
@@ -23,8 +23,8 @@ public class OutboxBuilder<T>(IMutableModel model) where T : class
     }
 
     /// <summary>
-    /// Configures background-only publishing strategy.
-    /// Messages are always published in the background after saving.
+    /// Configures background-only producing strategy.
+    /// Messages are always produced in the background after saving.
     /// </summary>
     /// <returns>The builder instance.</returns>
     public OutboxBuilder<T> UseBackgroundOnly()

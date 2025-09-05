@@ -87,7 +87,7 @@ public class OrderCreated
 
 ## Producer Usage
 
-### Publishing with the Outbox Pattern
+### Producing with the Outbox Pattern
 
 ```csharp
 public class OrderService
@@ -106,8 +106,8 @@ public class OrderService
         // Add to database
         _dbContext.Set<Order>().Add(order);
 
-        // Publish event (stored in outbox for reliable delivery)
-        _dbContext.OrderEvents.Publish(new OrderCreated
+    // Produce event (stored in outbox for reliable delivery)
+    _dbContext.OrderEvents.Produce(new OrderCreated
         {
             OrderId = order.Id,
             CustomerId = order.CustomerId,

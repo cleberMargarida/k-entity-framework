@@ -4,7 +4,7 @@ namespace K.EntityFrameworkCore.IntegrationTests;
 public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
 {
     [Fact]
-    public async Task Given_ProducerWithCustomKey_When_PublishingMessage_Then_MessageIsPublishedWithCorrectKey()
+    public async Task Given_ProducerWithCustomKey_When_ProducingMessage_Then_MessageIsProducedWithCorrectKey()
     {
         // Arrange
         defaultTopic.HasName("custom-key-topic");
@@ -12,7 +12,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(100, "CustomKey"));
+        context.DefaultMessages.Produce(new DefaultMessage(100, "CustomKey"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -23,7 +23,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
     }
 
     [Fact(Timeout = 60_000)]
-    public async Task Given_ProducerWithNoKey_When_PublishingMessage_Then_MessageIsDistributedRandomly()
+    public async Task Given_ProducerWithNoKey_When_ProducingMessage_Then_MessageIsDistributedRandomly()
     {
         // Arrange
         defaultTopic.HasSetting(setting => setting.NumPartitions = 2);
@@ -32,7 +32,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(200, "RandomPartition"));
+        context.DefaultMessages.Produce(new DefaultMessage(200, "RandomPartition"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -43,7 +43,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
     }
 
     [Fact(Timeout = 60_000)]
-    public async Task Given_ProducerWithMultiplePartitions_When_PublishingWithSameKey_Then_MessagesGoToSamePartition()
+    public async Task Given_ProducerWithMultiplePartitions_When_ProducingWithSameKey_Then_MessagesGoToSamePartition()
     {
         // Arrange
         defaultTopic.HasName("multiple-partitions-topic");
@@ -52,8 +52,8 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(800, "SameKeyMessage1"));
-        context.DefaultMessages.Publish(new DefaultMessage(801, "SameKeyMessage2"));
+        context.DefaultMessages.Produce(new DefaultMessage(800, "SameKeyMessage1"));
+        context.DefaultMessages.Produce(new DefaultMessage(801, "SameKeyMessage2"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -65,7 +65,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
     }
 
     [Fact]
-    public async Task Given_ProducerWithComplexKey_When_PublishingMessage_Then_MessageIsPublishedWithComplexKey()
+    public async Task Given_ProducerWithComplexKey_When_ProducingMessage_Then_MessageIsProducedWithComplexKey()
     {
         // Arrange
         defaultTopic.HasName("complex-key-topic");
@@ -73,7 +73,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(900, "ComplexKeyTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(900, "ComplexKeyTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -84,7 +84,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
     }
 
     [Fact]
-    public async Task Given_MixedProducerConfigurations_When_PublishingToMultipleTopics_Then_EachTopicUsesCorrectConfiguration()
+    public async Task Given_MixedProducerConfigurations_When_ProducingToMultipleTopics_Then_EachTopicUsesCorrectConfiguration()
     {
         // Arrange
         defaultTopic.HasName("topic-with-key")
@@ -96,8 +96,8 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1000, "WithKey"));
-        context.AlternativeMessages.Publish(new AlternativeMessage(2000, "WithoutKey"));
+        context.DefaultMessages.Produce(new DefaultMessage(1000, "WithKey"));
+        context.AlternativeMessages.Produce(new AlternativeMessage(2000, "WithoutKey"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -110,7 +110,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
     }
 
     [Fact]
-    public async Task Given_ProducerWithComplexKeyStrategy_When_PublishingWithCompositeKeys_Then_PartitioningWorksCorrectly()
+    public async Task Given_ProducerWithComplexKeyStrategy_When_ProducingWithCompositeKeys_Then_PartitioningWorksCorrectly()
     {
         // Arrange
         defaultTopic.HasName("composite-key-topic");
@@ -122,7 +122,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         // Act
         for (int i = 2800; i <= 2810; i++)
         {
-            context.DefaultMessages.Publish(new DefaultMessage(i, $"CompositeKey{i}"));
+            context.DefaultMessages.Produce(new DefaultMessage(i, $"CompositeKey{i}"));
         }
         await context.SaveChangesAsync();
 

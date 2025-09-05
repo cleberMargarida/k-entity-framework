@@ -23,8 +23,8 @@ public sealed class Topic<T>(DbContext context)
     where T : class
 {
     /// <inheritdoc/>
-    public void Publish(T message)
-        => context.Publish(message);
+    public void Produce(T message)
+        => context.Produce(message);
 
     /// <inheritdoc/>
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)

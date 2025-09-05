@@ -8,7 +8,7 @@ K-Entity-Framework provides a comprehensive set of features for building robust,
 Multiple serialization framework support with pluggable architecture.
 
 ### [Outbox Pattern](outbox.md)
-Ensure reliable message publishing with database transactions.
+Ensure reliable message producing with database transactions.
 
 ### [Inbox Pattern](inbox.md)
 Guarantee message idempotency and prevent duplicate processing.

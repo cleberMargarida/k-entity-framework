@@ -16,7 +16,7 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(400, "ForgetSemantic"));
+    context.DefaultMessages.Produce(new DefaultMessage(400, "ForgetSemantic"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -39,7 +39,7 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(2300, "AwaitForgetTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(2300, "AwaitForgetTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -62,7 +62,7 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(2400, "FireForgetTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(2400, "FireForgetTest"));
         await context.SaveChangesAsync();
 
         // Assert

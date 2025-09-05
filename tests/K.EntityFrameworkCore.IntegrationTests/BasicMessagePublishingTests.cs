@@ -1,16 +1,16 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class BasicMessagePublishingTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
 {
     [Fact]
-    public async Task Given_DbContextWithKafka_When_PublishingMessage_Then_MessageIsConsumed()
+    public async Task Given_DbContextWithKafka_When_ProducingMessage_Then_MessageIsConsumed()
     {
         // Arrange
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1, default));
+    context.DefaultMessages.Produce(new DefaultMessage(1, default));
         await context.SaveChangesAsync();
 
         // Assert
@@ -19,12 +19,12 @@ public class BasicMessagePublishingTests(KafkaFixture kafka, PostgreSqlFixture p
     }
 
     [Fact]
-    public async Task Given_PublishingMultipleMessages_When_SavingOnce_Then_MessagesAreConsumed()
+    public async Task Given_ProducingMultipleMessages_When_SavingOnce_Then_MessagesAreConsumed()
     {
         // Arrange
         await StartHostAsync();
-        context.DefaultMessages.Publish(new DefaultMessage(1, default));
-        context.DefaultMessages.Publish(new DefaultMessage(2, default));
+    context.DefaultMessages.Produce(new DefaultMessage(1, default));
+    context.DefaultMessages.Produce(new DefaultMessage(2, default));
 
         // Act
         await context.SaveChangesAsync();
@@ -37,15 +37,15 @@ public class BasicMessagePublishingTests(KafkaFixture kafka, PostgreSqlFixture p
     }
 
     [Fact]
-    public async Task Given_PublishingMessageTwice_When_SavingTwice_Then_MessagesAreConsumed()
+    public async Task Given_ProducingMessageTwice_When_SavingTwice_Then_MessagesAreConsumed()
     {
         // Arrange & Act
         await StartHostAsync();
 
-        context.DefaultMessages.Publish(new DefaultMessage(1, default));
+    context.DefaultMessages.Produce(new DefaultMessage(1, default));
         await context.SaveChangesAsync();
 
-        context.DefaultMessages.Publish(new DefaultMessage(2, default));
+    context.DefaultMessages.Produce(new DefaultMessage(2, default));
         await context.SaveChangesAsync();
 
         // Assert
@@ -56,7 +56,7 @@ public class BasicMessagePublishingTests(KafkaFixture kafka, PostgreSqlFixture p
     }
 
     [Fact]
-    public async Task Given_MultipleDifferentTopics_When_PublishingToEach_Then_MessagesAreRoutedCorrectly()
+    public async Task Given_MultipleDifferentTopics_When_ProducingToEach_Then_MessagesAreRoutedCorrectly()
     {
         // Arrange
         defaultTopic.HasName("topic-a");
@@ -64,10 +64,10 @@ public class BasicMessagePublishingTests(KafkaFixture kafka, PostgreSqlFixture p
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1, "TopicA"));
+    context.DefaultMessages.Produce(new DefaultMessage(1, "TopicA"));
         await context.SaveChangesAsync();
 
-        context.AlternativeMessages.Publish(new AlternativeMessage(2, "TopicB"));
+    context.AlternativeMessages.Produce(new AlternativeMessage(2, "TopicB"));
         await context.SaveChangesAsync();
 
         // Assert

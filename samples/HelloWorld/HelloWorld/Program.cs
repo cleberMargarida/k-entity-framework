@@ -26,7 +26,7 @@ dbContext.Orders.Add(new Order { Status = "New" });
 
 // here you're signing the event to be published.
 // not a block calling, the event will be published when SaveChangesAsync is called.
-dbContext.OrderEvents.Publish(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
+dbContext.OrderEvents.Produce(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
 
 await dbContext.SaveChangesAsync();
 

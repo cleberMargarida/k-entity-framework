@@ -7,14 +7,14 @@ namespace K.EntityFrameworkCore.IntegrationTests;
 public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
 {
     [Fact]
-    public async Task Given_DbContextWithCustomTopicName_When_PublishingMessage_Then_MessageIsSentToCustomTopic()
+    public async Task Given_DbContextWithCustomTopicName_When_ProducingMessage_Then_MessageIsSentToCustomTopic()
     {
         // Arrange
         defaultTopic.HasName("custom-name");
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1, default));
+    context.DefaultMessages.Produce(new DefaultMessage(1, default));
         await context.SaveChangesAsync();
 
         // Assert
@@ -24,7 +24,7 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
     }
 
     [Fact]
-    public async Task Given_ProducerWithSpecialCharactersTopic_When_PublishingMessage_Then_TopicIsCreatedWithSpecialCharacters()
+    public async Task Given_ProducerWithSpecialCharactersTopic_When_ProducingMessage_Then_TopicIsCreatedWithSpecialCharacters()
     {
         // Arrange
         defaultTopic.HasName("special-chars_topic.test-123");
@@ -32,7 +32,7 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
         await StartHostAsync();
 
         // Act
-        context.DefaultMessages.Publish(new DefaultMessage(1600, "SpecialCharsTest"));
+    context.DefaultMessages.Produce(new DefaultMessage(1600, "SpecialCharsTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -43,7 +43,7 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
     }
 
     [Fact]
-    public async Task Given_ProducerWithComplexTopicSettings_When_PublishingMessage_Then_CustomSettingsApplied()
+    public async Task Given_ProducerWithComplexTopicSettings_When_ProducingMessage_Then_CustomSettingsApplied()
     {
         // Arrange
         defaultTopic.HasName("complex-settings-topic");
@@ -58,7 +58,7 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
         // Act
         for (int i = 2500; i <= 2505; i++)
         {
-            context.DefaultMessages.Publish(new DefaultMessage(i, $"ComplexSettings{i}"));
+            context.DefaultMessages.Produce(new DefaultMessage(i, $"ComplexSettings{i}"));
         }
         await context.SaveChangesAsync();
 

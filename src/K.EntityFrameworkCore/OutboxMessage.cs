@@ -60,7 +60,7 @@ namespace K.EntityFrameworkCore
         public DateTime? ProcessedAt { get; set; }
 
         /// <summary>
-        /// Number of attempts to publish this message.
+    /// Number of attempts to produce this message.
         /// </summary>
         public int Retries { get; set; }
 

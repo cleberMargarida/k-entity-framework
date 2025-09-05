@@ -60,7 +60,7 @@ public class OrderService
 
     public async Task CreateOrderAsync()
     {
-        _dbContext.OrderEvents.Publish(new OrderCreated { OrderId = 1, CustomerId = "123" });
+    _dbContext.OrderEvents.Produce(new OrderCreated { OrderId = 1, CustomerId = "123" });
         await _dbContext.SaveChangesAsync();
     }
 }

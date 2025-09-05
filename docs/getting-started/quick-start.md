@@ -42,8 +42,8 @@ public class Program
         var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<OrderContext>();
 
-        // Publish an event. It will be sent when SaveChangesAsync is called.
-        dbContext.OrderEvents.Publish(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
+    // Produce an event. It will be sent when SaveChangesAsync is called.
+    dbContext.OrderEvents.Produce(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
 
         await dbContext.SaveChangesAsync();
 
@@ -87,7 +87,7 @@ public class OrderEvent
 1.  **Setup**: Configure your `DbContext` with Kafka integration using `UseKafkaExtensibility`.
 2.  **Topic Property**: Add a `Topic<T>` property to your `DbContext` for each message type.
 3.  **Topic Configuration**: Define your topics, producers, and consumers in `OnModelCreating` using the `modelBuilder.Topic<T>()` fluent API.
-4.  **Publishing**: Call `Publish()` on your `Topic<T>` property to queue an event for publishing. The event is sent when `SaveChangesAsync()` is called.
+4.  **Producing**: Call `Produce()` on your `Topic<T>` property to queue an event for producing. The event is sent when `SaveChangesAsync()` is called.
 5.  **Consuming**: Use `await foreach` on your `Topic<T>` property to consume events. Offsets are committed automatically on the next `SaveChangesAsync()` call.
 
 ## Next Steps

@@ -56,7 +56,7 @@ public class ConsumerMiddlewareInvoker<T> : IMiddlewareInvoker<T>
 [ScopedService("Manages the execution pipeline for producer middleware")]
 public class ProducerMiddlewareInvoker<T> : IMiddlewareInvoker<T>
 {
-    // New instance per message publishing cycle
+    // New instance per message producing cycle
 }
 ```
 

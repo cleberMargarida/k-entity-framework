@@ -7,27 +7,27 @@ K-Entity-Framework provides a robust implementation of the Transactional Outbox 
 The Outbox pattern solves the dual-write problem in distributed systems by:
 
 - **Atomic Operations** - Messages and business data are stored in the same database transaction.
-- **Guaranteed Delivery** - A background worker ensures all messages are eventually published to Kafka.
+- **Guaranteed Delivery** - A background worker ensures all messages are eventually produced to Kafka.
 
 ## Architecture
 
 ### Core Components
 
 1.  **`OutboxMessage`** - An entity that stores pending messages in your database.
-2.  **`OutboxProducerMiddleware<T>`** - Intercepts publish operations and stores messages in the outbox.
+2.  **`OutboxProducerMiddleware<T>`** - Intercepts produce operations and stores messages in the outbox.
 3.  **`OutboxPollingWorker<TDbContext>`** - A background service that polls the outbox and publishes messages.
 
 ### Message Flow
 
 ```mermaid
 graph TD
-    A[Application Code] --> B[dbContext.Topic.Publish()]
+    A[Application Code] --> B[dbContext.Topic.Produce()]
     B --> C[Outbox Middleware]
     C --> D[Store in OutboxMessage Table]
     D --> E[SaveChangesAsync]
     E --> F[Transaction Commit]
     F --> G[OutboxPollingWorker]
-    G --> H[Publish to Kafka]
+    G --> H[Produce to Kafka]
     
     style C fill:#fff3e0
     style G fill:#e1f5fe
@@ -73,7 +73,7 @@ builder.Services.AddOutboxKafkaWorker<MyDbContext>(worker => worker
 
 ## Usage
 
-Publishing a message with the outbox pattern is the same as regular publishing. The outbox middleware handles the rest.
+Producing a message with the outbox pattern is the same as regular producing. The outbox middleware handles the rest.
 
 ```csharp
 // Start a database transaction
@@ -85,8 +85,8 @@ try
     var order = new Order { CustomerId = "C123", Status = "Created" };
     dbContext.Set<Order>().Add(order);
     
-    // 2. Publish an event (it will be stored in the outbox)
-    dbContext.OrderEvents.Publish(new OrderCreated 
+    // 2. Produce an event (it will be stored in the outbox)
+    dbContext.OrderEvents.Produce(new OrderCreated 
     { 
         OrderId = order.Id, 
         CustomerId = order.CustomerId 

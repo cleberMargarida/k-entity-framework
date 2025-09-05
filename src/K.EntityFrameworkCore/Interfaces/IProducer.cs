@@ -7,7 +7,7 @@ public interface IProducer<T>
     where T : class
 {
     /// <summary>
-    /// Publishes a domain event to the Kafka topic.
+    /// Produces a domain event to the Kafka topic.
     /// </summary>
-    void Publish(T message);
+    void Produce(T message);
 }
