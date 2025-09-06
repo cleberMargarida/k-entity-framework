@@ -1,14 +1,13 @@
 using Confluent.Kafka;
-using System.ComponentModel.DataAnnotations;
-using System.Reflection;
-using System.Linq.Expressions;
-using System.Diagnostics.CodeAnalysis;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace K.EntityFrameworkCore.Middlewares.Producer;
 
@@ -28,14 +27,15 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
     where T : class
 {
     private Func<T, string>? keyAccessor;
-    private bool hasNoKey = false;
-    private Lazy<DbContext> dbContext = new(() => serviceProvider.GetRequiredService<ICurrentDbContext>().Context);
+    private readonly bool hasNoKey;
+    private Dictionary<string, Func<T, object>>? headerAccessors;
+    private readonly Lazy<DbContext> dbContext = new(() => serviceProvider.GetRequiredService<ICurrentDbContext>().Context);
 
     private readonly ProducerConfig producerConfig = new(clientSettings.ClientConfig);
 
-    public IEnumerable<KeyValuePair<string, string>> ProducerConfig => producerConfig;
+    public IEnumerable<KeyValuePair<string, string>> ProducerConfig => this.producerConfig;
 
-    public string TopicName => dbContext.Value.Model.GetTopicName<T>() ?? 
+    public string TopicName => this.dbContext.Value.Model.GetTopicName<T>() ??
         clientSettings.TopicName;
 
     /// <summary>
@@ -53,7 +53,7 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
 
         // Check model annotations first
         var model = this.dbContext.Value.Model;
-        
+
         // Check if configured to have no key
         if (model.HasNoKey<T>())
         {
@@ -65,7 +65,7 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
         if (keyPropertyAccessorExpression != null)
         {
             // Compile the expression if we haven't already
-            if (keyAccessor == null)
+            if (this.keyAccessor == null)
             {
                 var parameter = Expression.Parameter(typeof(T), "entity");
                 Expression propertyExpression;
@@ -82,21 +82,21 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
                 var toStringMethod = typeof(object).GetMethod("ToString")!;
                 var toStringCall = Expression.Call(propertyExpression, toStringMethod);
                 var lambdaExpression = Expression.Lambda<Func<T, string>>(toStringCall, parameter);
-                keyAccessor = lambdaExpression.Compile();
+                this.keyAccessor = lambdaExpression.Compile();
             }
-            
-            return keyAccessor(entity);
+
+            return this.keyAccessor(entity);
         }
 
         // If explicitly configured to have no key (legacy check), return null
-        if (hasNoKey)
+        if (this.hasNoKey)
         {
             return null;
         }
 
-        if (keyAccessor != null)
+        if (this.keyAccessor != null)
         {
-            return keyAccessor(entity);
+            return this.keyAccessor(entity);
         }
 
         var keyProperty = FindKeyProperty() ?? throw new InvalidOperationException(
@@ -107,9 +107,88 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
             $"3. Configure explicitly using HasKey(): .HasKey(x => x.MyProperty)\n" +
             $"4. Use HasNoKey() for random partitioning: .HasNoKey()\n");
 
-        keyAccessor = SetKeyAccessorFromProperty(keyProperty);
+        this.keyAccessor = SetKeyAccessorFromProperty(keyProperty);
 
-        return keyAccessor(entity);
+        return this.keyAccessor(entity);
+    }
+
+    /// <summary>
+    /// Gets the custom headers for the specified entity instance.
+    /// </summary>
+    /// <param name="message">The entity instance to extract headers from.</param>
+    /// <returns>A dictionary of header key-value pairs.</returns>
+    public ImmutableDictionary<string, string> GetHeaders(T message)
+    {
+        if (message == null)
+        {
+            throw new InvalidOperationException("Entity cannot be null when extracting headers.");
+        }
+
+        var result = new Dictionary<string, string>();
+
+        if (this.headerAccessors == null)
+        {
+            var model = this.dbContext.Value.Model;
+            var headerAccessorExpressions = model.GetHeaderAccessors<T>();
+
+            if (headerAccessorExpressions.Count == 0)
+            {
+                this.headerAccessors = [];
+            }
+            else
+            {
+                this.headerAccessors = [];
+
+                foreach (var headerAccessor in headerAccessorExpressions)
+                {
+                    string headerKey = headerAccessor.Key;
+                    Expression headerValueExpression = headerAccessor.Value;
+
+                    var compiledAccessor = CompileHeaderExpression(headerValueExpression);
+                    this.headerAccessors[headerKey] = compiledAccessor;
+                }
+            }
+        }
+
+        foreach (var accessor in this.headerAccessors)
+        {
+            string headerKey = accessor.Key;
+            Func<T, object> headerValueAccessor = accessor.Value;
+
+            object headerValue = headerValueAccessor(message);
+            result[headerKey] = headerValue.ToString()!;
+        }
+
+        Type messageType = typeof(T);
+        result["$type"] = messageType.AssemblyQualifiedName!;
+
+        Type messageRuntimeType = message.GetType();
+        if (messageRuntimeType != messageType)
+        {
+            result["$runtimeType"] = messageRuntimeType.AssemblyQualifiedName!;
+        }
+
+        return result.ToImmutableDictionary();
+    }
+
+    /// <summary>
+    /// Compiles a header value expression into a delegate that can be invoked.
+    /// </summary>
+    /// <param name="expression">The expression to compile.</param>
+    /// <returns>A compiled function that extracts the header value from a message.</returns>
+    private static Func<T, object> CompileHeaderExpression(Expression expression)
+    {
+        if (expression is LambdaExpression lambda)
+        {
+            // Already a lambda expression, just cast and compile
+            return ((Expression<Func<T, object>>)lambda).Compile();
+        }
+
+        // Create a lambda expression with parameter
+        var parameter = Expression.Parameter(typeof(T), "message");
+        var lambdaExpression = Expression.Lambda<Func<T, object>>(expression, parameter);
+
+        return lambdaExpression.Compile();
     }
 
     /// <summary>

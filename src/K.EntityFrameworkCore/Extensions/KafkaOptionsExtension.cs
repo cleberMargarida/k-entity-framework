@@ -14,6 +14,7 @@ using K.EntityFrameworkCore.Middlewares.Inbox;
 using K.EntityFrameworkCore.Middlewares.Producer;
 using K.EntityFrameworkCore.Middlewares.Consumer;
 using System.Collections.Concurrent;
+using K.EntityFrameworkCore.Middlewares.HeaderFilter;
 
 
 namespace K.EntityFrameworkCore.Extensions
@@ -55,6 +56,9 @@ namespace K.EntityFrameworkCore.Extensions
             services.AddScoped(typeof(SubscriptionRegistry<>));
             services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
             services.AddSingleton(typeof(ConsumerMiddleware<>));
+
+            services.AddScoped(typeof(HeaderFilterMiddlewareSettings<>));
+            services.AddScoped(typeof(HeaderFilterMiddleware<>));
 
             // Register channel options for configuration
             services.AddScoped(typeof(DeserializerMiddleware<>));

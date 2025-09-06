@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
@@ -14,7 +11,7 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(1, default));
+        context.DefaultMessages.Produce(new DefaultMessage(1, default));
         await context.SaveChangesAsync();
 
         // Assert
@@ -28,11 +25,11 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
     {
         // Arrange
         defaultTopic.HasName("special-chars_topic.test-123");
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(1600, "SpecialCharsTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(1600, "SpecialCharsTest"));
         await context.SaveChangesAsync();
 
         // Assert

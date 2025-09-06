@@ -11,19 +11,42 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentD
 {
     private readonly DbContext context = dbContext.Context;
 
-    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask<T?> InvokeAsync(scoped Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         DbSet<OutboxMessage> outboxMessages = context.Set<OutboxMessage>();
 
-        OutboxMessage message = envelope.AsOutboxMessage();
-
-        outboxMessages.Add(message);
+        outboxMessages.Add(ConvertToOutbox(envelope));
 
         return outbox.Strategy switch
         {
             OutboxPublishingStrategy.ImmediateWithFallback => base.InvokeAsync(envelope, cancellationToken),
-            OutboxPublishingStrategy.BackgroundOnly => ValueTask.CompletedTask,
+            OutboxPublishingStrategy.BackgroundOnly => ValueTask.FromResult(default(T)),
             _ => throw new NotSupportedException($"The outbox strategy '{outbox.Strategy}' is not supported.")
+        };
+    }
+
+    private static OutboxMessage ConvertToOutbox(scoped Envelope<T> envelope)
+    {
+        Type runtimeType = envelope.Message!.GetType();
+        Type compiledType = typeof(T);
+
+        string? runtimeTypeAssemblyQualifiedName;
+        if (runtimeType == compiledType)
+        {
+            runtimeTypeAssemblyQualifiedName = null;
+        }
+        else
+        {
+            runtimeTypeAssemblyQualifiedName = envelope.Message.GetType().AssemblyQualifiedName!;
+        }
+
+        return new OutboxMessage
+        {
+            Type = compiledType.AssemblyQualifiedName!,
+            RuntimeType = runtimeTypeAssemblyQualifiedName,
+            Payload = envelope.Payload.ToArray(),
+            Headers = envelope.Headers,
+            AggregateId = envelope.Key,
         };
     }
 }

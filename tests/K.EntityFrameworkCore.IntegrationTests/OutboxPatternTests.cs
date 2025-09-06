@@ -1,5 +1,3 @@
-using K.EntityFrameworkCore.Middlewares.Outbox;
-
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
@@ -12,13 +10,13 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         builder.Services.AddOutboxKafkaWorker<PostgreTestContext>();
         defaultTopic.HasName("outbox-test-topic").HasProducer(producer =>
         {
-            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasKey(msg => msg.Id);
             producer.HasOutbox(outbox => outbox.UseBackgroundOnly());
         });
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(42, "OutboxTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(42, "OutboxTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -36,13 +34,13 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         defaultTopic.HasName("immediate-fallback-topic");
         defaultTopic.HasProducer(producer =>
         {
-            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasKey(msg => msg.Id);
             producer.HasOutbox(outbox => outbox.UseImmediateWithFallback());
         });
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(300, "ImmediateFallback"));
+        context.DefaultMessages.Produce(new DefaultMessage(300, "ImmediateFallback"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -60,7 +58,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         defaultTopic.HasName("immediate-fallback-batch-topic");
         defaultTopic.HasProducer(producer =>
         {
-            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasKey(msg => msg.Id);
             producer.HasOutbox(outbox => outbox.UseImmediateWithFallback());
         });
         await StartHostAsync();

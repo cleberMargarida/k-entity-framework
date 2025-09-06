@@ -1,8 +1,8 @@
-﻿using K.EntityFrameworkCore.Middlewares.Core;
+﻿using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.HeaderFilter;
 using K.EntityFrameworkCore.Middlewares.Inbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
-using K.EntityFrameworkCore.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
@@ -15,6 +15,7 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         , PollingMiddleware<T> pollingMiddleware
         , ConsumerMiddleware<T> consumerMiddleware
         , DeserializerMiddleware<T> deserializationMiddleware
+        , HeaderFilterMiddleware<T> headerFilterMiddleware
         , InboxMiddleware<T> inboxMiddleware
         )
     {
@@ -22,6 +23,7 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
         Use(pollingMiddleware);
         Use(consumerMiddleware);
         Use(deserializationMiddleware);
+        Use(headerFilterMiddleware);
         Use(inboxMiddleware);
     }
 }

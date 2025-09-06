@@ -13,6 +13,8 @@ builder.Services.AddDbContext<OrderContext>(optionsBuilder => optionsBuilder
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
     .UseKafkaExtensibility(client => client.BootstrapServers = "localhost:9092"));
 
+builder.Services.AddOutboxKafkaWorker<OrderContext>();
+
 using var app = builder.Build();
 
 app.Start();
@@ -36,6 +38,8 @@ await foreach (var order in dbContext.OrderEvents.WithCancellation(app.Lifetime.
     // here you're commiting the offset of the current event.
     await dbContext.SaveChangesAsync();
 }
+
+await dbContext.DisposeAsync();
 
 app.WaitForShutdown();
 

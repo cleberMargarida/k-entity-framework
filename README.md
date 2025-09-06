@@ -30,7 +30,7 @@ builder.Services.AddDbContext<MyDbContext>(options => options
     .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
 
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
-    .UseKafkaExtensibility("localhost:9092"));
+  .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
 
 dbContext.Orders.Add(new Order { Id = 1232 });
 

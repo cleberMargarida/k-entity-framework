@@ -62,15 +62,15 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     {
         try
         {
-            var coordination = scope.ServiceProvider.GetRequiredService<IOutboxCoordinationStrategy<TDbContext>>();
+            var coordination = this.scope.ServiceProvider.GetRequiredService<IOutboxCoordinationStrategy<TDbContext>>();
 
-            int maxMessagesPerPoll = settings.MaxMessagesPerPoll;
-            using var timer = new PeriodicTimer(settings.PollingInterval);
+            int maxMessagesPerPoll = this.settings.MaxMessagesPerPoll;
+            using var timer = new PeriodicTimer(this.settings.PollingInterval);
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
                 try
                 {
-                    var outboxMessages = context.Set<OutboxMessage>();
+                    var outboxMessages = this.context.Set<OutboxMessage>();
                     var query = coordination.ApplyScope(outboxMessages);
 
                     var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
@@ -82,7 +82,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
                         continue;
                     }
 
-                    var dbContextServiceProvider = context.GetInfrastructure();
+                    var dbContextServiceProvider = this.context.GetInfrastructure();
 
                     for (int i = 0; i < outboxMessageArray.Length; i++)
                     {
@@ -93,7 +93,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
                     producer.Flush(stoppingToken);
 
                     await Task.WhenAll(outboxFinishedTasks);
-                    await context.SaveChangesAsync(stoppingToken);
+                    await this.context.SaveChangesAsync(stoppingToken);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -117,7 +117,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
 
     private ScopedCommand? CreateScopedCommandWithAutoGenerator(OutboxMessage outboxMessage)
     {
-        return middlewareSpecifier?.DeferedExecution(outboxMessage);
+        return this.middlewareSpecifier?.DeferedExecution(outboxMessage);
     }
 
     private static ScopedCommand CreateScopedCommandWithClr(OutboxMessage outboxMessage)
@@ -155,7 +155,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
         return new MiddlewareInvokeCommand<T>(outboxMessage).ExecuteAsync;
     }
 
-    readonly struct MiddlewareInvokeCommand<T>
+    private readonly struct MiddlewareInvokeCommand<T>
         where T : class
     {
         private readonly OutboxMessage outboxMessage;
@@ -166,10 +166,14 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
             this.outboxMessage = outboxMessage;
         }
 
-        public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        public async ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
             var middleware = serviceProvider.GetRequiredService<OutboxProducerMiddleware<T>>();
-            return middleware.InvokeAsync(outboxMessage.AsEnvelope<T>(), cancellationToken);
+            var envelope = new Envelope<T>();
+
+            envelope.WeakReference.SetTarget(this.outboxMessage);
+
+            await middleware.InvokeAsync(envelope, cancellationToken);
         }
     }
 
@@ -178,7 +182,7 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
     /// </summary>
     public override void Dispose()
     {
-        scope?.Dispose();
+        this.scope?.Dispose();
         base.Dispose();
     }
 }

@@ -5,8 +5,8 @@ Get up and running with K-Entity-Framework in just a few minutes.
 ## Prerequisites
 
 - .NET 8.0 or later
-- Apache Kafka cluster (local or cloud)
-- Entity Framework Core knowledge (recommended)
+- Confluent.Kafka .NET Client
+- Entity Framework Core
 
 ## Installation
 
@@ -34,7 +34,7 @@ public class Program
 
         builder.Services.AddDbContext<OrderContext>(optionsBuilder => optionsBuilder
             .UseInMemoryDatabase("hello-world-db")
-            .UseKafkaExtensibility(client => client.BootstrapServers = "localhost:9092"));
+            .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
 
         using var app = builder.Build();
         app.Start();
@@ -42,8 +42,8 @@ public class Program
         var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<OrderContext>();
 
-    // Produce an event. It will be sent when SaveChangesAsync is called.
-    dbContext.OrderEvents.Produce(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
+        // Produce an event. It will be sent when SaveChangesAsync is called.
+        dbContext.OrderEvents.Produce(new OrderEvent { Id = 1, Status = Guid.NewGuid().ToString() });
 
         await dbContext.SaveChangesAsync();
 
@@ -70,7 +70,7 @@ public class OrderContext(DbContextOptions options) : DbContext(options)
         {
             topic.HasName("hello-world-topic");
             topic.HasProducer(p => p.HasKey(m => m.Id));
-            topic.HasConsumer(c => c.HasExclusiveConnection(conn => conn.GroupId = "hello-world-group"));
+            topic.HasConsumer(c => c.HasGroupId("hello-world-group"));
         });
     }
 }

@@ -7,9 +7,7 @@ Understanding the architecture of K.EntityFrameworkCore will help you make the m
 This section covers the fundamental architectural concepts:
 
 - **[Middleware Architecture](middleware-architecture.md)** - How the middleware pipeline works
-- **[Plugin Serialization](plugin-serialization.md)** - Extensible serialization system
-- **[Service Attributes](service-attributes.md)** - Service registration and dependency injection
-
+ 
 ## Design Principles
 
 K.EntityFrameworkCore is built on several key design principles:

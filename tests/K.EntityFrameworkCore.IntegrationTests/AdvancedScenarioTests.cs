@@ -8,7 +8,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
     {
         // Arrange
         defaultTopic.HasName("batch-processing-topic");
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
         await StartHostAsync();
 
         // Act
@@ -34,15 +34,15 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(1800, "First"));
+        context.DefaultMessages.Produce(new DefaultMessage(1800, "First"));
         await context.SaveChangesAsync();
-        
+
         await Task.Delay(100); // Small delay
-        
-    context.DefaultMessages.Produce(new DefaultMessage(1801, "Second"));
+
+        context.DefaultMessages.Produce(new DefaultMessage(1801, "Second"));
         await context.SaveChangesAsync();
-        
-    context.DefaultMessages.Produce(new DefaultMessage(1802, "Third"));
+
+        context.DefaultMessages.Produce(new DefaultMessage(1802, "Third"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -59,13 +59,13 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
     {
         // Arrange
         defaultTopic.HasName("large-message-topic");
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
         await StartHostAsync();
 
         var largeContent = new string('X', 10000); // 10KB content
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(1900, largeContent));
+        context.DefaultMessages.Produce(new DefaultMessage(1900, largeContent));
         await context.SaveChangesAsync();
 
         // Assert
@@ -79,6 +79,6 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
     public void Dispose()
     {
         DeleteKafkaTopics();
-        context.Dispose();
+        this.context.Dispose();
     }
 }

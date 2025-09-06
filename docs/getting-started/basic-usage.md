@@ -29,13 +29,7 @@ public class MyDbContext : DbContext
                 producer.HasOutbox();
             });
             
-            topic.HasConsumer(consumer =>
-            {
-                consumer.HasExclusiveConnection(conn => 
-                {
-                    conn.GroupId = "order-processor";
-                });
-            });
+            topic.HasConsumer();
         });
     }
 }
@@ -60,14 +54,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             producer.HasOutbox();               // Transactional outbox
         });
         
-        topic.HasConsumer(consumer =>           // Consumer configuration
-        {
-            consumer.HasExclusiveConnection(connection =>
-            {
-                connection.GroupId = "order-processor";
-            });
-            consumer.HasInbox(); // Enable inbox for deduplication
-        });
+        topic.HasConsumer();
     });
 }
 ```
@@ -161,12 +148,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Register DbContext with Kafka integration
 builder.Services.AddDbContext<MyDbContext>(options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-    .UseKafkaExtensibility(client =>
-    {
-        client.BootstrapServers = "localhost:9092";
-        // Global consumer settings
-        client.Consumer.GroupId = "my-global-group";
-    }));
+    .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
 
 // Register the outbox worker if you are using the outbox pattern
 builder.Services.AddOutboxKafkaWorker<MyDbContext>();
@@ -175,4 +157,105 @@ builder.Services.AddOutboxKafkaWorker<MyDbContext>();
 builder.Services.AddHostedService<OrderEventProcessor>();
 
 var app = builder.Build();
+```
+
+## Examples
+
+This section provides simple, practical examples to help you get started with K-Entity-Framework quickly. For short navigational convenience the examples that used to live in the "Basic Examples" page are consolidated here.
+
+### Simple Producer and Consumer
+
+#### DbContext Setup
+
+```csharp
+public class OrderDbContext : DbContext
+{
+    public Topic<OrderCreated> OrderEvents { get; set; }
+
+    public OrderDbContext(DbContextOptions<OrderDbContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Topic<OrderCreated>(topic =>
+        {
+            topic.HasName("order-events");
+            topic.HasProducer(producer => producer.HasKey(o => o.CustomerId));
+            topic.HasConsumer(consumer => consumer.HasGroupId("order-processor"));
+        });
+    }
+}
+
+public class OrderCreated
+{
+    public int OrderId { get; set; }
+    public string CustomerId { get; set; }
+}
+```
+
+#### Service Configuration (full)
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<OrderDbContext>(opts => opts
+    // Configure Postgres
+    .UseNpgsql(builder.Configuration.GetConnectionString("OrdersDb"))
+    
+    // Configure Kafka
+    .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
+
+// If you use outbox patterns, add the worker
+builder.Services.AddOutboxKafkaWorker<OrderDbContext>();
+
+// Add background processor that reads from the DbContext topic
+builder.Services.AddHostedService<OrderEventProcessor>();
+
+var app = builder.Build();
+app.Run();
+```
+
+#### Producer Example
+
+```csharp
+public class OrderService
+{
+    private readonly OrderDbContext _dbContext;
+
+    public OrderService(OrderDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task CreateOrderAsync()
+    {
+    _dbContext.OrderEvents.Produce(new OrderCreated { OrderId = 1, CustomerId = "123" });
+        await _dbContext.SaveChangesAsync();
+    }
+}
+```
+
+#### Consumer Example
+
+```csharp
+public class OrderEventProcessor : BackgroundService
+{
+    private readonly IServiceProvider _serviceProvider;
+
+    public OrderEventProcessor(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+
+        await foreach (var orderEvent in dbContext.OrderEvents.WithCancellation(stoppingToken))
+        {
+            Console.WriteLine($"Processing order {orderEvent.OrderId}");
+            await dbContext.SaveChangesAsync(stoppingToken);
+        }
+    }
+}
 ```

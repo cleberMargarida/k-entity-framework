@@ -4,11 +4,15 @@ namespace K.EntityFrameworkCore.IntegrationTests.Scenarios;
 
 public sealed class PostgreTestContext(DbContextOptions options) : DbContext(options), IDisposable, IAsyncDisposable
 {
+#pragma warning disable CA2211 // Non-constant fields should not be visible
     public static List<IAnnotation> Annotations = [];
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         modelBuilder.HasOutboxInboxTables();
+#pragma warning restore CS0618 // Type or member is obsolete
         modelBuilder.Model.AddAnnotations(Annotations);
     }
 

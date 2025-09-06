@@ -87,10 +87,6 @@ internal static class ModelAnnotationKeys
     /// </summary>
     public static string InboxDeduplicationTimeWindow(Type messageType) => $"{BasePrefix}InboxDeduplicationTimeWindow[{messageType.FullName}]";
     
-    /// <summary>
-    /// Annotation key for storing the cleanup interval for an inbox message type.
-    /// </summary>
-    public static string InboxCleanupInterval(Type messageType) => $"{BasePrefix}InboxCleanupInterval[{messageType.FullName}]";
     
     /// <summary>
     /// Annotation key for storing ConsumerMiddlewareSettings by message type.
@@ -111,4 +107,14 @@ internal static class ModelAnnotationKeys
     /// Annotation key for storing whether a consumer message type uses exclusive connection.
     /// </summary>
     public static string ConsumerExclusiveConnection(Type messageType) => $"{BasePrefix}ConsumerExclusiveConnection[{messageType.FullName}]";
+    
+    /// <summary>
+    /// Annotation key for storing header property accessors for a producer message type.
+    /// </summary>
+    public static string ProducerHeaderAccessors(Type messageType) => $"{BasePrefix}ProducerHeaderAccessors[{messageType.FullName}]";
+    
+    /// <summary>
+    /// Annotation key for storing header filter expressions for a consumer message type.
+    /// </summary>
+    public static string ConsumerHeaderFilters(Type messageType) => $"{BasePrefix}ConsumerHeaderFilters[{messageType.FullName}]";
 }

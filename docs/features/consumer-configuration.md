@@ -23,35 +23,14 @@ builder.Services.AddDbContext<MyDbContext>(optionsBuilder => optionsBuilder
     }));
 ```
 
+
 ## Type-Specific Configuration
 
-You can override the global settings for specific message types.
-
-### Exclusive Connections
-
-While there is a single shared consumer by default, you can configure a message type to use its own dedicated consumer connection. This is useful for high-priority messages or for isolating consumers from each other.
-
-When you configure an exclusive connection, a new `KafkaConsumerPollService` is created for that specific message type, with its own underlying `IConsumer` instance.
-
-```csharp
-modelBuilder.Topic<CriticalAlert>(topic =>
-{
-    topic.HasName("critical-alerts");
-    
-    topic.HasConsumer(consumer =>
-    {
-        consumer.HasExclusiveConnection(connection =>
-        {
-            connection.GroupId = "critical-alerts-processor";
-            connection.AutoOffsetReset = AutoOffsetReset.Earliest;
-        });
-    });
-});
-```
+You can override global settings for specific message types while still using the shared producer and consumer connections. Prefer adjusting buffer sizes, backpressure, and other consumer settings per-type rather than creating separate connections.
 
 ### Buffer and Backpressure
 
-You can configure the buffer size and backpressure mode for each message type, regardless of whether it's using the shared or an exclusive consumer.
+You can configure the buffer size and backpressure mode for each message type.
 
 ```csharp
 // High-volume events - large buffer for throughput

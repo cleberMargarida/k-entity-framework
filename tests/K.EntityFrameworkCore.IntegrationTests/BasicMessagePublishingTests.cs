@@ -10,7 +10,7 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(1, default));
+        context.DefaultMessages.Produce(new DefaultMessage(1, default));
         await context.SaveChangesAsync();
 
         // Assert
@@ -23,8 +23,8 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
     {
         // Arrange
         await StartHostAsync();
-    context.DefaultMessages.Produce(new DefaultMessage(1, default));
-    context.DefaultMessages.Produce(new DefaultMessage(2, default));
+        context.DefaultMessages.Produce(new DefaultMessage(1, default));
+        context.DefaultMessages.Produce(new DefaultMessage(2, default));
 
         // Act
         await context.SaveChangesAsync();
@@ -42,10 +42,10 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
         // Arrange & Act
         await StartHostAsync();
 
-    context.DefaultMessages.Produce(new DefaultMessage(1, default));
+        context.DefaultMessages.Produce(new DefaultMessage(1, default));
         await context.SaveChangesAsync();
 
-    context.DefaultMessages.Produce(new DefaultMessage(2, default));
+        context.DefaultMessages.Produce(new DefaultMessage(2, default));
         await context.SaveChangesAsync();
 
         // Assert
@@ -64,10 +64,10 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(1, "TopicA"));
+        context.DefaultMessages.Produce(new DefaultMessage(1, "TopicA"));
         await context.SaveChangesAsync();
 
-    context.AlternativeMessages.Produce(new AlternativeMessage(2, "TopicB"));
+        context.AlternativeMessages.Produce(new AlternativeMessage(2, "TopicB"));
         await context.SaveChangesAsync();
 
         // Assert

@@ -1,14 +1,10 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Producer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.DependencyInjection;
 using System.IO.Hashing;
 using System.Linq.Expressions;
 using System.Text;
-using System.Text.Json;
 
 namespace K.EntityFrameworkCore.Middlewares.Inbox;
 
@@ -24,7 +20,6 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
     where T : class
 {
     private static readonly byte[] TypeSalt = Encoding.UTF8.GetBytes(typeof(T).FullName ?? typeof(T).Name);
-    private Func<T, object>? deduplicationValueAccessor;
 
     /// <summary>
     /// Gets the timeout for duplicate message detection.
@@ -33,11 +28,6 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
     /// </summary>
     public TimeSpan DeduplicationTimeWindow => model.GetInboxDeduplicationTimeWindow<T>() ?? TimeSpan.FromHours(24);
 
-    /// <summary>
-    /// Gets the interval for automatic cleanup operations.
-    /// Default is 1 hour.
-    /// </summary>
-    public TimeSpan CleanupInterval => model.GetInboxCleanupInterval<T>() ?? TimeSpan.FromHours(1);
 
     /// <summary>
     /// Gets the compiled deduplication value accessor from model annotations.
@@ -46,11 +36,11 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
     {
         get
         {
-            if (deduplicationValueAccessor != null)
-                return deduplicationValueAccessor;
+            if (field != null)
+                return field;
 
             var valueAccessorExpression = model.GetInboxDeduplicationValueAccessor<T>();
-            
+
             if (valueAccessorExpression == null)
                 return null;
 
@@ -68,32 +58,23 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
             }
 
             var lambdaExpression = Expression.Lambda<Func<T, object>>(propertyExpression, parameter);
-            deduplicationValueAccessor = lambdaExpression.Compile();
+            field = lambdaExpression.Compile();
 
-            return deduplicationValueAccessor;
+            return field;
         }
+
+        set;
     }
 
-    /// <summary>
-    /// Computes a hash for the envelope using xxHash64 algorithm for fast deduplication.
-    /// Includes type-specific salt to ensure type isolation in hash values.
-    /// </summary>
-    /// <param name="envelope">The envelope to compute hash for.</param>
-    /// <returns>A 64-bit hash value that includes type-specific salt.</returns>
-    internal ulong Hash(Envelope<T> envelope)
+    internal ulong Hash(T message)
     {
-        if (envelope.Message == null)
-        {
-            throw new InvalidOperationException("Cannot compute hash for envelope with null message.");
-        }
-
         byte[] dataToHash;
 
         var accessor = DeduplicationValueAccessor;
         if (accessor != null)
         {
-            var value = accessor(envelope.Message);
-            var jsonValue = JsonSerializer.Serialize(value);
+            var value = accessor(message);
+            var jsonValue = value.ToString()!;
             dataToHash = Encoding.UTF8.GetBytes(jsonValue);
         }
         else
@@ -108,7 +89,7 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
         Array.Copy(dataToHash, 0, saltedData, TypeSalt.Length, dataToHash.Length);
 
         var hashBytes = XxHash64.Hash(saltedData);
-        
+
         return BitConverter.ToUInt64(hashBytes, 0);
     }
 }

@@ -1,8 +1,6 @@
-﻿using K.EntityFrameworkCore.Middlewares.Core;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using K.EntityFrameworkCore.Middlewares.Producer;
 
 namespace K.EntityFrameworkCore.Extensions;
 
@@ -24,7 +22,7 @@ public static class DbContextExtensions
 
         var commandRegistry = serviceProvider.GetRequiredService<ScopedCommandRegistry>();
 
-    commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);
+        commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);
     }
 
     /// <summary>

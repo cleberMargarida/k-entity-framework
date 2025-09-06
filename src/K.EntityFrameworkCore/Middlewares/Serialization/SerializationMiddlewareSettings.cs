@@ -2,6 +2,8 @@ using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Extensions;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using System.Collections.Immutable;
 
 namespace K.EntityFrameworkCore.Middlewares.Serialization;
 
@@ -27,13 +29,21 @@ internal class SystemTextJsonSerializer<T>
 {
     public JsonSerializerOptions Options { get; } = new();
 
-    public T? Deserialize(byte[] data)
+    public T Deserialize(IImmutableDictionary<string, string> headers, ReadOnlySpan<byte> data)
     {
-        return JsonSerializer.Deserialize<T>(data, Options);
+        Type type = GetType(headers);
+        return JsonSerializer.Deserialize(data, type, Options) as T ?? throw new InvalidOperationException("Serialize from to null values are not allowed.");
     }
 
-    public byte[] Serialize(in T message)
+    public ReadOnlySpan<byte> Serialize(IImmutableDictionary<string, string> headers, in T message)
     {
-        return JsonSerializer.SerializeToUtf8Bytes(message, Options);
+        Type type = message.GetType();
+        return JsonSerializer.SerializeToUtf8Bytes(message, type, Options);
+    }
+
+    private static Type GetType(IImmutableDictionary<string, string> headers)
+    {
+        var assemblyQualifiedName = headers.GetValueOrDefault("$runtimeType") ?? headers["$type"];
+        return Type.GetType(assemblyQualifiedName, throwOnError: true)!;
     }
 }

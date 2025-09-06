@@ -1,146 +1,128 @@
-﻿using Confluent.Kafka;
-using Confluent.Kafka.Admin;
-using K.EntityFrameworkCore;
-using K.EntityFrameworkCore.Extensions;
+﻿using Confluent.Kafka.Admin;
 using K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Forget;
-using K.EntityFrameworkCore.Middlewares.Inbox;
-using K.EntityFrameworkCore.Middlewares.Outbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
-using K.EntityFrameworkCore.Middlewares.Producer;
-using K.EntityFrameworkCore.Middlewares.Consumer;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using System;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "EF1001:Internal EF Core API usage.", Justification = "<Pending>")]
 
-namespace K.EntityFrameworkCore.Extensions
+namespace K.EntityFrameworkCore.Extensions;
+
+/// <summary>
+/// Extension methods for <see cref="ModelBuilder"/> to configure domain events.
+/// </summary>
+public static class ModelBuilderExtensions
 {
     /// <summary>
-    /// Extension methods for <see cref="ModelBuilder"/> to configure domain events.
+    /// Configures a topic for the specified message type.
     /// </summary>
-    public static class ModelBuilderExtensions
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="modelBuilder">The model builder instance.</param>
+    /// <param name="topic">Action to configure the topic.</param>
+    /// <returns>The model builder instance.</returns>
+    public static ModelBuilder Topic<T>(this ModelBuilder modelBuilder, Action<TopicTypeBuilder<T>> topic) where T : class
     {
-        /// <summary>
-        /// Configures a topic for the specified message type.
-        /// </summary>
-        /// <typeparam name="T">The message type.</typeparam>
-        /// <param name="modelBuilder">The model builder instance.</param>
-        /// <param name="topic">Action to configure the topic.</param>
-        /// <returns>The model builder instance.</returns>
-        public static ModelBuilder Topic<T>(this ModelBuilder modelBuilder, Action<TopicTypeBuilder<T>> topic) where T : class
-        {
-            topic(new TopicTypeBuilder<T>(modelBuilder));
-            return modelBuilder;
-        }
-
-        /// <summary>
-        /// Configures both outbox and inbox tables for message processing.
-        /// </summary>
-        /// <param name="modelBuilder"></param>
-        /// <remarks>
-        /// Not needed, this will happen when you configure outbox/inbox on specific topics via <see cref="Topic{T}(ModelBuilder, Action{TopicTypeBuilder{T}})"/>.
-        /// </remarks>
-        /// <returns></returns>
-        public static ModelBuilder HasOutboxInboxTables(this ModelBuilder modelBuilder)
-        {
-            modelBuilder.Topic<object>(topic => topic.HasProducer(producer => producer.HasOutbox()).HasConsumer(consumer => consumer.HasInbox()));
-            return modelBuilder;
-        }
+        topic(new TopicTypeBuilder<T>(modelBuilder));
+        return modelBuilder;
     }
 
     /// <summary>
-    /// Provides a fluent API for configuring a topic for a specific message type.
+    /// Configures both outbox and inbox tables for message processing.
     /// </summary>
-    /// <typeparam name="T">The message type for this topic.</typeparam>
-    /// <param name="modelBuilder">The model builder instance.</param>
-    public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
-        where T : class
+    /// <param name="modelBuilder"></param>
+    /// <returns></returns>
+    [Obsolete("Not needed, this will happen when you configure outbox/inbox on specific topics via Topic<T>.")]
+    public static ModelBuilder HasOutboxInboxTables(this ModelBuilder modelBuilder)
     {
-        /// <summary>
-        /// Configures a consumer for this topic.
-        /// </summary>
-        /// <param name="consumer">Action to configure the consumer.</param>
-        /// <returns>The topic builder instance for method chaining.</returns>
-        public TopicTypeBuilder<T> HasConsumer(Action<ConsumerBuilder<T>> consumer)
-        {
-            consumer(new ConsumerBuilder<T>(modelBuilder));
-            return this;
-        }
+        modelBuilder.Topic<object>(topic => topic.HasProducer(producer => producer.HasOutbox()).HasConsumer(consumer => consumer.HasInbox()));
+        return modelBuilder;
+    }
+}
 
-        /// <summary>
-        /// Sets the name of this topic.
-        /// </summary>
-        /// <param name="name">The topic name.</param>
-        /// <returns>The topic builder instance for method chaining.</returns>
-        public TopicTypeBuilder<T> HasName(string name)
-        {
-            modelBuilder.Model.SetTopicName<T>(name);
+/// <summary>
+/// Provides a fluent API for configuring a topic for a specific message type.
+/// </summary>
+/// <typeparam name="T">The message type for this topic.</typeparam>
+/// <param name="modelBuilder">The model builder instance.</param>
+public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
+    where T : class
+{
+    /// <summary>
+    /// Configures a consumer for this topic.
+    /// </summary>
+    /// <param name="consumer">Action to configure the consumer.</param>
+    /// <returns>The topic builder instance for method chaining.</returns>
+    public TopicTypeBuilder<T> HasConsumer(Action<ConsumerBuilder<T>> consumer)
+    {
+        consumer(new ConsumerBuilder<T>(modelBuilder));
+        return this;
+    }
 
-            return this;
-        }
+    /// <summary>
+    /// Sets the name of this topic.
+    /// </summary>
+    /// <param name="name">The topic name.</param>
+    /// <returns>The topic builder instance for method chaining.</returns>
+    public TopicTypeBuilder<T> HasName(string name)
+    {
+        modelBuilder.Model.SetTopicName<T>(name);
 
-        /// <summary>
-        /// Configures a producer for this topic.
-        /// </summary>
-        /// <param name="producer">Action to configure the producer.</param>
-        /// <returns>The topic builder instance for method chaining.</returns>
-        public TopicTypeBuilder<T> HasProducer(Action<ProducerBuilder<T>> producer)
-        {
-            producer(new ProducerBuilder<T>(modelBuilder));
-            return this;
-        }
+        return this;
+    }
 
-        /// <summary>
-        /// Configures topic-specific settings.
-        /// </summary>
-        /// <param name="settings">Action to configure the topic settings.</param>
-        /// <returns>The topic builder instance for method chaining.</returns>
-        public TopicTypeBuilder<T> HasSetting(Action<TopicSpecification> settings)
-        {
-            return this;
-        }
+    /// <summary>
+    /// Configures a producer for this topic.
+    /// </summary>
+    /// <param name="producer">Action to configure the producer.</param>
+    /// <returns>The topic builder instance for method chaining.</returns>
+    public TopicTypeBuilder<T> HasProducer(Action<ProducerBuilder<T>> producer)
+    {
+        producer(new ProducerBuilder<T>(modelBuilder));
+        return this;
+    }
 
-        /// <summary>
-        /// Configures the topic to use a specific serialization strategy identified by options type.
-        /// </summary>
-        /// <typeparam name="TSerializer">The serializer type.</typeparam>
-        /// <typeparam name="TOptions">The options type that identifies the serialization strategy.</typeparam>
-        /// <param name="configure">Optional action to configure the strategy-specific settings.</param>
-        /// <returns>The topic type builder instance.</returns>
-        public TopicTypeBuilder<T> UseSerializer<TSerializer, TOptions>(Action<TOptions>? configure = null)
-            where TOptions : class, new()
-            where TSerializer : class, IMessageSerializer<T, TOptions>, IMessageDeserializer<T>, new()
-        {
-            modelBuilder.Model.SetSerializer<T, TSerializer>();
+    /// <summary>
+    /// Configures topic-specific settings.
+    /// </summary>
+    /// <param name="settings">Action to configure the topic settings.</param>
+    /// <returns>The topic builder instance for method chaining.</returns>
+    public TopicTypeBuilder<T> HasSetting(Action<TopicSpecification> settings)
+    {
+        // TODO: Topic settings need to be handled
+        return this;
+    }
 
-            // TODO: Serializer configuration needs to be handled differently
-            // For now, serializer instances will be created at runtime
-            
-            return this;
-        }
+    /// <summary>
+    /// Configures the topic to use a specific serialization strategy identified by options type.
+    /// </summary>
+    /// <typeparam name="TSerializer">The serializer type.</typeparam>
+    /// <typeparam name="TOptions">The options type that identifies the serialization strategy.</typeparam>
+    /// <param name="configure">Optional action to configure the strategy-specific settings.</param>
+    /// <returns>The topic type builder instance.</returns>
+    public TopicTypeBuilder<T> UseSerializer<TSerializer, TOptions>(Action<TOptions>? configure = null)
+        where TOptions : class, new()
+        where TSerializer : class, IMessageSerializer<T, TOptions>, IMessageDeserializer<T>, new()
+    {
+        modelBuilder.Model.SetSerializer<T, TSerializer>();
 
-        /// <summary>
-        /// Configures the topic to use System.Text.Json for serialization.
-        /// This is a convenience method for the built-in JsonSerializerOptions strategy.
-        /// </summary>
-        /// <param name="configure">Action to configure System.Text.Json settings.</param>
-        /// <returns>The topic type builder instance.</returns>
-        public TopicTypeBuilder<T> UseSystemTextJson(Action<JsonSerializerOptions>? configure = null)
-        {
-            return UseSerializer<SystemTextJsonSerializer<T>, JsonSerializerOptions>(configure);
-        }
+        // TODO: Serializer configuration needs to be handled differently
+        // For now, serializer instances will be created at runtime
+
+        return this;
+    }
+
+    /// <summary>
+    /// Configures the topic to use System.Text.Json for serialization.
+    /// This is a convenience method for the built-in JsonSerializerOptions strategy.
+    /// </summary>
+    /// <param name="configure">Action to configure System.Text.Json settings.</param>
+    /// <returns>The topic type builder instance.</returns>
+    public TopicTypeBuilder<T> UseSystemTextJson(Action<JsonSerializerOptions>? configure = null)
+    {
+        return UseSerializer<SystemTextJsonSerializer<T>, JsonSerializerOptions>(configure);
     }
 }
 
@@ -212,7 +194,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
         });
 
         configure?.Invoke(new OutboxBuilder<T>(modelBuilder.Model));
-        
+
         return this;
     }
 
@@ -228,11 +210,53 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 
         // TODO: Forget builder configuration needs to be handled differently
         // For now, middleware settings will be configured at runtime
-        
+
         return this;
     }
 
+    /// <summary>
+    /// Configures a header to be included in produced messages using the property name as the header key.
+    /// </summary>
+    /// <param name="headerValueAccessor">Expression to extract the header value from the message.</param>
+    /// <returns>The producer builder instance for method chaining.</returns>
+    public ProducerBuilder<T> HasHeader(Expression<Func<T, object>> headerValueAccessor)
+    {
+        string headerKey = GetPropertyName(headerValueAccessor);
 
+        modelBuilder.Model.AddHeaderAccessor<T>(headerKey, headerValueAccessor);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a header to be included in produced messages with a custom header key.
+    /// </summary>
+    /// <param name="headerKey">The header key to use in the message.</param>
+    /// <param name="headerValueAccessor">Expression to extract the header value from the message.</param>
+    /// <returns>The producer builder instance for method chaining.</returns>
+    public ProducerBuilder<T> HasHeader(string headerKey, Expression<Func<T, object>> headerValueAccessor)
+    {
+        modelBuilder.Model.AddHeaderAccessor<T>(headerKey, headerValueAccessor);
+
+        return this;
+    }
+
+    private static string GetPropertyName<TSource>(Expression<Func<TSource, object>> expression)
+    {
+        Expression body = expression.Body;
+
+        if (body is UnaryExpression { NodeType: ExpressionType.Convert } unaryExpression)
+        {
+            body = unaryExpression.Operand;
+        }
+
+        if (body is MemberExpression memberExpression && memberExpression.Member is PropertyInfo property)
+        {
+            return property.Name;
+        }
+
+        throw new ArgumentException($"Expression '{expression}' does not refer to a property.", nameof(expression));
+    }
 }
 
 /// <summary>
@@ -253,17 +277,16 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         modelBuilder.Entity<InboxMessage>(entity =>
         {
             entity.HasKey(entity => entity.HashId);
-
             entity.Property(e => e.HashId).ValueGeneratedNever();
-
-            entity.HasIndex(entity => entity.ReceivedAt);
+            entity.HasIndex(entity => entity.ExpireAt);
+            entity.HasQueryFilter(entity => entity.ExpireAt > DateTime.UtcNow);
         });
 
         modelBuilder.Model.SetInboxEnabled<T>();
 
         // Configure using the inbox builder
         configure?.Invoke(new InboxBuilder<T>(modelBuilder));
-        
+
         return this;
     }
 
@@ -281,7 +304,7 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
 
         // TODO: Dedicated consumer config needs to be handled differently
         // For now, these settings will be configured at runtime
-        
+
         return this;
     }
 
@@ -297,7 +320,7 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
 
         // TODO: Dedicated consumer config needs to be handled differently
         // For now, these settings will be configured at runtime
-        
+
         return this;
     }
 
@@ -314,7 +337,30 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
 
         // TODO: Consumer config action needs to be handled differently
         // For now, consumer config will be configured at runtime
-        
+
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a header filter that will run after deserialization to filter messages based on header values.
+    /// Messages that don't match the filter criteria will be discarded and not processed further.
+    /// </summary>
+    /// <param name="headerKey">The header key to filter on.</param>
+    /// <param name="expectedValue">The expected header value for the message to be processed.</param>
+    /// <returns>The consumer builder instance.</returns>
+    /// <example>
+    /// <code>
+    /// // Filter messages by tenant ID from header
+    /// consumer.HasHeaderFilter("tenant-id", "tenant-123");
+    /// 
+    /// // Filter messages by region
+    /// consumer.HasHeaderFilter("region", "US");
+    /// </code>
+    /// </example>
+    public ConsumerBuilder<T> HasHeaderFilter(string headerKey, string expectedValue)
+    {
+        modelBuilder.Model.AddHeaderFilter<T>(headerKey, expectedValue);
+
         return this;
     }
 }

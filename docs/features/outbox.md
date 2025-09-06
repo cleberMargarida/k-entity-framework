@@ -20,17 +20,34 @@ The Outbox pattern solves the dual-write problem in distributed systems by:
 ### Message Flow
 
 ```mermaid
-graph TD
-    A[Application Code] --> B[dbContext.Topic.Produce()]
-    B --> C[Outbox Middleware]
-    C --> D[Store in OutboxMessage Table]
-    D --> E[SaveChangesAsync]
-    E --> F[Transaction Commit]
-    F --> G[OutboxPollingWorker]
-    G --> H[Produce to Kafka]
-    
-    style C fill:#fff3e0
-    style G fill:#e1f5fe
+%% Dark mode styled flow
+graph LR
+    A["Application Code"] --> B["dbContext.Topic.Produce()"]
+    B --> C["Outbox Middleware"]
+    C --> D["Store in DbSet OutboxMessage"]
+    D --> E["SaveChangesAsync"]
+    E --> F["Transaction Commit"]
+    F --> G["OutboxPollingWorker"]
+    G --> H["Produce to Kafka"]
+
+    %% Base style for all nodes
+    classDef default fill:#2b2b2b,stroke:#888,stroke-width:1px,color:#eee;
+
+    %% Highlight middleware
+    class C middleware;
+    classDef middleware fill:#3e2723,stroke:#ff9800,color:#ffcc80;
+
+    %% Highlight worker
+    class G worker;
+    classDef worker fill:#0d47a1,stroke:#29b6f6,color:#bbdefb;
+
+    %% Highlight database action
+    class D database;
+    classDef database fill:#263238,stroke:#4db6ac,color:#80cbc4;
+
+    %% Highlight final Kafka step
+    class H kafka;
+    classDef kafka fill:#1b5e20,stroke:#66bb6a,color:#a5d6a7;
 ```
 
 ## Configuration

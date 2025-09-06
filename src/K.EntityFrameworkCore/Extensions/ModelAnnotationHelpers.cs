@@ -11,6 +11,62 @@ namespace K.EntityFrameworkCore.Extensions;
 internal static class ModelAnnotationHelpers
 {
     /// <summary>
+    /// Gets header property accessors for a producer message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>Dictionary mapping header keys to property accessor expressions, or empty dictionary if not set.</returns>
+    public static Dictionary<string, Expression> GetHeaderAccessors<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerHeaderAccessors(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as Dictionary<string, Expression> ?? [];
+    }
+
+    /// <summary>
+    /// Sets header filter configuration for a consumer message type.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="headerKey">The header key to filter on.</param>
+    /// <param name="expectedValue">The expected header value.</param>
+    public static void AddHeaderFilter<T>(this IMutableModel model, string headerKey, string expectedValue)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerHeaderFilters(typeof(T));
+        var existingFilters = model.FindAnnotation(annotationKey)?.Value as Dictionary<string, string> ?? [];
+        existingFilters[headerKey] = expectedValue;
+        model.SetAnnotation(annotationKey, existingFilters);
+    }
+
+    /// <summary>
+    /// Gets header filter configurations for a consumer message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>Dictionary mapping header keys to expected values, or empty dictionary if not set.</returns>
+    public static Dictionary<string, string> GetHeaderFilters<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerHeaderFilters(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as Dictionary<string, string> ?? [];
+    }
+
+    /// <summary>
+    /// Checks if header filters are enabled for a message type.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>True if header filters are configured, false otherwise.</returns>
+    public static bool IsHeaderFilterEnabled<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerHeaderFilters(typeof(T));
+        var filters = model.FindAnnotation(annotationKey)?.Value as Dictionary<string, string>;
+        return filters != null && filters.Count > 0;
+    }
+
+    /// <summary>
     /// Sets the topic name for a message type in the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
@@ -221,31 +277,7 @@ internal static class ModelAnnotationHelpers
         return model.FindAnnotation(annotationKey)?.Value as TimeSpan?;
     }
 
-    /// <summary>
-    /// Sets the cleanup interval for an inbox message type in the model annotations.
-    /// </summary>
-    /// <typeparam name="T">The message type.</typeparam>
-    /// <param name="model">The Entity Framework model.</param>
-    /// <param name="cleanupInterval">The cleanup interval.</param>
-    public static void SetInboxCleanupInterval<T>(this IMutableModel model, TimeSpan cleanupInterval)
-        where T : class
-    {
-        var annotationKey = ModelAnnotationKeys.InboxCleanupInterval(typeof(T));
-        model.SetAnnotation(annotationKey, cleanupInterval);
-    }
-
-    /// <summary>
-    /// Gets the cleanup interval for an inbox message type from the model annotations.
-    /// </summary>
-    /// <typeparam name="T">The message type.</typeparam>
-    /// <param name="model">The Entity Framework model.</param>
-    /// <returns>The cleanup interval, or null if not set.</returns>
-    public static TimeSpan? GetInboxCleanupInterval<T>(this IModel model)
-        where T : class
-    {
-        var annotationKey = ModelAnnotationKeys.InboxCleanupInterval(typeof(T));
-        return model.FindAnnotation(annotationKey)?.Value as TimeSpan?;
-    }
+    // Inbox cleanup interval helpers removed — cleanup scheduling is no longer part of the library.
 
     /// <summary>
     /// Sets the serializer type for a message type in the model annotations.
@@ -376,5 +408,34 @@ internal static class ModelAnnotationHelpers
     {
         var annotationKey = ModelAnnotationKeys.ConsumerExclusiveConnection(typeof(T));
         return model.FindAnnotation(annotationKey)?.Value as bool? ?? false;
+    }
+
+    /// <summary>
+    /// Sets header property accessors for a producer message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="headerAccessors">Dictionary mapping header keys to property accessor expressions.</param>
+    public static void SetHeaderAccessors<T>(this IMutableModel model, Dictionary<string, Expression> headerAccessors)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerHeaderAccessors(typeof(T));
+        model.SetAnnotation(annotationKey, headerAccessors);
+    }
+
+    /// <summary>
+    /// Adds a header property accessor for a producer message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="headerKey">The header key.</param>
+    /// <param name="headerValueAccessor">The expression that defines how to extract the header value from the message.</param>
+    public static void AddHeaderAccessor<T>(this IMutableModel model, string headerKey, Expression headerValueAccessor)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerHeaderAccessors(typeof(T));
+        var existingAccessors = model.FindAnnotation(annotationKey)?.Value as Dictionary<string, Expression> ?? [];
+        existingAccessors[headerKey] = headerValueAccessor;
+        model.SetAnnotation(annotationKey, existingAccessors);
     }
 }

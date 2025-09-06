@@ -9,12 +9,13 @@
 
 ## 🏗️ Architecture
 - [Middleware Architecture](architecture/middleware-architecture.md)
-- [Plugin System](architecture/plugin-serialization.md)
-- [Service Attributes](architecture/service-attributes.md)
+- 
 
 ## ⭐ Features
 - [Overview](features/index.md)
 - [Serialization](features/serialization.md)
+- [Custom Headers](features/custom-headers.md)
+- [Performance Considerations](features/performance-considerations.md)
 - [Outbox Pattern](features/outbox.md)
 - [Inbox Pattern](features/inbox.md)
 - [Consumer Configuration](features/consumer-configuration.md)
@@ -24,7 +25,7 @@
 - [Kafka Configuration](guides/kafka-configuration.md)
 
 ## 💡 Examples
-- [Basic Examples](examples/basic-examples.md)
+- [Basic Examples](getting-started/basic-usage.md)
 
 ## 🤝 Contributing
 - [Contributing Guide](../CONTRIBUTING.md)

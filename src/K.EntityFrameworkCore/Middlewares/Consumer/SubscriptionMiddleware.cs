@@ -15,17 +15,15 @@ internal class SubscriptionMiddleware<T>(IServiceProvider serviceProvider, Subsc
 {
     private IDisposable? activationToken;
 
-    public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        // Activate subscription if not already activated
         if (activationToken == null)
         {
             var subscriptionRegistry = serviceProvider.GetRequiredService<SubscriptionRegistry<T>>();
             activationToken = subscriptionRegistry.Activate();
         }
 
-        // Continue with the pipeline
-        await base.InvokeAsync(envelope, cancellationToken);
+        return base.InvokeAsync(envelope, cancellationToken);
     }
 
     /// <summary>

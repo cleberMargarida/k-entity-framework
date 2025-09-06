@@ -2,35 +2,37 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Producer;
+using System.Text;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
 {
     [ScopedService]
     internal class OutboxProducerMiddleware<T>(
-        IProducer producer, 
+        IProducer producer,
         OutboxMiddlewareSettings<T> settings,
-        ProducerMiddlewareSettings<T> producerMiddlewareSettings) 
-        : Middleware<T>(settings) 
+        ProducerMiddlewareSettings<T> producerMiddlewareSettings)
+        : Middleware<T>(settings)
         where T : class
     {
         private readonly string topicName = producerMiddlewareSettings.TopicName;
 
-        public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+        public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
         {
-            var outboxMessage = envelope.AsOutboxMessage();
+            envelope.WeakReference.TryGetTarget(out object? target);
+            OutboxMessage outboxMessage = target as OutboxMessage ?? throw new InvalidOperationException("Outbox not stored.");
 
-            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var tcs = new TaskCompletionSource<T?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             producer.Produce(topicName, new Message<string, byte[]>
             {
-                Headers = envelope.GetHeaders(),
+                Headers = outboxMessage.Headers.ToConfluentHeaders(),
                 Key = outboxMessage.AggregateId!,
                 Value = outboxMessage.Payload,
 
             }, HandleDeliveryReport);
 
 
-            return new ValueTask(tcs.Task);
+            return new ValueTask<T?>(tcs.Task);
 
             void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
             {
@@ -45,8 +47,16 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
                     outboxMessage.Retries++;
                 }
 
-                tcs.SetResult();
+                tcs.SetResult(null);
             }
         }
     }
+}
+
+internal static class HeadersExtensions
+{
+    public static Headers ToConfluentHeaders(this IDictionary<string, string> headers) =>
+        [..
+            headers.Select(kv => new Header(kv.Key, Encoding.UTF8.GetBytes(kv.Value)))
+        ];
 }

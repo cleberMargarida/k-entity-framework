@@ -7,11 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A1707FFC-A0E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{446945EA-2BDD-44FB-BF55-0068A4D0B349}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solutions Items", "Solutions Items", "{6B1C438D-63B6-4144-8A60-1C7C57BC335A}"
-	ProjectSection(SolutionItems) = preProject
-		docs\README.md = docs\README.md
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K.EntityFrameworkCore", "src\K.EntityFrameworkCore\K.EntityFrameworkCore.csproj", "{2AA6BCC6-13B4-4720-9542-C21DF216BBCD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld", "samples\HelloWorld\HelloWorld\HelloWorld.csproj", "{055ABCA5-2C43-4912-8C1C-9423244C5D17}"
@@ -23,6 +18,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K.EntityFrameworkCore.IntegrationTests", "tests\K.EntityFrameworkCore.IntegrationTests\K.EntityFrameworkCore.IntegrationTests.csproj", "{C1234567-1234-1234-1234-123456789012}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{795B1636-AA48-432A-AC3A-880CD5DBA288}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7E85543F-BBD9-400E-BD6D-2D8CBB14265C}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

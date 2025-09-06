@@ -12,40 +12,44 @@ namespace K.EntityFrameworkCore.Middlewares.Inbox;
 internal class InboxMiddleware<T>(
       ICurrentDbContext currentDbContext
     , ScopedCommandRegistry scopedCommandRegistry
-    , InboxMiddlewareSettings<T> settings) 
-    : Middleware<T>(settings)
+    , InboxMiddlewareSettings<T> inboxSetting)
+    : Middleware<T>(inboxSetting)
     where T : class
 {
     private readonly DbContext context = currentDbContext.Context;
 
-    public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        ulong hashId = settings.Hash(envelope);
+        T message = envelope.Message;
+        envelope.WeakReference.TryGetTarget(out object? target);
+        var offset = target as TopicPartitionOffset ?? throw new InvalidOperationException("Topic partition offset not stored.");
 
-        DbSet<InboxMessage> inboxMessages = context.Set<InboxMessage>();
+        return DeduplicateAsync(message, offset, cancellationToken);
+    }
+
+    private async ValueTask<T?> DeduplicateAsync(T message, TopicPartitionOffset offset, CancellationToken cancellationToken)
+    {
+        ulong hashId = inboxSetting.Hash(message);
+        var inboxMessages = context.Set<InboxMessage>();
 
         var isDuplicate = (await inboxMessages.FindAsync(new object[] { hashId }, cancellationToken)) != null;
         if (isDuplicate)
         {
-            envelope.Clean();
-            return;
+            return null;
         }
 
         inboxMessages.Add(new()
         {
             HashId = hashId,
-            ReceivedAt = DateTime.UtcNow,
+            ExpireAt = DateTime.UtcNow + inboxSetting.DeduplicationTimeWindow,
         });
 
-        if (envelope.WeakReference.TryGetTarget(out object? target) && target is TopicPartitionOffset offset)
-        {
-            scopedCommandRegistry.Add(new CommitMiddlewareInvokeCommand(offset).ExecuteAsync);
-        }
+        scopedCommandRegistry.Add(new CommitMiddlewareInvokeCommand(offset).ExecuteAsync);
 
-        await base.InvokeAsync(envelope, cancellationToken);
+        return message;
     }
 
-    readonly struct CommitMiddlewareInvokeCommand(TopicPartitionOffset topicPartitionOffset)
+    private readonly struct CommitMiddlewareInvokeCommand(TopicPartitionOffset topicPartitionOffset)
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {

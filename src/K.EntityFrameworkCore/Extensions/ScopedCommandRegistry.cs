@@ -23,9 +23,9 @@ internal class ScopedCommandRegistry
 internal readonly struct ProducerMiddlewareInvokeCommand<T>(T message)
     where T : class
 {
-    public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    public async ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
-        return serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>().InvokeAsync(message.Seal(), cancellationToken);
+        await serviceProvider.GetRequiredService<ProducerMiddlewareInvoker<T>>().InvokeAsync(new Envelope<T>(message), cancellationToken);
     }
 }
 

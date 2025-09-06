@@ -16,7 +16,7 @@ public class InboxMessage
     /// <summary>
     /// When the message was first received for cleanup purposes.
     /// </summary>
-    public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
+    public DateTime ExpireAt { get; set; }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)

@@ -407,4 +407,4 @@ public static class ServiceDependencyAnalyzer
 
 - [Middleware Architecture](middleware-architecture.md) - Understand how services fit into the middleware pipeline
 
-- [Testing](../examples/basic-examples.md) - Test services with proper lifetime scoping
+- [Testing](../getting-started/basic-usage.md) - Test services with proper lifetime scoping

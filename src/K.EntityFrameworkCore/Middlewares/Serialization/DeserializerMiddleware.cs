@@ -1,5 +1,6 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
+using System.Collections.Immutable;
 
 namespace K.EntityFrameworkCore.Middlewares.Serialization;
 
@@ -11,9 +12,9 @@ namespace K.EntityFrameworkCore.Middlewares.Serialization;
 internal class DeserializerMiddleware<T>(SerializationMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
-    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask<T?> InvokeAsync(scoped Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        settings.Deserializer.DeserializeMessage(envelope);
+        envelope.Message = settings.Deserializer.Deserialize(envelope.Headers, envelope.Payload);
         return base.InvokeAsync(envelope, cancellationToken);
     }
 }

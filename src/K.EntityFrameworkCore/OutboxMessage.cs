@@ -1,4 +1,4 @@
-﻿using Confluent.Kafka;
+﻿using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -42,7 +42,7 @@ namespace K.EntityFrameworkCore
         /// <summary>
         /// The message headers.
         /// </summary>
-        public string Headers { get; set; } = default!;
+        public ImmutableDictionary<string, string> Headers { get; set; } = default!;
 
         /// <summary>
         /// The serialized event payload.
@@ -60,12 +60,8 @@ namespace K.EntityFrameworkCore
         public DateTime? ProcessedAt { get; set; }
 
         /// <summary>
-    /// Number of attempts to produce this message.
+        /// Number of attempts to produce this message.
         /// </summary>
         public int Retries { get; set; }
-
-        [field: JsonIgnore, NotMapped, AllowNull]
-        // Weak reference for Envelope of T
-        internal WeakReference<object> WeakReference { get => field ??= new(null!); }
     }
 }

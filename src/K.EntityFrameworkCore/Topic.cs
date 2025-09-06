@@ -49,11 +49,7 @@ public sealed class Topic<T>(DbContext context)
         {
             do
             {
-                var envelope = default(T).Seal();
-
-                await middleware.InvokeAsync(envelope, cancellationToken);
-
-                Current = envelope.Unseal();
+                Current = await middleware.InvokeAsync(default, cancellationToken);
 
             } while (Current == null && !cancellationToken.IsCancellationRequested);
 

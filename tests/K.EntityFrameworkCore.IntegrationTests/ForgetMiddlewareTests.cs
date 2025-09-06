@@ -10,13 +10,13 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         defaultTopic.HasName("forget-topic");
         defaultTopic.HasProducer(producer =>
         {
-            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasKey(msg => msg.Id);
             producer.HasForget(); // Fire and forget semantics
         });
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(400, "ForgetSemantic"));
+        context.DefaultMessages.Produce(new DefaultMessage(400, "ForgetSemantic"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -33,13 +33,13 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         defaultTopic.HasName("await-forget-topic");
         defaultTopic.HasProducer(producer =>
         {
-            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasKey(msg => msg.Id);
             producer.HasForget(forget => forget.UseAwaitForget(TimeSpan.FromSeconds(10)));
         });
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(2300, "AwaitForgetTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(2300, "AwaitForgetTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -56,13 +56,13 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         defaultTopic.HasName("fire-forget-topic");
         defaultTopic.HasProducer(producer =>
         {
-            producer.HasKey(msg => msg.Id.ToString());
+            producer.HasKey(msg => msg.Id);
             producer.HasForget(forget => forget.UseFireForget());
         });
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(2400, "FireForgetTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(2400, "FireForgetTest"));
         await context.SaveChangesAsync();
 
         // Assert

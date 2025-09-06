@@ -10,24 +10,24 @@ namespace K.EntityFrameworkCore.Middlewares.Forget;
 internal abstract class ForgetMiddleware<T>(ForgetMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
-    public override ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default) => settings.Strategy switch
+    public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default) => settings.Strategy switch
     {
         ForgetStrategy.AwaitForget => AwaitForgetProcessing(envelope, cancellationToken),
         ForgetStrategy.FireForget => FireForgetProcessing(envelope, cancellationToken),
         _ => throw new InvalidOperationException($"Unknown forget strategy: {settings.Strategy}"),
     };
 
-    private ValueTask AwaitForgetProcessing(Envelope<T> envelope, CancellationToken cancellationToken)
+    private ValueTask<T?> AwaitForgetProcessing(Envelope<T> envelope, CancellationToken cancellationToken)
     {
-        return new ValueTask(
+        return new ValueTask<T?>(
             Task.WhenAny(
                 base.InvokeAsync(envelope, cancellationToken).AsTask(),
-                Task.Delay(settings.Timeout, cancellationToken)));
+                Task.Delay(settings.Timeout, cancellationToken)).ContinueWith(static _ => default(T)));
     }
 
-    private ValueTask FireForgetProcessing(Envelope<T> envelope, CancellationToken cancellationToken)
+    private ValueTask<T?> FireForgetProcessing(Envelope<T> envelope, CancellationToken cancellationToken)
     {
         _ = base.InvokeAsync(envelope, cancellationToken).AsTask();
-        return ValueTask.CompletedTask;
+        return ValueTask.FromResult(default(T));
     }
 }

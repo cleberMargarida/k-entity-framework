@@ -9,10 +9,10 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         // Arrange
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         defaultTopic.HasName("deduplication-topic");
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        defaultTopic.HasConsumer(consumer => 
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
+        defaultTopic.HasConsumer(consumer =>
         {
-            consumer.HasInbox(inbox => 
+            consumer.HasInbox(inbox =>
             {
                 inbox.HasDeduplicateProperties(msg => new { msg.Id });
                 inbox.UseDeduplicationTimeWindow(TimeSpan.FromMinutes(5));
@@ -21,10 +21,10 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
         await context.SaveChangesAsync();
-        
-    context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
+
+        context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
         await context.SaveChangesAsync();
 
         // Assert
@@ -40,7 +40,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
     {
         // Arrange
         defaultTopic.HasName("backpressure-topic");
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
         defaultTopic.HasConsumer(consumer =>
         {
             consumer.HasMaxBufferedMessages(5);
@@ -48,7 +48,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         });
         await StartHostAsync();
 
-    // Act - Produce more messages than buffer size
+        // Act - Produce more messages than buffer size
         for (int i = 2100; i <= 2110; i++)
         {
             context.DefaultMessages.Produce(new DefaultMessage(i, $"BackpressureMessage{i}"));
@@ -66,7 +66,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
     {
         // Arrange
         defaultTopic.HasName("exclusive-connection-topic");
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
+        defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
         defaultTopic.HasConsumer(consumer =>
         {
             consumer.HasExclusiveConnection();
@@ -74,7 +74,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         await StartHostAsync();
 
         // Act
-    context.DefaultMessages.Produce(new DefaultMessage(2200, "ExclusiveConnectionTest"));
+        context.DefaultMessages.Produce(new DefaultMessage(2200, "ExclusiveConnectionTest"));
         await context.SaveChangesAsync();
 
         // Assert

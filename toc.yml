@@ -9,6 +9,12 @@
       href: docs/getting-started/quick-start.md
     - name: Basic Usage
       href: docs/getting-started/basic-usage.md
+    - name: Outbox Examples
+      href: docs/examples/outbox.md
+    - name: Inbox Examples
+      href: docs/examples/inbox-deduplication.md
+    - name: Forget Examples
+      href: docs/examples/forget.md
 - name: Features
   homepage: docs/features/index.md
   items:
@@ -16,28 +22,21 @@
       href: docs/features/connection-management.md
     - name: Serialization
       href: docs/features/serialization.md
+    - name: Custom Headers
+      href: docs/features/custom-headers.md
+    - name: Performance Considerations
+      href: docs/features/performance-considerations.md
     - name: Inbox Pattern
       href: docs/features/inbox.md
     - name: Outbox Pattern
       href: docs/features/outbox.md
-    - name: Deduplication
-      href: docs/features/deduplication.md
-    - name: Type-Specific Processing
-      href: docs/features/type-specific-processing.md
-- name: Examples
-  homepage: docs/examples/index.md
-  items:
-    - name: Basic Examples
-      href: docs/examples/basic-examples.md
+    
 - name: Architecture
   homepage: docs/architecture/index.md
   items:
     - name: Middleware Architecture
       href: docs/architecture/middleware-architecture.md
-    - name: Plugin Serialization
-      href: docs/architecture/plugin-serialization.md
-    - name: Service Attributes
-      href: docs/architecture/service-attributes.md
+    
 - name: Guides
   homepage: docs/guides/index.md
   items:

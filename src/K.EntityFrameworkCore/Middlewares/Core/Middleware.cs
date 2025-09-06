@@ -8,7 +8,7 @@ internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddlew
 {
     private IMiddleware<T>? next;
 
-    protected Middleware() : this(new MiddlewareSettings<T>()) { }
+    protected Middleware() : this(new MiddlewareSettings<T>(true)) { }
 
     /// <summary>
     /// Gets a value indicating whether this middleware is enabled based on the settings.
@@ -21,8 +21,8 @@ internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddlew
         set => next = value;
     }
 
-    public virtual ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public virtual ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        return next?.InvokeAsync(envelope, cancellationToken) ?? ValueTask.CompletedTask;
+        return next?.InvokeAsync(envelope, cancellationToken) ?? ValueTask.FromResult((T?)envelope.Message);
     }
 }

@@ -14,7 +14,7 @@ Ensure reliable message producing with database transactions.
 Guarantee message idempotency and prevent duplicate processing.
 
 ### [Consumer Configuration](consumer-configuration.md)
-Advanced connection strategies and processing options for different scenarios.
+Options to configure consumer behavior and per-type processing settings.
 
 ### [Connection Management](connection-management.md)
-Learn about the shared and exclusive connection models.
+Learn about the recommended single-producer / single-consumer connection approach and how to tune it.

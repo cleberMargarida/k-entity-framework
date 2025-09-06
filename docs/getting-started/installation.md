@@ -44,54 +44,6 @@ dotnet add package Microsoft.EntityFrameworkCore.SqlServer
 ```bash
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 ```
-
-## Verify Installation
-
-Create a simple test to verify the installation:
-
-```csharp
-using K.EntityFrameworkCore.Extensions;
-using Microsoft.EntityFrameworkCore;
-
-public class TestDbContext : DbContext
-{
-    public TestDbContext(DbContextOptions options) : base(options) { }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Topic<TestMessage>(topic =>
-        {
-            topic.HasName("test-topic");
-            topic.UseSystemTextJson();
-            
-            topic.HasProducer(producer =>
-            {
-                producer.HasKey(m => m.Content);
-            });
-        });
-    }
-}
-
-public class TestMessage
-{
-    public string Content { get; set; }
-}
-
-// Service configuration test
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddDbContext<TestDbContext>(options => options
-    .UseInMemoryDatabase("test-db")
-    .UseKafkaExtensibility(client =>
-    {
-        client.BootstrapServers = "localhost:9092";
-    }));
-
-var app = builder.Build();
-```
-
-If this compiles without errors, your installation is successful.
-
 ## Framework Compatibility
 
 | Framework | Supported |

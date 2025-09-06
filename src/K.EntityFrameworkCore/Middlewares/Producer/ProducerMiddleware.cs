@@ -4,32 +4,34 @@ using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace K.EntityFrameworkCore.Middlewares.Producer
+namespace K.EntityFrameworkCore.Middlewares.Producer;
+
+[ScopedService]
+internal class ProducerMiddleware<T>(IProducer producer, ICurrentDbContext dbContext, ProducerMiddlewareSettings<T> settings)
+    : Middleware<T>(settings)
+    where T : class
 {
-    [ScopedService]
-    internal class ProducerMiddleware<T>(IProducer producer, ICurrentDbContext dbContext, ProducerMiddlewareSettings<T> settings)
-        : Middleware<T>(settings)
-        where T : class
+    private readonly DbContext context = dbContext.Context;
+
+    public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        private readonly DbContext context = dbContext.Context;
-
-        public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+        Message<string, byte[]> confluentMessage = new()
         {
-            Message<string, byte[]> confluentMessage = new()
-            {
-                Headers = envelope.GetHeaders(),
-                Key = settings.GetKey(envelope.Message!)!,
-                Value = envelope.GetSerializedData(),
-            };
+            Headers = envelope.Headers.ToConfluentHeaders(),
+            Key = envelope.Key,
+            Value = envelope.Payload.ToArray(),
+        };
 
-            await producer.ProduceAsync(settings.TopicName, confluentMessage, cancellationToken);
+        return ProduceAsync(confluentMessage, envelope.WeakReference, cancellationToken);
+    }
 
-            await base.InvokeAsync(envelope, cancellationToken);
+    private async ValueTask<T?> ProduceAsync(Message<string, byte[]> confluentMessage, WeakReference<object> weakReference, CancellationToken cancellationToken)
+    {
+        await producer.ProduceAsync(settings.TopicName, confluentMessage, cancellationToken);
 
-            if (envelope.WeakReference.TryGetTarget(out var outbox))
-            {
-                context.Entry(outbox).State = EntityState.Detached;
-            }
-        }
+        if (weakReference.TryGetTarget(out var outbox))
+            this.context.Entry(outbox).State = EntityState.Detached;
+
+        return null;
     }
 }

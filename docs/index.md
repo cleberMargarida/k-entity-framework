@@ -11,6 +11,8 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 ## Features
 
 - [Serialization](features/serialization.md)
+- [Custom Headers](features/custom-headers.md)
+- [Performance Considerations](features/performance-considerations.md)
 - [Inbox Pattern](features/inbox.md)
 - [Outbox Pattern](features/outbox.md)
 - [Consumer Configuration](features/consumer-configuration.md)
@@ -18,13 +20,16 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 
 ## Examples
 
-- [Basic Examples](examples/basic-examples.md)
+- [Basic Examples](getting-started/basic-usage.md)
+
+## Guides
+
+- [Kafka Configuration](guides/kafka-configuration.md)
 
 ## Architecture
 
 - [Middleware Architecture](architecture/middleware-architecture.md)
-- [Plugin Serialization](architecture/plugin-serialization.md)
-- [Service Attributes](architecture/service-attributes.md)
+ 
 
 ## API Reference
 

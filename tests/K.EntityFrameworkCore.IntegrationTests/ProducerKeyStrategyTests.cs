@@ -88,11 +88,11 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
     {
         // Arrange
         defaultTopic.HasName("topic-with-key")
-                   .HasProducer(producer => producer.HasKey(msg => msg.Id.ToString()));
-        
+                    .HasProducer(producer => producer.HasKey(msg => msg.Id));
+
         alternativeTopic.HasName("topic-without-key")
-                       .HasProducer(producer => producer.HasNoKey());
-        
+                        .HasProducer(producer => producer.HasNoKey());
+
         await StartHostAsync();
 
         // Act
@@ -115,8 +115,10 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         // Arrange
         defaultTopic.HasName("composite-key-topic");
         defaultTopic.HasSetting(setting => setting.NumPartitions = 4);
-        defaultTopic.HasProducer(producer => producer.HasKey(msg => 
-            $"{msg.Id % 2}_{(msg.Name != null ? msg.Name.GetHashCode() : 0)}_{DateTime.UtcNow:yyyyMMdd}"));
+        defaultTopic.HasProducer(producer =>
+        {
+            producer.HasKey(msg => $"{msg.Id % 2}_{(msg.Name != null ? msg.Name.GetHashCode() : 0)}_{DateTime.UtcNow:yyyyMMdd}");
+        });
         await StartHostAsync();
 
         // Act
@@ -129,7 +131,7 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         // Assert
         var results = await context.Topic<DefaultMessage>().Take(11).ToListAsync();
         Assert.Equal(11, results.Count);
-        Assert.True(results.All(r => r.Id >= 2800 && r.Id <= 2810));
+        Assert.True(results.All(r => r.Id is >= 2800 and <= 2810));
         Assert.True(TopicExist("composite-key-topic"));
     }
 

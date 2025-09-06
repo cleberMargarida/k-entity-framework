@@ -47,6 +47,7 @@
       "_appTitle": "K.EntityFrameworkCore Documentation",
       "_appName": "K.EntityFrameworkCore",
       "_appLogoPath": "docs/images/logo.png",
+      "_enableSearch": true,
       "_gitContribute": {
         "repo": "https://github.com/cleberMargarida/k-entity-framework",
         "branch": "master"

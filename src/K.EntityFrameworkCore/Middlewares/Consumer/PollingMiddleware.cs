@@ -15,7 +15,7 @@ internal class PollingMiddleware<T>(IServiceProvider serviceProvider, PollingMid
 {
     private bool pollingStarted;
 
-    public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         // Start polling if not already started
         if (!pollingStarted)
@@ -35,8 +35,7 @@ internal class PollingMiddleware<T>(IServiceProvider serviceProvider, PollingMid
             pollingStarted = true;
         }
 
-        // Continue with the pipeline
-        await base.InvokeAsync(envelope, cancellationToken);
+        return base.InvokeAsync(envelope, cancellationToken);
     }
 }
 

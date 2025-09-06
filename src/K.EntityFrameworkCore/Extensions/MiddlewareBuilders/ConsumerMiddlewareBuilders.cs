@@ -1,6 +1,3 @@
-using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Consumer;
-using K.EntityFrameworkCore.Middlewares.Inbox;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -35,14 +32,4 @@ public class InboxBuilder<T>(ModelBuilder modelBuilder) where T : class
         return this;
     }
 
-    /// <summary>
-    /// Sets the interval for automatic cleanup operations.
-    /// </summary>
-    /// <param name="cleanupInterval">The cleanup interval.</param>
-    /// <returns>The builder instance.</returns>
-    public InboxBuilder<T> UseCleanupInterval(TimeSpan cleanupInterval)
-    {
-        modelBuilder.Model.SetInboxCleanupInterval<T>(cleanupInterval);
-        return this;
-    }
 }

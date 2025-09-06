@@ -2,6 +2,7 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
+using System.Collections.Immutable;
 using System.Threading.Channels;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
@@ -13,28 +14,31 @@ internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : M
     private readonly Channel<ConsumeResult<string, byte[]>> channel
         = Channel.CreateBounded<ConsumeResult<string, byte[]>>(((IConsumerProcessingConfig)settings).ToBoundedChannelOptions());
 
-    public override async ValueTask InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
+    {
+        return InvokeAsync(cancellationToken);
+    }
+
+    private async ValueTask<T?> InvokeAsync(CancellationToken cancellationToken)
     {
         try
         {
             var result = await channel.Reader.ReadAsync(cancellationToken);
 
+            scoped var envelope = new Envelope<T>();
+
             envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
 
-            FillEnvelopeWithConsumeResult(envelope, result);
+            envelope.Headers = result.Message.Headers.ToImmutableDictionary(h => h.Key, h => System.Text.Encoding.UTF8.GetString(h.GetValueBytes()));
+            envelope.Key = result.Message.Key;
+            envelope.Payload = result.Message.Value;
 
-            await base.InvokeAsync(envelope, cancellationToken);
+            return await base.InvokeAsync(envelope, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            return null!;
         }
-    }
-
-    private static void FillEnvelopeWithConsumeResult(ISerializedEnvelope<T> envelope, ConsumeResult<string, byte[]> result)
-    {
-        envelope.Headers = result.Message.Headers.ToDictionary(h => h.Key, h => (object)h.GetValueBytes());
-        envelope.Key = result.Message.Key;
-        envelope.SerializedData = result.Message.Value;
     }
 
     public ValueTask WriteAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellationToken = default)

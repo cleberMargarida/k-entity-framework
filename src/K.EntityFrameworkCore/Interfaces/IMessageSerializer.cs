@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace K.EntityFrameworkCore.Interfaces
 {
     /// <summary>
@@ -8,11 +10,12 @@ namespace K.EntityFrameworkCore.Interfaces
         where T : class
     {
         /// <summary>
-        /// Serializes a message into a byte array.
+        /// Serializes a message into a byte array with access to message headers.
         /// </summary>
+        /// <param name="headers">The message headers that can be used during serialization.</param>
         /// <param name="message">The message to serialize.</param>
         /// <returns>A byte array representing the serialized message.</returns>
-        byte[] Serialize(in T message);
+        ReadOnlySpan<byte> Serialize(IImmutableDictionary<string, string> headers, in T message);
     }
 
     /// <summary>
@@ -38,11 +41,12 @@ namespace K.EntityFrameworkCore.Interfaces
         where T : class
     {
         /// <summary>
-        /// Deserializes a byte array into a message instance.
+        /// Deserializes a byte array into a message instance with access to message headers.
         /// </summary>
+        /// <param name="headers">The message headers that can be used during deserialization.</param>
         /// <param name="data">The byte array containing the serialized message.</param>
         /// <returns>The deserialized message instance, or <c>null</c> if deserialization fails.</returns>
-        T? Deserialize(byte[] data);
+        T Deserialize(IImmutableDictionary<string, string> headers, ReadOnlySpan<byte> data);
     }
 
     /// <summary>

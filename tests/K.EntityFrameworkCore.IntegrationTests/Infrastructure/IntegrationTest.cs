@@ -3,6 +3,7 @@ using Confluent.Kafka.Admin;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Diagnostics.CodeAnalysis;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -11,24 +12,22 @@ namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
 /// <summary>
 /// Base class for integration tests that uses shared TestContainers via fixture
 /// </summary>
+[SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "Properties has overheads for tests")]
+[SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Is necessary")]
 public abstract class IntegrationTest
 {
     private readonly KafkaFixture kafka;
-    private readonly PostgreSqlFixture postgreSql;
 
+    private readonly ModelBuilder internalModelBuilder = new();
     private WebApplication host;
-    private ModelBuilder internalModelBuilder = new();
-
     protected WebApplicationBuilder builder;
     protected PostgreTestContext context;
     protected TopicTypeBuilder<DefaultMessage> defaultTopic;
     protected TopicTypeBuilder<AlternativeMessage> alternativeTopic;
 
-    
     public IntegrationTest(KafkaFixture kafka, PostgreSqlFixture postgreSql)
     {
         this.kafka = kafka;
-        this.postgreSql = postgreSql;
 
         builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseTestServer();
@@ -75,12 +74,12 @@ public abstract class IntegrationTest
     {
         using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = kafka.BootstrapAddress }).Build();
         var metadata = adminClient.GetMetadata(TimeSpan.FromMilliseconds(timoutMilliseconds));
-        var options = new DeleteTopicsOptions 
+        var options = new DeleteTopicsOptions
         {
             OperationTimeout = TimeSpan.FromMilliseconds(timoutMilliseconds),
             RequestTimeout = TimeSpan.FromMilliseconds(timoutMilliseconds)
         };
-        await adminClient.DeleteTopicsAsync(metadata.Topics.Where(t => !t.Topic.StartsWith("__")).Select(t => t.Topic), options);
+        await adminClient.DeleteTopicsAsync(metadata.Topics.Where(t => !t.Topic.StartsWith("__", StringComparison.InvariantCulture)).Select(t => t.Topic), options);
         metadata = adminClient.GetMetadata(TimeSpan.FromMilliseconds(timoutMilliseconds));
     }
 }

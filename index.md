@@ -14,8 +14,7 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 - [Serialization](docs/features/serialization.md)
 - [Inbox Pattern](docs/features/inbox.md)
 - [Outbox Pattern](docs/features/outbox.md)
-- [Deduplication](docs/features/deduplication.md)
-- [Type-Specific Processing](docs/features/type-specific-processing.md)
+ 
 
 ## Examples
 
@@ -24,8 +23,7 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 ## Architecture
 
 - [Middleware Architecture](docs/architecture/middleware-architecture.md)
-- [Plugin Serialization](docs/architecture/plugin-serialization.md)
-- [Service Attributes](docs/architecture/service-attributes.md)
+ 
 
 ## API Reference
 

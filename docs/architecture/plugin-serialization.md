@@ -10,6 +10,7 @@ K-Entity-Framework features a sophisticated plugin-based serialization system th
 ✅ **Type Safety**: Compile-time validation through generics  
 ✅ **Unified API**: All serializers use the same `UseSerializer()` method  
 ✅ **Convenience Methods**: Optional type-safe extension methods per strategy  
+✅ **Polymorphic Support**: Automatic handling of inheritance hierarchies and derived types  
 
 ## Architecture Components
 
@@ -295,6 +296,136 @@ Create a `PackageReference` in your plugin project:
 </Project>
 ```
 
+## Polymorphic Serialization Support
+
+The plugin-based serialization architecture fully supports polymorphic message serialization. The framework automatically manages type information through message headers, enabling seamless serialization and deserialization of derived types.
+
+### Core Mechanisms
+
+All serialization strategies leverage the same polymorphic infrastructure:
+
+1. **Type Header Management**: The framework automatically adds type information to message headers
+2. **Runtime Type Resolution**: Uses `$runtimeType` or `$type` headers to determine the correct type during deserialization
+3. **Strategy-Agnostic**: Works with any serialization plugin (System.Text.Json, Newtonsoft.Json, MessagePack, etc.)
+
+### Framework Integration
+
+The `SystemTextJsonSerializer<T>` implementation demonstrates the pattern:
+
+```csharp
+internal class SystemTextJsonSerializer<T> : IMessageSerializer<T, JsonSerializerOptions>
+{
+    public ReadOnlySpan<byte> Serialize(IImmutableDictionary<string, string> headers, in T message)
+    {
+        // Uses the runtime type of the message for serialization
+        Type type = message.GetType();
+        return JsonSerializer.SerializeToUtf8Bytes(message, type, Options);
+    }
+
+    public T Deserialize(IImmutableDictionary<string, string> headers, ReadOnlySpan<byte> data)
+    {
+        // Resolves the type from headers
+        Type type = GetType(headers);
+        return JsonSerializer.Deserialize(data, type, Options) as T;
+    }
+
+    private static Type GetType(IImmutableDictionary<string, string> headers)
+    {
+        // Framework manages these headers automatically
+        var assemblyQualifiedName = headers.GetValueOrDefault("$runtimeType") ?? headers["$type"];
+        return Type.GetType(assemblyQualifiedName, throwOnError: true)!;
+    }
+}
+```
+
+### Plugin Implementation Guidelines
+
+When implementing polymorphic-aware plugins:
+
+#### 1. Always Use Runtime Type for Serialization
+
+```csharp
+public class CustomSerializer<T> : IMessageSerializer<T> where T : class
+{
+    public ReadOnlySpan<byte> Serialize(IImmutableDictionary<string, string> headers, in T message)
+    {
+        // ✅ Use actual runtime type, not generic parameter T
+        Type runtimeType = message.GetType();
+        return SerializeWithType(message, runtimeType);
+    }
+}
+```
+
+#### 2. Resolve Type from Headers for Deserialization
+
+```csharp
+public T Deserialize(IImmutableDictionary<string, string> headers, ReadOnlySpan<byte> data)
+{
+    // ✅ Always check headers for type information
+    Type targetType = ResolveTypeFromHeaders(headers);
+    return DeserializeWithType(data, targetType) as T;
+}
+
+private Type ResolveTypeFromHeaders(IImmutableDictionary<string, string> headers)
+{
+    // Follow framework convention
+    var typeName = headers.GetValueOrDefault("$runtimeType") ?? 
+                   headers.GetValueOrDefault("$type") ??
+                   typeof(T).AssemblyQualifiedName;
+    
+    return Type.GetType(typeName, throwOnError: true)!;
+}
+```
+
+### Serialization Strategy Considerations
+
+Different serialization libraries handle polymorphism differently:
+
+#### System.Text.Json
+- Built-in support via `JsonDerivedType` attributes (optional)
+- Runtime type handling works automatically
+- Consider `JsonTypeInfoResolver` for advanced scenarios
+
+#### Newtonsoft.Json
+- Natural support for polymorphic serialization
+- `TypeNameHandling` settings can complement framework headers
+- Built-in `$type` metadata works alongside framework headers
+
+#### MessagePack
+- Requires explicit type mapping configuration
+- Use framework headers as the source of truth for type resolution
+- Consider `MessagePackObjectAttribute` for known hierarchies
+
+#### Custom Binary Serializers
+- Must implement type resolution logic manually
+- Should write type identifiers to the payload or rely solely on headers
+- Framework headers provide consistent type information
+
+### Best Practices
+
+1. **Header Priority**: Always prioritize `$runtimeType` over `$type` for maximum compatibility
+2. **Type Safety**: Include proper error handling for unknown or invalid types
+3. **Version Compatibility**: Consider how type changes affect deserialization across plugin versions
+4. **Performance**: Cache type resolution results when possible
+
+### Testing Polymorphic Scenarios
+
+Ensure your plugin handles polymorphic serialization correctly:
+
+```csharp
+[Test]
+public void Should_SerializeAndDeserialize_PolymorphicTypes()
+{
+    // Arrange
+    var baseMessage = new BaseMessage(1, "Base");
+    var derivedMessage = new DerivedMessage(2, "Derived", "ExtraData");
+    
+    // Act & Assert - Test both directions
+    TestRoundTrip(baseMessage);
+    TestRoundTrip<BaseMessage>(derivedMessage); // Serialize as derived, deserialize as base
+}
+```
+
 ## Advanced Plugin Examples
 
 ### MessagePack Plugin
@@ -566,6 +697,6 @@ public void Plugin_IntegratesWithFramework()
 
 ## Next Steps
 
-- [Serialization Features](../features/serialization.md) - Learn about available serialization options
+- [Serialization Features](../features/serialization.md) - Learn about available serialization options including polymorphic message support
 - [Middleware Architecture](middleware-architecture.md) - Understand how serialization fits into the middleware pipeline
 - [Performance Tuning](../guides/kafka-configuration.md) - Optimize serialization performance
