@@ -27,12 +27,6 @@
         "files": ["docs/images/**"]
       }
     ],
-    "overwrite": [
-      {
-        "files": ["apidoc/**.md"],
-        "exclude": ["obj/**", "api/**", "_site/**"]
-      }
-    ],
     "dest": "bin/docs",
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],

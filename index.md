@@ -27,7 +27,7 @@ Welcome to the K.EntityFrameworkCore documentation. This library simplifies Apac
 
 ## API Reference
 
-The complete API reference is under [API Documentation](api/index.html) section.
+The complete API reference is under [API Documentation](~/api/index.md) section.
 
 ## Contributing
 
