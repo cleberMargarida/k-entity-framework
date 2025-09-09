@@ -43,4 +43,4 @@
     - name: Kafka Configuration
       href: docs/guides/kafka-configuration.md
 - name: API Reference
-  href: docs/api-reference.md
+  href: api/

@@ -21,6 +21,6 @@ We're working on additional guides to help you get the most out of K.EntityFrame
 
 If you can't find what you're looking for in these guides, please:
 
-- Check the [API Reference](~/docs/api-reference.md) for detailed technical documentation
+- Check the API Reference section for detailed technical documentation
 - Review the [Examples](../examples/index.md) for practical use cases
 - Open an issue on our GitHub repository
