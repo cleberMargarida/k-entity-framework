@@ -408,8 +408,9 @@ jobs:
 
       - name: Build Documentation
         run: |
-          # Build docs with the new output location
-          docfx docfx.json
+          # Generate API metadata first, then build docs
+          docfx metadata docfx.json
+          docfx build docfx.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
