@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact]
     public async Task Given_DbContextWithKafka_When_ProducingMessage_Then_MessageIsConsumed()
@@ -75,11 +75,5 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
         var message2 = await context.AlternativeMessages.FirstAsync();
         Assert.True(message1.Id == 1 && message1.Name == "TopicA");
         Assert.True(message2.Id == 2 && message2.Name == "TopicB");
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

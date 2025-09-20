@@ -1,6 +1,4 @@
-using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
-using System.Collections.Immutable;
 
 namespace K.EntityFrameworkCore.Middlewares.Serialization;
 
@@ -8,7 +6,6 @@ namespace K.EntityFrameworkCore.Middlewares.Serialization;
 /// Middleware that handles deserialization based on context.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-[ScopedService]
 internal class DeserializerMiddleware<T>(SerializationMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {

@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact(Skip = "Forget not implemented")]
     public async Task Given_ProducerWithForgetMiddleware_When_PublishingMessage_Then_MessageIsPublishedWithFireAndForgetSemantics()
@@ -70,11 +70,5 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         Assert.Equal(2400, result.Id);
         Assert.Equal("FireForgetTest", result.Name);
         Assert.True(TopicExist("fire-forget-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

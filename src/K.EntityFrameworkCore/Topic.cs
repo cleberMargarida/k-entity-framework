@@ -1,18 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Middlewares.Consumer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-
 namespace K.EntityFrameworkCore;
 
-using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Producer;
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using K.EntityFrameworkCore.Middlewares.Consumer;
 
 /// <summary>
 /// Represents a topic in the Kafka message broker that can be used for both producing and consuming messages.
@@ -40,7 +33,7 @@ public sealed class Topic<T>(DbContext context)
 
         internal ConsumerEnumerator(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            middleware = serviceProvider.GetRequiredService<ConsumerMiddlewareInvoker<T>>();
+            this.middleware = serviceProvider.GetRequiredService<ConsumerMiddlewareInvoker<T>>();
             this.cancellationToken = cancellationToken;
         }
 
@@ -49,11 +42,11 @@ public sealed class Topic<T>(DbContext context)
         {
             do
             {
-                Current = await middleware.InvokeAsync(default, cancellationToken);
+                Current = await this.middleware.InvokeAsync(default, this.cancellationToken);
 
-            } while (Current == null && !cancellationToken.IsCancellationRequested);
+            } while (Current == null && !this.cancellationToken.IsCancellationRequested);
 
-            return !cancellationToken.IsCancellationRequested;
+            return !this.cancellationToken.IsCancellationRequested;
         }
 
         public ValueTask DisposeAsync()

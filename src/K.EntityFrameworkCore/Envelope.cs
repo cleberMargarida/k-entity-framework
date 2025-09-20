@@ -1,6 +1,6 @@
-﻿namespace K.EntityFrameworkCore;
+﻿using System.Collections.Immutable;
 
-using System.Collections.Immutable;
+namespace K.EntityFrameworkCore;
 
 /// <summary>
 /// Represents a mutable envelope that holds a message of type <typeparamref name="T"/> along with its serialized data and headers.
@@ -24,18 +24,9 @@ public ref struct Envelope<T>(T message)
     ///<inheritdoc/>
     public string Key { readonly get; internal set; }
 
-    internal WeakReference<object> WeakReference 
-    { 
-        get => field ??= new(null!); 
-        set => field = value; 
-    }
-
-    internal void Clean()
+    internal WeakReference<object> WeakReference
     {
-        Message = null;
-        Key = null;
-        Payload = null;
-        Headers = null;
-        WeakReference = null;
+        get => field ??= new(null);
+        set => field = value;
     }
 }

@@ -1,4 +1,3 @@
-using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 
 namespace K.EntityFrameworkCore.Middlewares.HeaderFilter;
@@ -8,7 +7,6 @@ namespace K.EntityFrameworkCore.Middlewares.HeaderFilter;
 /// This middleware runs after deserialization and can filter messages before they reach the inbox or business logic.
 /// </summary>
 /// <typeparam name="T">The message type being processed.</typeparam>
-[ScopedService]
 internal class HeaderFilterMiddleware<T>(HeaderFilterMiddlewareSettings<T> headerSetting) : Middleware<T>(headerSetting)
     where T : class
 {

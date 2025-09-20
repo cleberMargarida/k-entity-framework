@@ -1,12 +1,10 @@
 ﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Producer;
 using System.Text;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
 {
-    [ScopedService]
     internal class OutboxProducerMiddleware<T>(
         IProducer producer,
         OutboxMiddlewareSettings<T> settings,
@@ -23,7 +21,7 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
 
             var tcs = new TaskCompletionSource<T?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            producer.Produce(topicName, new Message<string, byte[]>
+            producer.Produce(this.topicName, new Message<string, byte[]>
             {
                 Headers = outboxMessage.Headers.ToConfluentHeaders(),
                 Key = outboxMessage.AggregateId!,

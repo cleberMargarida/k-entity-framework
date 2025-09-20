@@ -1,5 +1,4 @@
 using K.EntityFrameworkCore.Middlewares.Outbox;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
 
@@ -62,8 +61,7 @@ internal static class ModelAnnotationHelpers
         where T : class
     {
         var annotationKey = ModelAnnotationKeys.ConsumerHeaderFilters(typeof(T));
-        var filters = model.FindAnnotation(annotationKey)?.Value as Dictionary<string, string>;
-        return filters != null && filters.Count > 0;
+        return model.FindAnnotation(annotationKey)?.Value is Dictionary<string, string> filters && filters.Count > 0;
     }
 
     /// <summary>
@@ -117,7 +115,7 @@ internal static class ModelAnnotationHelpers
         var annotationKey = ModelAnnotationKeys.ProducerKeyPropertyAccessor(typeof(T));
         return model.FindAnnotation(annotationKey)?.Value as Expression;
     }
-    
+
     /// <summary>
     /// Sets that a message type should have no key (null key) in the model annotations.
     /// </summary>
@@ -128,7 +126,7 @@ internal static class ModelAnnotationHelpers
     {
         var annotationKey = ModelAnnotationKeys.ProducerHasNoKey(typeof(T));
         model.SetAnnotation(annotationKey, true);
-        
+
         // Remove any existing key property accessor when setting no key
         var keyAccessorKey = ModelAnnotationKeys.ProducerKeyPropertyAccessor(typeof(T));
         model.RemoveAnnotation(keyAccessorKey);
@@ -285,25 +283,26 @@ internal static class ModelAnnotationHelpers
     /// <typeparam name="T">The message type.</typeparam>
     /// <typeparam name="TSerializer">The serializer type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
-    public static void SetSerializer<T, TSerializer>(this IMutableModel model)
+    /// <param name="serializer">The serializer instance to set.</param>
+    public static void SetSerializer<T, TSerializer>(this IMutableModel model, TSerializer serializer)
         where T : class
         where TSerializer : class
     {
-        var annotationKey = ModelAnnotationKeys.SerializerType(typeof(T));
-        model.SetAnnotation(annotationKey, typeof(TSerializer));
+        var annotationKey = ModelAnnotationKeys.SerializerInstance(typeof(T));
+        model.SetAnnotation(annotationKey, serializer);
     }
 
     /// <summary>
-    /// Gets the serializer type for a message type from the model annotations.
+    /// Gets the serializer for a message type from the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
     /// <returns>The serializer type, or null if not set.</returns>
-    public static Type? GetSerializerType<T>(this IModel model)
+    public static object? GetSerializer<T>(this IModel model)
         where T : class
     {
-        var annotationKey = ModelAnnotationKeys.SerializerType(typeof(T));
-        return model.FindAnnotation(annotationKey)?.Value as Type;
+        var annotationKey = ModelAnnotationKeys.SerializerInstance(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value;
     }
 
     /// <summary>
@@ -364,7 +363,7 @@ internal static class ModelAnnotationHelpers
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
     /// <param name="mode">The backpressure mode.</param>
-    public static void SetBackpressureMode<T>(this IMutableModel model, object mode)
+    public static void SetBackpressureMode<T>(this IMutableModel model, ConsumerBackpressureMode mode)
         where T : class
     {
         var annotationKey = ModelAnnotationKeys.ConsumerBackpressureMode(typeof(T));
@@ -377,11 +376,11 @@ internal static class ModelAnnotationHelpers
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
     /// <returns>The backpressure mode, or null if not set.</returns>
-    public static object? GetBackpressureMode<T>(this IModel model)
+    public static ConsumerBackpressureMode? GetBackpressureMode<T>(this IModel model)
         where T : class
     {
         var annotationKey = ModelAnnotationKeys.ConsumerBackpressureMode(typeof(T));
-        return model.FindAnnotation(annotationKey)?.Value;
+        return model.FindAnnotation(annotationKey)?.Value as ConsumerBackpressureMode?;
     }
 
     /// <summary>
@@ -408,6 +407,44 @@ internal static class ModelAnnotationHelpers
     {
         var annotationKey = ModelAnnotationKeys.ConsumerExclusiveConnection(typeof(T));
         return model.FindAnnotation(annotationKey)?.Value as bool? ?? false;
+    }
+
+    /// <summary>
+    /// Checks if a consumer message type uses exclusive connection.
+    /// </summary>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="type">The message type.</param>
+    /// <returns>True if the consumer uses exclusive connection, false otherwise.</returns>
+    public static bool HasExclusiveConnection(this IModel model, Type type)
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerExclusiveConnection(type);
+        return model.FindAnnotation(annotationKey)?.Value as bool? ?? false;
+    }
+
+    /// <summary>
+    /// Sets the exclusive connection configuration for a consumer message type.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="connectionConfig">The action to configure the consumer connection.</param>
+    public static void SetExclusiveConnectionConfig<T>(this IMutableModel model, Action<IConsumerConfig>? connectionConfig)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerExclusiveConnectionConfig(typeof(T));
+        model.SetAnnotation(annotationKey, connectionConfig);
+    }
+
+    /// <summary>
+    /// Gets the exclusive connection configuration for a consumer message type.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The action to configure the consumer connection, or null if not set.</returns>
+    public static Action<IConsumerConfig>? GetExclusiveConnectionConfig<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerExclusiveConnectionConfig(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as Action<IConsumerConfig>;
     }
 
     /// <summary>

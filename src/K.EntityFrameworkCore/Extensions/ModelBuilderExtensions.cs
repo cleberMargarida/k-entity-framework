@@ -106,10 +106,9 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
         where TOptions : class, new()
         where TSerializer : class, IMessageSerializer<T, TOptions>, IMessageDeserializer<T>, new()
     {
-        modelBuilder.Model.SetSerializer<T, TSerializer>();
-
-        // TODO: Serializer configuration needs to be handled differently
-        // For now, serializer instances will be created at runtime
+        var serializer = new TSerializer();
+        configure?.Invoke(serializer.Options);
+        modelBuilder.Model.SetSerializer<T, TSerializer>(serializer);
 
         return this;
     }
@@ -301,10 +300,6 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     public ConsumerBuilder<T> HasMaxBufferedMessages(int maxMessages)
     {
         modelBuilder.Model.SetMaxBufferedMessages<T>(maxMessages);
-
-        // TODO: Dedicated consumer config needs to be handled differently
-        // For now, these settings will be configured at runtime
-
         return this;
     }
 
@@ -317,10 +312,6 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     public ConsumerBuilder<T> HasBackpressureMode(ConsumerBackpressureMode mode)
     {
         modelBuilder.Model.SetBackpressureMode<T>(mode);
-
-        // TODO: Dedicated consumer config needs to be handled differently
-        // For now, these settings will be configured at runtime
-
         return this;
     }
 
@@ -334,9 +325,7 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     public ConsumerBuilder<T> HasExclusiveConnection(Action<IConsumerConfig>? connection = null)
     {
         modelBuilder.Model.SetExclusiveConnection<T>();
-
-        // TODO: Consumer config action needs to be handled differently
-        // For now, consumer config will be configured at runtime
+        modelBuilder.Model.SetExclusiveConnectionConfig<T>(connection);
 
         return this;
     }

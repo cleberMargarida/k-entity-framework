@@ -1,7 +1,5 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
@@ -10,7 +8,6 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox;
 /// Configuration options for the OutboxMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-[ScopedService]
 public class OutboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(model.IsOutboxEnabled<T>())
     where T : class
 {
