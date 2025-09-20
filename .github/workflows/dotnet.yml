@@ -409,6 +409,7 @@ jobs:
       - name: Build Documentation
         run: |
           # Generate API metadata first, then build docs
+          cd docs
           docfx metadata docfx.json
           docfx build docfx.json
 

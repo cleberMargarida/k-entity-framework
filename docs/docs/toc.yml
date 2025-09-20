@@ -1,0 +1,33 @@
+- name: Getting Started
+  topicHtml: <span class="text-body-tertiary">Getting Started</span>
+- name: Overview
+  href: ../getting-started/index.md
+- name: Installation
+  href: ../getting-started/installation.md  
+- name: Basic Usage
+  href: ../getting-started/basic-usage.md
+
+- name: Features
+  topicHtml: <span class="text-body-tertiary">Features</span>
+- name: Serialization
+  href: ../features/serialization.md
+- name: Custom Headers
+  href: ../features/custom-headers.md
+- name: Inbox Pattern
+  href: ../features/inbox.md
+- name: Outbox Pattern
+  href: ../features/outbox.md
+- name: Consumer Configuration
+  href: ../features/consumer-configuration.md
+
+- name: Architecture
+  topicHtml: <span class="text-body-tertiary">Architecture</span>
+- name: Middleware Architecture
+  href: ../architecture/middleware-architecture.md
+
+- name: Guides
+  topicHtml: <span class="text-body-tertiary">Guides</span>
+- name: Connection Management
+  href: ../guides/connection-management.md
+- name: Kafka Configuration
+  href: ../guides/kafka-configuration.md

@@ -17,7 +17,7 @@ modelBuilder.Topic<OrderCreated>(topic =>
 
 ## Custom Serializers
 
-Implement `IMessageSerializer<T>` and `IMessageDeserializer<T>`:
+Implement [`IMessageSerializer<T>`](../api/K.EntityFrameworkCore.Interfaces.IMessageSerializer-2.yml) and [`IMessageDeserializer<T>`](../api/K.EntityFrameworkCore.Interfaces.IMessageDeserializer-2.yml):
 
 > [!TIP]
 > You can register a custom serializer for a topic using `topic.UseSerializer<TSerializer, TSettings>(...)`. Provide any serializer-specific settings via the factory argument so the framework constructs and configures the serializer for you.
@@ -120,3 +120,10 @@ Use different serializers per topic:
 modelBuilder.Topic<ApiEvent>(topic => topic.UseSystemTextJson());
 modelBuilder.Topic<LegacyEvent>(topic => topic.UseSerializer<CustomSerializer<LegacyEvent>>());
 ```
+
+> [!TIP]
+> K-Entity-Framework is built to push a lot of messages fast while keeping memory use low.
+> </br>
+> It leans on [`Span<T>`](https://learn.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay#what-is-spant) everywhere – working directly on memory with almost no copying.
+> </br></br>
+> The core [`Envelope<T>`](../api/K.EntityFrameworkCore.Envelope-1.yml) `ref struct` encapsulates messages, headers, and serialized payloads as [`ReadOnlySpan<byte>`](https://learn.microsoft.com/en-us/dotnet/api/system.readonlyspan-1?view=net-9.0), enabling zero-allocation middleware pipelines and direct memory access throughout the serialization process.

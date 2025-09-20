@@ -635,6 +635,3 @@ kafka.StatisticsIntervalMs = 60000; // Statistics every minute
 kafka.EnableDeliveryReports = true; // Track delivery success
 ```
 
-## Next Steps
-
-

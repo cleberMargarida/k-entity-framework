@@ -1,0 +1,57 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": ["src/K.EntityFrameworkCore/**/*.csproj"],
+          "exclude": ["**/bin/**", "**/obj/**"],
+          "src": "../"
+        }
+      ],
+      "dest": "api",
+      "disableGitFeatures": false,
+      "disableDefaultFilter": false,
+      "properties": {
+        "TargetFramework": "net8.0"
+      },
+      "enumSortOrder": "alphabetic",
+      "includePrivateMembers": false,
+      "filter": "filterConfig.yml"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": ["**/*.{md,yml}"],
+        "exclude": ["_site/**", "obj/**", "docs-backup/**", "filterConfig.yml"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["images/**"],
+        "exclude": ["_site/**", "obj/**"]
+      }
+    ],
+    "output": "../bin/docs",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appTitle": "K.EntityFrameworkCore Documentation",
+      "_appName": "K.EntityFrameworkCore",
+      "_appLogoPath": "images/logo.png",
+      "_enableSearch": true,
+      "_gitContribute": {
+        "repo": "https://github.com/cleberMargarida/k-entity-framework",
+        "branch": "master"
+      }
+    },
+    "fileMetadata": {
+      "_gitContribute": {
+        "**/*.md": {
+          "repo": "https://github.com/cleberMargarida/k-entity-framework",
+          "branch": "master"
+        }
+      }
+    }
+  }
+}
