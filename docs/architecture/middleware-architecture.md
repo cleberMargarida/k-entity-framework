@@ -66,18 +66,15 @@ modelBuilder.Topic<OrderCreated>(topic =>
 
 **Producer Pipeline**:
 ```csharp
-[ScopedService]
 internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
 {
     public ProducerMiddlewareInvoker(
           SerializerMiddleware<T> serializationMiddleware
         , OutboxMiddleware<T> outboxMiddleware
-        , ProducerForgetMiddleware<T> forgetMiddleware
         , ProducerMiddleware<T> producerMiddleware)
     {
         Use(serializationMiddleware);
         Use(outboxMiddleware);
-        Use(forgetMiddleware); 
         Use(producerMiddleware);
     }
 }
@@ -85,20 +82,19 @@ internal class ProducerMiddlewareInvoker<T> : MiddlewareInvoker<T>
 
 **Consumer Pipeline**:
 ```csharp
-[ScopedService]  
 internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
 {
     public ConsumerMiddlewareInvoker(
-          SubscriptionMiddleware<T> subscriptionMiddleware
-        , PollingMiddleware<T> pollingMiddleware
+          SubscriberMiddleware<T> subscriberMiddleware
         , ConsumerMiddleware<T> consumerMiddleware
         , DeserializerMiddleware<T> deserializationMiddleware
+        , HeaderFilterMiddleware<T> headerFilterMiddleware
         , InboxMiddleware<T> inboxMiddleware)
     {
-        Use(subscriptionMiddleware);
-        Use(pollingMiddleware);
+        Use(subscriberMiddleware);
         Use(consumerMiddleware);
         Use(deserializationMiddleware);
+        Use(headerFilterMiddleware);
         Use(inboxMiddleware);
     }
 }
@@ -113,33 +109,15 @@ internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
 - **ProducerMiddleware**: Produces messages to Kafka
 
 #### Consumer Middleware
-- **SubscriptionMiddleware**: Manages Kafka subscription lifecycle
-- **PollingMiddleware**: Coordinates consumer polling operations
+- **SubscriberMiddleware**: Manages Kafka subscription lifecycle
 - **ConsumerMiddleware**: Handles message consumption from topics
 - **DeserializerMiddleware**: Deserializes messages from bytes
+- **HeaderFilterMiddleware**: Filters messages based on headers
 - **InboxMiddleware**: Implements message deduplication pattern
 
 ### Service Lifetimes
 
-Middleware are registered with appropriate service lifetimes:
+Middleware components are registered with the dependency injection container using appropriate service lifetimes:
 
-### Middleware Settings
-
-Each middleware has associated settings that control behavior:
-
-```csharp
-[SingletonService]
-internal class SerializationMiddlewareSettings<T> : MiddlewareSettings<T>
-{
-    public IMessageSerializer<T> Serializer { get; set; }
-    public IMessageDeserializer<T> Deserializer { get; set; }
-}
-
-[SingletonService] 
-internal class OutboxMiddlewareSettings<T> : MiddlewareSettings<T>
-{
-    public OutboxPublishingStrategy Strategy { get; set; }
-}
-```
-
-Settings are singleton because they represent configuration that doesn't change during execution.
+- **Singleton**: Core Kafka clients (producers/consumers), client configurations, and shared infrastructure like `ConsumerPollRegistry` and `Channel<T>`
+- **Scoped**: Middleware invokers, individual middleware components, and their associated settings

@@ -13,21 +13,20 @@ The Inbox pattern provides:
 
 ### Core Components
 
-1.  **`InboxMiddleware<T>`** - Intercepts incoming messages and checks for duplicates.
-2.  **`InboxMessage`** - An entity that stores message hashes for deduplication.
-
+1.  **[`InboxMiddleware<T>`](../api/K.EntityFrameworkCore.Middlewares.Inbox.InboxMiddlewareSettings-1.yml)** - Intercepts incoming messages and checks for duplicates.
+2.  **[`InboxMessage`](../api/K.EntityFrameworkCore.InboxMessage.yml)** - An entity that stores message hashes for deduplication.
 ### Message Flow
 
 ```mermaid
-graph TD
+flowchart LR
     A[Kafka Message] --> B[InboxMiddleware]
     B --> C{Duplicate Found?}
     C -->|Yes| D[Skip Processing]
     C -->|No| E[Store Hash & Process Message]
     E --> F[SaveChangesAsync]
     
-    style B fill:#fff3e0
-    style C fill:#ffecb3
+    style B fill:#2d4a22,stroke:#4caf50,stroke-width:2px,color:#ffffff
+    style C fill:#1a365d,stroke:#3182ce,stroke-width:2px,color:#ffffff
 ```
 
 ## Configuration
@@ -99,18 +98,22 @@ public class InboxCleanupService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            await Task.Delay(TimeSpan.FromHours(1), stoppingToken); // Run every hour
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        
+        // Create a periodic timer that fires every hour
+        using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
 
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+        // Wait for each timer tick (every hour) until cancellation is requested
+        while (await timer.WaitForNextTickAsync(stoppingToken))
+        {
+            // Query for expired inbox messages that are past their expiration date
+            var oldMessages = dbContext.Set<InboxMessage>().Where(m => m.ExpiredAt < DateTime.UtcNow);
             
-            var cutoff = DateTime.UtcNow.AddDays(-7); // Keep 7 days of records
-            var oldMessages = dbContext.Set<InboxMessage>().Where(m => m.ReceivedAt < cutoff);
-            
+            // Mark all expired messages for deletion
             dbContext.Set<InboxMessage>().RemoveRange(oldMessages);
             
+            // Execute the deletion in the database
             await dbContext.SaveChangesAsync(stoppingToken);
         }
     }

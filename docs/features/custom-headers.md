@@ -4,7 +4,7 @@ K-Entity-Framework supports extracting custom headers from your messages for rou
 
 ## Configuration
 
-Configure custom headers in your `OnModelCreating` method:
+Configure custom headers in your [`OnModelCreating`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore.dbcontext.onmodelcreating?view=efcore-8.0) method:
 
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -45,15 +45,14 @@ public class OrderCreated
 producer.HasHeader("is-high-value", o => o.IsHighValue);
 producer.HasHeader("customer-tier", o => o.CustomerTier);
 ```
+> [!IMPORTANT]
+> Use computed properties for complex header logic, but keep them cheap to compute — header expressions are evaluated during production and can affect producer performance if they run expensive logic.
 
 ## Built-in Headers
 
 K-Entity-Framework automatically adds:
 - `$type` - Compile-time type of the message
 - `$runtimeType` - Runtime type (if different from compile-time)
-
-> [!IMPORTANT]
-> Use computed properties for complex header logic, but keep them cheap to compute — header expressions are evaluated during production and can affect producer performance if they run expensive logic.
 
 ## Examples
 

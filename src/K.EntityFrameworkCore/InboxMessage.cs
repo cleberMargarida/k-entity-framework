@@ -14,7 +14,7 @@ public class InboxMessage
     public ulong HashId { get; set; }
 
     /// <summary>
-    /// When the message was first received for cleanup purposes.
+    /// The expiration timestamp in UTC for cleanup purposes.
     /// </summary>
     public DateTime ExpireAt { get; set; }
 

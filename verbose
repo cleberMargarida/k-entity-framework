@@ -1,0 +1,14 @@
+{"severity":"info","message":"Loading project C:/Users/c.margarida/source/repos/k-entity-framework/src/K.EntityFrameworkCore/K.EntityFrameworkCore.csproj","date_time":"2025-09-21T15:14:45.7568365Z"}
+{"severity":"info","message":"Processing K.EntityFrameworkCore","date_time":"2025-09-21T15:14:49.3771444Z"}
+{"severity":"info","message":"Creating output...","date_time":"2025-09-21T15:14:50.6926818Z"}
+{"severity":"info","message":"Searching built-in plugins in directory C:\\Users\\c.margarida\\.dotnet\\tools\\.store\\docfx\\2.78.3\\docfx\\2.78.3\\tools\\net9.0\\any\\...","date_time":"2025-09-21T15:14:51.1599717Z"}
+{"severity":"info","message":"Post processor ExtractSearchIndex loaded.","date_time":"2025-09-21T15:14:51.2015154Z"}
+{"severity":"info","message":"7 plug-in(s) loaded.","date_time":"2025-09-21T15:14:51.2176244Z"}
+{"severity":"info","message":"ExtractSearchIndex: UseMetadata = False, UseMetadataTitle = True","date_time":"2025-09-21T15:14:51.2312244Z"}
+{"severity":"info","message":"Building 2 file(s) in ResourceDocumentProcessor(ValidateResourceMetadata)...","date_time":"2025-09-21T15:14:51.6997378Z"}
+{"severity":"info","message":"Building 3 file(s) in TocDocumentProcessor(BuildTocDocument)...","date_time":"2025-09-21T15:14:51.6999962Z"}
+{"severity":"info","message":"Building 12 file(s) in ConceptualDocumentProcessor(BuildConceptualDocument=>ValidateConceptualDocumentMetadata)...","date_time":"2025-09-21T15:14:51.7002973Z"}
+{"severity":"info","message":"Building 50 file(s) in ManagedReferenceDocumentProcessor(BuildManagedReferenceDocument=>SplitClassPageToMemberLevel=>ValidateManagedReferenceDocumentMetadata=>ApplyOverwriteDocumentForMref=>FillReferenceInformation=>FillMetadata)...","date_time":"2025-09-21T15:14:51.7007244Z"}
+{"severity":"info","message":"Applying templates to 67 model(s)...","date_time":"2025-09-21T15:14:52.2079764Z"}
+{"severity":"info","message":"XRef map exported.","date_time":"2025-09-21T15:14:52.5029837Z"}
+{"severity":"info","message":"Extracting index data from 62 html files","date_time":"2025-09-21T15:14:52.6617237Z"}

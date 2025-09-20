@@ -5,6 +5,7 @@
 </div>
 
 [![Build Status](https://github.com/cleberMargarida/k-entity-framework/actions/workflows/dotnet.yml/badge.svg)](https://github.com/cleberMargarida/k-entity-framework/actions/workflows/dotnet.yml)
+[![codecov](https://codecov.io/gh/cleberMargarida/k-entity-framework/branch/master/graph/badge.svg)](https://codecov.io/gh/cleberMargarida/k-entity-framework)
 [![NuGet Version](https://img.shields.io/nuget/v/K.EntityFrameworkCore.svg)](https://www.nuget.org/packages/K.EntityFrameworkCore/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/K.EntityFrameworkCore.svg)](https://www.nuget.org/packages/K.EntityFrameworkCore/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

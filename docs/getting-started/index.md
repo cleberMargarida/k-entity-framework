@@ -1,29 +1,75 @@
 # Getting Started
 
-Welcome to K.EntityFrameworkCore! This section will help you get up and running quickly with the library.
+`K.EntityFrameworkCore` is a library that seamlessly integrates Apache Kafka messaging with Entity Framework Core. It simplifies the process of producing and consuming messages in response to entity changes. 
+<br/><br/>
+For example, when you create an order, you may want to produce a message notifying other systems about the new order. 
+<br/><br/>
+The goal is to make this integration easy and smooth, allowing developers to focus on business logic rather than messaging infrastructure.
 
-## What You'll Learn
+> Prerequisites
+> - .NET 8.0 or later
+> - Entity Framework Core
+> - Kafka - messaging concepts and terminology
 
-In this section, you'll find everything you need to start using K.EntityFrameworkCore:
+#### Define Your DbContext
 
-- **[Installation](installation.md)** - How to install and set up the library
-- **[Quick Start](quick-start.md)** - A rapid introduction to get you going
- - **[Basic Usage](basic-usage.md)** - Fundamental patterns and usage examples
- - **[Basic Examples](basic-usage.md)** - Quick start producer & consumer wiring and sample code
- - **[Outbox Pattern Examples](../examples/outbox.md)** - Durable message delivery patterns and worker configuration
- - **[Inbox Deduplication](../examples/inbox-deduplication.md)** - Examples for deduplicating and handling repeated messages
- - **[Forget / Fire-and-Forget](../examples/forget.md)** - Low-latency fire-and-forget producer patterns and trade-offs
- - **[Exclusive Connection (deprecated)](../examples/exclusive-connection.md)** - Historical docs about dedicated connections; prefer group-based shared consumers
+Extend your Entity Framework Core DbContext to include Kafka topics alongside your regular entities:
 
-## Prerequisites
+```csharp
+// Define your DbContext with Kafka topics
+public class OrderContext(DbContextOptions options) : DbContext(options)
+{
+    // Standard EF Core DbSet for entities
+    public DbSet<Order> Orders { get; set; }
 
-- Before getting started, make sure you have:
-- .NET 8.0 or later
-- Entity Framework Core
-- Basic knowledge of Kafka and messaging patterns
+    // Kafka topic for order events - enables producing and consuming messages
+    public Topic<OrderEvent> OrderEvents { get; set; }
+}
+```
 
-## Next Steps
+#### Configure Services
 
-After completing the getting started guide, explore our [Features](../features/index.md) section to learn about advanced capabilities like the Inbox/Outbox patterns, serialization, and middleware architecture.
+Set up dependency injection to configure your DbContext with both database and Kafka connectivity:
 
-If you'd like to contribute examples, see the [Contributing Guide](../../CONTRIBUTING.md).
+```csharp
+// Configure services in your application startup
+builder.Services.AddDbContext<MyDbContext>(options => options
+
+  // Configure EF Core to use SQL Server
+  .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Catalog=Hello World")
+
+  // Enable Kafka extensibility for EF Core (publishing/consuming integration)
+  .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
+```
+
+#### Producing Messages
+
+Create entities and produce Kafka messages that will be sent atomically when changes are saved:
+
+```csharp
+// Create and add a new order entity
+dbContext.Orders.Add(new Order { Id = 1232 });
+
+// Produce an order created event (non-blocking, queued for sending)
+dbContext.OrderEvents.Produce(new OrderCreated { OrderId = 123 });
+
+// Save changes - this persists the order AND sends the Kafka message atomically
+await dbContext.SaveChangesAsync();
+```
+
+#### Consuming Messages
+
+Process incoming messages from Kafka topics with automatic offset management:
+
+```csharp
+// Consume messages from the order events topic
+// This starts consuming from Kafka and processes each message
+await foreach (var order in dbContext.OrderEvents)
+{
+    // Process the consumed message here
+    // ... your business logic ...
+
+    // Commit the message offset to mark it as processed
+    await dbContext.SaveChangesAsync(); // Commit message
+}
+```

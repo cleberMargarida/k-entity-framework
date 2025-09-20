@@ -1,0 +1,17 @@
+    ### YamlMime:ApiFilter
+
+apiRules:
+- exclude:
+    uidRegex: ^System\.
+    type: Namespace
+- exclude:
+    uidRegex: ^Microsoft\.
+    type: Namespace
+- exclude:
+    hasAttribute:
+      uid: System.Runtime.CompilerServices.CompilerGeneratedAttribute
+- exclude:
+    hasAttribute:
+      uid: System.CodeDom.Compiler.GeneratedCodeAttribute
+- include:
+    uidRegex: ^K\.EntityFrameworkCore
