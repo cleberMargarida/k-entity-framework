@@ -1,9 +1,9 @@
+using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Extensions;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace K.EntityFrameworkCore.Middlewares.Serialization;
 
@@ -12,14 +12,20 @@ namespace K.EntityFrameworkCore.Middlewares.Serialization;
 /// Uses compile-time type as strategy identifier - no strings needed.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-[SingletonService]
-internal class SerializationMiddlewareSettings<T>() : MiddlewareSettings<T>(isMiddlewareEnabled: true)
+internal class SerializationMiddlewareSettings<T> : MiddlewareSettings<T>
     where T : class
 {
     private static readonly SystemTextJsonSerializer<T> defaultSerializer = new();
 
-    public IMessageSerializer<T> Serializer { get; set; } = defaultSerializer;
-    public IMessageDeserializer<T> Deserializer { get; set; } = defaultSerializer;
+    public SerializationMiddlewareSettings(IModel model) : base(isMiddlewareEnabled: true)
+    {
+        IMessageSerializer<T> serializer = model.GetSerializer<T>() as IMessageSerializer<T> ?? defaultSerializer;
+        Serializer = serializer;
+        Deserializer = (IMessageDeserializer<T>)serializer;
+    }
+
+    public IMessageSerializer<T> Serializer { get; }
+    public IMessageDeserializer<T> Deserializer { get; }
 }
 
 internal class SystemTextJsonSerializer<T>

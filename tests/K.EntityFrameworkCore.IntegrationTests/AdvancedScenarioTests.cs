@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact]
     public async Task Given_ProducingLargeNumberOfMessages_When_SavingInBatches_Then_AllMessagesAreProcessed()
@@ -74,11 +74,5 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
         Assert.Equal(largeContent, result.Name);
         Assert.Equal(10000, result.Name.Length);
         Assert.True(TopicExist("large-message-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        this.context.Dispose();
     }
 }

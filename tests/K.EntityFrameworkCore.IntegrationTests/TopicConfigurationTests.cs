@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact]
     public async Task Given_DbContextWithCustomTopicName_When_ProducingMessage_Then_MessageIsSentToCustomTopic()
@@ -63,11 +63,5 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
         var results = await context.Topic<DefaultMessage>().Take(6).ToListAsync();
         Assert.Equal(6, results.Count);
         Assert.True(TopicExist("complex-settings-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

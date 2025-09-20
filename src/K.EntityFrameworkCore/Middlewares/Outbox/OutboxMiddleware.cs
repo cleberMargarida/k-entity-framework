@@ -1,11 +1,9 @@
-﻿using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.Middlewares.Core;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 
-[ScopedService]
 internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentDbContext dbContext) : Middleware<T>(outbox)
     where T : class
 {
@@ -13,7 +11,7 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentD
 
     public override ValueTask<T?> InvokeAsync(scoped Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        DbSet<OutboxMessage> outboxMessages = context.Set<OutboxMessage>();
+        DbSet<OutboxMessage> outboxMessages = this.context.Set<OutboxMessage>();
 
         outboxMessages.Add(ConvertToOutbox(envelope));
 
@@ -30,15 +28,9 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentD
         Type runtimeType = envelope.Message!.GetType();
         Type compiledType = typeof(T);
 
-        string? runtimeTypeAssemblyQualifiedName;
-        if (runtimeType == compiledType)
-        {
-            runtimeTypeAssemblyQualifiedName = null;
-        }
-        else
-        {
-            runtimeTypeAssemblyQualifiedName = envelope.Message.GetType().AssemblyQualifiedName!;
-        }
+        string? runtimeTypeAssemblyQualifiedName = runtimeType != compiledType
+            ? envelope.Message.GetType().AssemblyQualifiedName!
+            : null;
 
         return new OutboxMessage
         {

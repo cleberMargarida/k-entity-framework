@@ -19,7 +19,6 @@ public static class DbContextExtensions
         where T : class
     {
         var serviceProvider = dbContext.GetInfrastructure();
-
         var commandRegistry = serviceProvider.GetRequiredService<ScopedCommandRegistry>();
 
         commandRegistry.Add(new ProducerMiddlewareInvokeCommand<T>(message).ExecuteAsync);

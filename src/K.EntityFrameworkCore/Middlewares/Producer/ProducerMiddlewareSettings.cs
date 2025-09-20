@@ -1,9 +1,7 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
@@ -22,21 +20,17 @@ internal class ParameterReplacer(ParameterExpression oldParameter, ParameterExpr
     }
 }
 
-[ScopedService]
-internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, IServiceProvider serviceProvider) : MiddlewareSettings<T>(true)
+internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, IModel model) : MiddlewareSettings<T>(true)
     where T : class
 {
     private Func<T, string>? keyAccessor;
-    private readonly bool hasNoKey;
     private Dictionary<string, Func<T, object>>? headerAccessors;
-    private readonly Lazy<DbContext> dbContext = new(() => serviceProvider.GetRequiredService<ICurrentDbContext>().Context);
 
     private readonly ProducerConfig producerConfig = new(clientSettings.ClientConfig);
 
     public IEnumerable<KeyValuePair<string, string>> ProducerConfig => this.producerConfig;
 
-    public string TopicName => this.dbContext.Value.Model.GetTopicName<T>() ??
-        clientSettings.TopicName;
+    public string TopicName => model.GetTopicName<T>() ?? clientSettings.TopicName;
 
     /// <summary>
     /// Gets the key value for the specified entity instance.
@@ -51,20 +45,14 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
             throw new InvalidOperationException("Entity cannot be null when extracting key.");
         }
 
-        // Check model annotations first
-        var model = this.dbContext.Value.Model;
-
-        // Check if configured to have no key
         if (model.HasNoKey<T>())
         {
             return null;
         }
 
-        // Check if there's a key property accessor in the model annotations
         var keyPropertyAccessorExpression = model.GetKeyPropertyAccessor<T>();
         if (keyPropertyAccessorExpression != null)
         {
-            // Compile the expression if we haven't already
             if (this.keyAccessor == null)
             {
                 var parameter = Expression.Parameter(typeof(T), "entity");
@@ -86,12 +74,6 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
             }
 
             return this.keyAccessor(entity);
-        }
-
-        // If explicitly configured to have no key (legacy check), return null
-        if (this.hasNoKey)
-        {
-            return null;
         }
 
         if (this.keyAccessor != null)
@@ -128,7 +110,6 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
 
         if (this.headerAccessors == null)
         {
-            var model = this.dbContext.Value.Model;
             var headerAccessorExpressions = model.GetHeaderAccessors<T>();
 
             if (headerAccessorExpressions.Count == 0)

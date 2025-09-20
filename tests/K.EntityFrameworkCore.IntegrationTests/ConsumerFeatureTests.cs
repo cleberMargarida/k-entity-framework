@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact(Timeout = 60_000)]
     public async Task Given_ProducerWithInboxDeduplication_When_PublishingDuplicateMessages_Then_DuplicatesAreIgnored()
@@ -69,7 +69,10 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         defaultTopic.HasProducer(producer => producer.HasKey(msg => msg.Id));
         defaultTopic.HasConsumer(consumer =>
         {
-            consumer.HasExclusiveConnection();
+            consumer.HasExclusiveConnection(connection =>
+            {
+                connection.GroupId = "exclusive-group";
+            });
         });
         await StartHostAsync();
 
@@ -82,11 +85,6 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         Assert.Equal(2200, result.Id);
         Assert.Equal("ExclusiveConnectionTest", result.Name);
         Assert.True(TopicExist("exclusive-connection-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
+        Assert.True(GroupExist("exclusive-group"));
     }
 }

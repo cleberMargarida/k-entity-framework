@@ -1,26 +1,21 @@
-﻿using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.Middlewares.Core;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.HeaderFilter;
 using K.EntityFrameworkCore.Middlewares.Inbox;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
-[ScopedService]
 internal class ConsumerMiddlewareInvoker<T> : MiddlewareInvoker<T>
     where T : class
 {
     public ConsumerMiddlewareInvoker(
-          SubscriptionMiddleware<T> subscriptionMiddleware
-        , PollingMiddleware<T> pollingMiddleware
+          SubscriberMiddleware<T> subscriberMiddleware
         , ConsumerMiddleware<T> consumerMiddleware
         , DeserializerMiddleware<T> deserializationMiddleware
         , HeaderFilterMiddleware<T> headerFilterMiddleware
-        , InboxMiddleware<T> inboxMiddleware
-        )
+        , InboxMiddleware<T> inboxMiddleware)
     {
-        Use(subscriptionMiddleware);
-        Use(pollingMiddleware);
+        Use(subscriberMiddleware);
         Use(consumerMiddleware);
         Use(deserializationMiddleware);
         Use(headerFilterMiddleware);

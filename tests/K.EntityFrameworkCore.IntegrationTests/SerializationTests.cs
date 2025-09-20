@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact]
     public async Task Given_ProducerWithJsonSerialization_When_ProducingComplexMessage_Then_MessageIsSerializedCorrectly()
@@ -111,11 +111,5 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         Assert.Equal("Technology", extendedResult.Category);
         Assert.Equal(499.99m, extendedResult.Value);
         Assert.True(TopicExist("polymorphic-default-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

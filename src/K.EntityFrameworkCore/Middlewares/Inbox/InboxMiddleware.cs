@@ -4,18 +4,18 @@ using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace K.EntityFrameworkCore.Middlewares.Inbox;
 
-[ScopedService]
 internal class InboxMiddleware<T>(
-      ICurrentDbContext currentDbContext
+      ConsumerAssessor<T> consumerAssessor
+    , ICurrentDbContext currentDbContext
     , ScopedCommandRegistry scopedCommandRegistry
     , InboxMiddlewareSettings<T> inboxSetting)
     : Middleware<T>(inboxSetting)
     where T : class
 {
+    private readonly IConsumer consumer = consumerAssessor.Consumer;
     private readonly DbContext context = currentDbContext.Context;
 
     public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
@@ -30,7 +30,7 @@ internal class InboxMiddleware<T>(
     private async ValueTask<T?> DeduplicateAsync(T message, TopicPartitionOffset offset, CancellationToken cancellationToken)
     {
         ulong hashId = inboxSetting.Hash(message);
-        var inboxMessages = context.Set<InboxMessage>();
+        var inboxMessages = this.context.Set<InboxMessage>();
 
         var isDuplicate = (await inboxMessages.FindAsync(new object[] { hashId }, cancellationToken)) != null;
         if (isDuplicate)
@@ -44,31 +44,24 @@ internal class InboxMiddleware<T>(
             ExpireAt = DateTime.UtcNow + inboxSetting.DeduplicationTimeWindow,
         });
 
-        scopedCommandRegistry.Add(new CommitMiddlewareInvokeCommand(offset).ExecuteAsync);
+        scopedCommandRegistry.Add(new CommitMiddlewareInvokeCommand(this.consumer, offset).ExecuteAsync);
 
         return message;
     }
 
-    private readonly struct CommitMiddlewareInvokeCommand(TopicPartitionOffset topicPartitionOffset)
+    private readonly struct CommitMiddlewareInvokeCommand(IConsumer consumer, TopicPartitionOffset topicPartitionOffset)
     {
         public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            // We need to resolve settings again to choose the correct consumer
-            var settings = serviceProvider.GetRequiredService<ConsumerMiddlewareSettings<T>>();
+            _ = serviceProvider;
+            cancellationToken.ThrowIfCancellationRequested();
 
-            IConsumer consumer;
+            consumer.StoreOffset(new TopicPartitionOffset(
+                  topicPartitionOffset.Topic
+                , topicPartitionOffset.Partition
+                , topicPartitionOffset.Offset + 1
+                , topicPartitionOffset.LeaderEpoch));
 
-            if (settings.ExclusiveConnection)
-            {
-                //var consumerC = serviceProvider.GetRequiredKeyedService<ConsumerConfig>(typeof(T));
-                consumer = serviceProvider.GetRequiredKeyedService<IConsumer>(typeof(T));
-            }
-            else
-            {
-                consumer = serviceProvider.GetRequiredService<IConsumer>();
-            }
-
-            consumer.StoreOffset(new TopicPartitionOffset(topicPartitionOffset.Topic, topicPartitionOffset.Partition, topicPartitionOffset.Offset + 1, topicPartitionOffset.LeaderEpoch));
             return ValueTask.CompletedTask;
         }
     }

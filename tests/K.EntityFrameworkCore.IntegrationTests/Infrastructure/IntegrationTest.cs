@@ -14,7 +14,7 @@ namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
 /// </summary>
 [SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "Properties has overheads for tests")]
 [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Is necessary")]
-public abstract class IntegrationTest
+public abstract class IntegrationTest : IDisposable
 {
     private readonly KafkaFixture kafka;
 
@@ -65,6 +65,13 @@ public abstract class IntegrationTest
         return metadata.Topics.Any(t => t.Topic == topicName);
     }
 
+    protected bool GroupExist(string groupName, int timoutMilliseconds = 1000)
+    {
+        using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = kafka.BootstrapAddress }).Build();
+        var groups = adminClient.ListGroups(TimeSpan.FromMilliseconds(timoutMilliseconds));
+        return groups.Any(g => g.Group == groupName);
+    }
+
     protected void DeleteKafkaTopics(int timoutMilliseconds = 3000)
     {
         DeleteKafkaTopicsAsync(timoutMilliseconds).GetAwaiter().GetResult();
@@ -81,5 +88,11 @@ public abstract class IntegrationTest
         };
         await adminClient.DeleteTopicsAsync(metadata.Topics.Where(t => !t.Topic.StartsWith("__", StringComparison.InvariantCulture)).Select(t => t.Topic), options);
         metadata = adminClient.GetMetadata(TimeSpan.FromMilliseconds(timoutMilliseconds));
+    }
+
+    public void Dispose()
+    {
+        DeleteKafkaTopics();
+        context.Dispose();
     }
 }

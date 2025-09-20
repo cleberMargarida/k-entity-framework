@@ -1,19 +1,11 @@
-﻿using Confluent.Kafka;
-using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.Interfaces;
-using K.EntityFrameworkCore.Middlewares.Core;
+﻿using K.EntityFrameworkCore.Middlewares.Core;
 using System.Collections.Immutable;
-using System.Threading.Channels;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
-[SingletonService]
-internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : Middleware<T>(settings), IConsumeResultChannel
+internal class ConsumerMiddleware<T>(Channel<T> channel, ConsumerMiddlewareSettings<T> settings) : Middleware<T>(settings)
     where T : class
 {
-    private readonly Channel<ConsumeResult<string, byte[]>> channel
-        = Channel.CreateBounded<ConsumeResult<string, byte[]>>(((IConsumerProcessingConfig)settings).ToBoundedChannelOptions());
-
     public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
         return InvokeAsync(cancellationToken);
@@ -23,7 +15,7 @@ internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : M
     {
         try
         {
-            var result = await channel.Reader.ReadAsync(cancellationToken);
+            var result = await channel.ReadAsync(cancellationToken);
 
             scoped var envelope = new Envelope<T>();
 
@@ -39,10 +31,5 @@ internal class ConsumerMiddleware<T>(ConsumerMiddlewareSettings<T> settings) : M
         {
             return null!;
         }
-    }
-
-    public ValueTask WriteAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellationToken = default)
-    {
-        return channel.Writer.WriteAsync(result, cancellationToken);
     }
 }

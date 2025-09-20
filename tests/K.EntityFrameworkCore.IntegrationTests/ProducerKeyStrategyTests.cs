@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact]
     public async Task Given_ProducerWithCustomKey_When_ProducingMessage_Then_MessageIsProducedWithCorrectKey()
@@ -133,11 +133,5 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         Assert.Equal(11, results.Count);
         Assert.True(results.All(r => r.Id is >= 2800 and <= 2810));
         Assert.True(TopicExist("composite-key-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

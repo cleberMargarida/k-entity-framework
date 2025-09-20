@@ -1,12 +1,9 @@
-using K.EntityFrameworkCore.Extensions;
-
 namespace K.EntityFrameworkCore.Middlewares.Forget;
 
 /// <summary>
 /// Producer-specific configuration options for the ForgetMiddleware.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-[SingletonService]
 public class ProducerForgetMiddlewareSettings<T> : ForgetMiddlewareSettings<T>
     where T : class
 {

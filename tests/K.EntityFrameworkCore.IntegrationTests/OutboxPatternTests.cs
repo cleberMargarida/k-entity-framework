@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact(Timeout = 60_000)]
     public async Task Given_ProducerWithOutboxPattern_When_PublishingMessage_Then_MessageIsStoredInOutboxAndEventuallyPublished()
@@ -76,11 +76,5 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         Assert.Equal(1400, results.First().Id);
         Assert.Equal(1403, results.Last().Id);
         Assert.True(TopicExist("immediate-fallback-batch-topic"));
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

@@ -1,131 +1,127 @@
-﻿global using IProducer = Confluent.Kafka.IProducer<string, byte[]>;
-global using IConsumer = Confluent.Kafka.IConsumer<string, byte[]>;
-
+﻿global using IConsumer = Confluent.Kafka.IConsumer<string, byte[]>;
+global using IProducer = Confluent.Kafka.IProducer<string, byte[]>;
 using Confluent.Kafka;
-using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Middlewares.Consumer;
+using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.HeaderFilter;
+using K.EntityFrameworkCore.Middlewares.Inbox;
+using K.EntityFrameworkCore.Middlewares.Outbox;
+using K.EntityFrameworkCore.Middlewares.Producer;
+using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
-using K.EntityFrameworkCore.Middlewares.Forget;
-using K.EntityFrameworkCore.Middlewares.Outbox;
-using K.EntityFrameworkCore.Middlewares.Serialization;
-using K.EntityFrameworkCore.Middlewares.Core;
-using K.EntityFrameworkCore.Middlewares.Inbox;
-using K.EntityFrameworkCore.Middlewares.Producer;
-using K.EntityFrameworkCore.Middlewares.Consumer;
-using System.Collections.Concurrent;
-using K.EntityFrameworkCore.Middlewares.HeaderFilter;
+using Microsoft.Extensions.Logging;
+using Error = Confluent.Kafka.Error;
 
+namespace K.EntityFrameworkCore.Extensions;
 
-namespace K.EntityFrameworkCore.Extensions
+internal class KafkaOptionsExtension : IDbContextOptionsExtension
 {
-    internal class KafkaOptionsExtension : IDbContextOptionsExtension
+    private readonly KafkaClientBuilder client;
+    private readonly Type contextType;
+
+    public KafkaOptionsExtension(KafkaClientBuilder client, Type contextType)
     {
-        // TODO dictionary of context types to options
-        private readonly KafkaClientBuilder client;
-        private readonly Type contextType;
+        this.client = client;
+        this.contextType = contextType;
+        Info = new KafkaOptionsExtensionInfo(this);
+    }
 
-        public KafkaOptionsExtension(KafkaClientBuilder client, Type contextType)
+    public DbContextOptionsExtensionInfo Info { get; }
+
+    public void ApplyServices(IServiceCollection services)
+    {
+        services.AddLogging();
+        services.AddSingleton(this.client);
+        services.AddSingleton(this.client.ClientConfig);
+        services.AddSingleton(this.client.Producer);
+        services.AddSingleton(this.client.Consumer);
+        services.AddSingleton<IConsumerProcessingConfig>(this.client.Consumer);
+
+        services.AddSingleton(typeof(ConsumerPollRegistry));
+
+        services.AddScoped(typeof(ScopedCommandRegistry));
+        services.AddScoped(typeof(ClientSettings<>));
+        services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
+        services.AddScoped(typeof(ProducerMiddlewareSettings<>));
+        services.AddScoped(typeof(ProducerMiddleware<>));
+
+        services.AddScoped(typeof(SerializationMiddlewareSettings<>));
+        services.AddScoped(typeof(SerializerMiddleware<>));
+        services.AddScoped(typeof(DeserializerMiddleware<>));
+
+        services.AddScoped(typeof(OutboxMiddlewareSettings<>));
+        services.AddScoped(typeof(OutboxMiddleware<>));
+        services.AddScoped(typeof(OutboxProducerMiddleware<>));
+
+        //services.AddScoped(typeof(ForgetMiddlewareSettings<>));
+        //services.AddScoped(typeof(ForgetMiddleware<>));
+
+        services.AddSingleton(typeof(Channel<>));
+
+        services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
+        services.AddScoped(typeof(SubscriberMiddleware<>));
+        services.AddScoped(typeof(ConsumerMiddlewareSettings<>));
+        services.AddScoped(typeof(ConsumerMiddleware<>));
+
+        services.AddScoped(typeof(InboxMiddlewareSettings<>));
+        services.AddScoped(typeof(InboxMiddleware<>));
+
+        services.AddScoped(typeof(HeaderFilterMiddlewareSettings<>));
+        services.AddScoped(typeof(HeaderFilterMiddleware<>));
+
+        services.AddSingleton(provider =>
         {
-            this.client = client;
-            this.contextType = contextType;
-            Info = new KafkaOptionsExtensionInfo(this);
-        }
+            ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("K.EntityFrameworkCore.Producer");
 
-        public DbContextOptionsExtensionInfo Info { get; }
+            return new ProducerBuilder<string, byte[]>((ProducerConfig)this.client.Producer)
+                .SetLogHandler(OnLog)
+                .SetErrorHandler(OnError)
+                .Build();
 
-        public void ApplyServices(IServiceCollection services)
-        {
-            services.AddScoped<ScopedCommandRegistry>();
-
-            services.AddScoped(typeof(ConsumerMiddlewareInvoker<>));
-            services.AddScoped(typeof(ProducerMiddlewareInvoker<>));
-
-            services.AddSingleton(typeof(SerializationMiddlewareSettings<>));
-            services.AddScoped(typeof(ClientSettings<>));
-
-            // Consumer-specific middleware options and classes
-            services.AddScoped(typeof(InboxMiddlewareSettings<>));
-            services.AddScoped(typeof(InboxMiddleware<>));
-
-            services.AddSingleton(typeof(SubscriptionMiddlewareSettings<>));
-            services.AddScoped(typeof(SubscriptionMiddleware<>));
-            services.AddSingleton(typeof(PollingMiddlewareSettings<>));
-            services.AddScoped(typeof(PollingMiddleware<>));
-
-            services.AddScoped(typeof(SubscriptionRegistry<>));
-            services.AddSingleton(typeof(ConsumerMiddlewareSettings<>));
-            services.AddSingleton(typeof(ConsumerMiddleware<>));
-
-            services.AddScoped(typeof(HeaderFilterMiddlewareSettings<>));
-            services.AddScoped(typeof(HeaderFilterMiddleware<>));
-
-            // Register channel options for configuration
-            services.AddScoped(typeof(DeserializerMiddleware<>));
-
-            // Producer-specific middleware options and classes
-            services.AddScoped(typeof(ProducerMiddlewareSettings<>));
-            services.AddScoped(typeof(ProducerMiddleware<>));
-
-            services.AddScoped(typeof(SerializerMiddleware<>));
-
-            services.AddSingleton(typeof(ProducerForgetMiddlewareSettings<>));
-            services.AddScoped(typeof(ProducerForgetMiddleware<>));
-
-            services.AddScoped(typeof(OutboxMiddlewareSettings<>));
-            services.AddScoped(typeof(OutboxMiddleware<>));
-            services.AddScoped(typeof(OutboxProducerMiddleware<>));
-
-            services.AddSingleton(_ => client.ClientConfig);
-            services.AddSingleton(_ => (ProducerConfig)client.Producer);
-            services.AddSingleton(_ => (ConsumerConfig)client.Consumer);
-            services.AddSingleton(_ => (IConsumerProcessingConfig)client.Consumer);
-
-            // https://github.com/confluentinc/confluent-kafka-dotnet/issues/197
-            // One consumer per process
-            services.AddSingleton(ConsumerFactory);
-
-            // Register the central Kafka consumer poll service (shared) with lazy consumer factory
-            services.AddSingleton(provider => new KafkaConsumerPollService(provider, () => provider.GetRequiredService<IConsumer>()));
-            services.AddSingleton<PollerManager>();
-
-            // https://github.com/confluentinc/confluent-kafka-dotnet/issues/1346
-            // One producer per process
-            services.AddSingleton(ProducerFactory);
-
-            //TODO: move to source generator is okay reflection here?
-            foreach (var type in contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(prop =>
-                    prop.PropertyType.IsGenericType &&
-                    prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
-                .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
+            void OnError(IProducer producer, Error error)
             {
-                Type consumerMiddlewareType = typeof(ConsumerMiddleware<>).MakeGenericType(type!);
-
-                services.AddKeyedSingleton(type, (provider, _) => (ConsumerConfig)provider.GetRequiredKeyedService<IConsumerConfig>(type));
-                services.AddKeyedSingleton<IConsumerConfig>(type, (_, _) => new ConsumerConfigInternal(client.ClientConfig));
-                services.AddKeyedSingleton(type, (_, type) => (IConsumeResultChannel)_.GetRequiredService(consumerMiddlewareType));
-                services.AddKeyedSingleton<IConsumer>(type, KeyedConsumerFactory);
+                logger.LogError(
+                    "Kafka producer '{ClientId}' on host '{HostName}' encountered a error: {ErrorReason} (Code: {ErrorCode}, Broker: {BrokerName})",
+                    this.client.ClientId,
+                    Environment.MachineName,
+                    error.Reason,
+                    error.Code,
+                    error.IsLocalError ? "local" : "broker");
             }
-        }
 
-        private IProducer ProducerFactory(IServiceProvider provider)
-        {
-            return new ProducerBuilder<string, byte[]>(provider.GetRequiredService<ProducerConfig>()).SetLogHandler((_, _) => { }).Build();//TODO handle kafka logs
-        }
+            void OnLog(IProducer producer, LogMessage logMessage)
+            {
+                logger.Log((LogLevel)logMessage.LevelAs(LogLevelType.MicrosoftExtensionsLogging),
+                    "Kafka client log [{Facility}] from group '{ClientId}' on host '{HostName}': {Message}",
+                    logMessage.Facility,
+                    this.client.ClientId,
+                    Environment.MachineName,
+                    logMessage.Message);
+            }
+        });
 
-        private IConsumer<string, byte[]> KeyedConsumerFactory(IServiceProvider provider, object? key)
+        services.AddSingleton(provider =>
         {
-            return new ConsumerBuilder<string, byte[]>(provider.GetRequiredKeyedService<ConsumerConfig>(key)).Build();
-        }
+            ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("K.EntityFrameworkCore.Consumer");
 
-        private IConsumer<string, byte[]> ConsumerFactory(IServiceProvider provider)
-        {
-            return new ConsumerBuilder<string, byte[]>(provider.GetRequiredService<ConsumerConfig>()).Build();
-        }
+            return new ConsumerBuilder<string, byte[]>((ConsumerConfig)this.client.Consumer)
+                .Build();
+        });
 
-        public void Validate(IDbContextOptions options)
-        {
-        }
+        services.AddScoped(typeof(ConsumerAssessor<>));
+
+        ////TODO: move to source generator? is okay reflection here?
+        //foreach (var type in this.contextType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        //    .Where(prop =>
+        //        prop.PropertyType.IsGenericType &&
+        //        prop.PropertyType.GetGenericTypeDefinition().Equals(typeof(Topic<>)))
+        //    .Select(prop => prop.PropertyType.GenericTypeArguments[0]))
+        //{
+        //}
+    }
+
+    public void Validate(IDbContextOptions options)
+    {
     }
 }

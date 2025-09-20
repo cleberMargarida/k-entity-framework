@@ -1,7 +1,7 @@
 namespace K.EntityFrameworkCore.IntegrationTests;
 
 [Collection("IntegrationTests")]
-public class HeaderFilterTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql), IDisposable
+public class HeaderFilterTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
     [Fact]
     public async Task Given_HeaderFilterByTenantId_When_PublishingMessagesForDifferentTenants_Then_OnlyMatchingTenantMessagesAreProcessed()
@@ -69,11 +69,5 @@ public class HeaderFilterTests(KafkaFixture kafka, PostgreSqlFixture postgreSql)
 
         var results = await context.DefaultMessages.Take(3).ToListAsync();
         Assert.Equal(3, results.Count);
-    }
-
-    public void Dispose()
-    {
-        DeleteKafkaTopics();
-        context.Dispose();
     }
 }

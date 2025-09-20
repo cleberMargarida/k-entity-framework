@@ -15,7 +15,6 @@ namespace K.EntityFrameworkCore.Middlewares.Inbox;
 /// <remarks>
 /// Initializes a new instance of the InboxMiddlewareSettings class.
 /// </remarks>
-[ScopedService]
 public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(model.IsInboxEnabled<T>())
     where T : class
 {

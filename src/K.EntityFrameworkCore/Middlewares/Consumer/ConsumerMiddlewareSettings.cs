@@ -1,20 +1,19 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Core;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
-[SingletonService]
-internal class ConsumerMiddlewareSettings<T>(
-      IConsumerProcessingConfig globalProcessingConfig)
-    : MiddlewareSettings<T>(isMiddlewareEnabled: true)
-    , IConsumerProcessingConfig
+internal class ConsumerMiddlewareSettings<T>(IModel model, IConsumerProcessingConfig consumerConfig) : MiddlewareSettings<T>(isMiddlewareEnabled: true), IConsumerProcessingConfig
     where T : class
 {
     /// <inheritdoc />
-    public int MaxBufferedMessages { get; set; } = globalProcessingConfig.MaxBufferedMessages;
+    public int MaxBufferedMessages { get; } = model.GetMaxBufferedMessages<T>() ?? consumerConfig.MaxBufferedMessages;
 
     /// <inheritdoc />
-    public ConsumerBackpressureMode BackpressureMode { get; set; } = globalProcessingConfig.BackpressureMode;
-    public bool ExclusiveConnection { get; internal set; }
+    public ConsumerBackpressureMode BackpressureMode { get; } = model.GetBackpressureMode<T>() ?? consumerConfig.BackpressureMode;
+
+    /// <inheritdoc />
+    public bool ExclusiveConnection { get; } = model.HasExclusiveConnection<T>();
 }
 

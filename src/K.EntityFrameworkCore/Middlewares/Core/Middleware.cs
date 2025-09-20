@@ -1,5 +1,4 @@
-﻿using K.EntityFrameworkCore.Extensions;
-using K.EntityFrameworkCore.Interfaces;
+﻿using K.EntityFrameworkCore.Interfaces;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
@@ -8,7 +7,7 @@ internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddlew
 {
     private IMiddleware<T>? next;
 
-    protected Middleware() : this(new MiddlewareSettings<T>(true)) { }
+    protected Middleware() : this(new MiddlewareSettings<T>(isMiddlewareEnabled: true)) { }
 
     /// <summary>
     /// Gets a value indicating whether this middleware is enabled based on the settings.
@@ -17,12 +16,12 @@ internal abstract class Middleware<T>(MiddlewareSettings<T> settings) : IMiddlew
 
     IMiddleware<T>? IMiddleware<T>.Next
     {
-        get => next;
-        set => next = value;
+        get => this.next;
+        set => this.next = value;
     }
 
     public virtual ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        return next?.InvokeAsync(envelope, cancellationToken) ?? ValueTask.FromResult((T?)envelope.Message);
+        return this.next?.InvokeAsync(envelope, cancellationToken) ?? ValueTask.FromResult((T?)envelope.Message);
     }
 }
