@@ -30,7 +30,7 @@ internal class ProducerMiddlewareSettings<T>(ClientSettings<T> clientSettings, I
 
     public IEnumerable<KeyValuePair<string, string>> ProducerConfig => this.producerConfig;
 
-    public string TopicName => model.GetTopicName<T>() ?? clientSettings.TopicName;
+    public string TopicName => clientSettings.TopicName;
 
     /// <summary>
     /// Gets the key value for the specified entity instance.

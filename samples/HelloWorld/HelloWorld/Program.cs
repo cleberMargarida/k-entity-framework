@@ -13,7 +13,9 @@ builder.Services.AddDbContext<OrderContext>(optionsBuilder => optionsBuilder
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
     .UseKafkaExtensibility(client => client.BootstrapServers = "localhost:9092"));
 
-builder.Services.AddOutboxKafkaWorker<OrderContext>();
+//builder.Services.AddOutboxKafkaWorker<OrderContext>();
+
+builder.Services.AddTopicProvisioning<OrderContext>();
 
 using var app = builder.Build();
 
@@ -50,6 +52,17 @@ namespace HelloWorld
         public DbSet<Order> Orders { get; set; }
 
         public Topic<OrderEvent> OrderEvents { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Topic<OrderEvent>(topic =>
+            {
+                topic.HasSetting(setting =>
+                {
+                    setting.NumPartitions = 2;
+                });
+            });
+        }
     }
 
     public class Order
