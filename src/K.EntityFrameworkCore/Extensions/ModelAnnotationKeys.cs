@@ -122,4 +122,9 @@ internal static class ModelAnnotationKeys
     /// Annotation key for storing header filter expressions for a consumer message type.
     /// </summary>
     public static string ConsumerHeaderFilters(Type messageType) => $"{BasePrefix}ConsumerHeaderFilters[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing topic specifications for a message type.
+    /// </summary>
+    public static string TopicSpecification(Type messageType) => $"{BasePrefix}TopicSpecification[{messageType.FullName}]";
 }

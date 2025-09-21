@@ -475,4 +475,67 @@ internal static class ModelAnnotationHelpers
         existingAccessors[headerKey] = headerValueAccessor;
         model.SetAnnotation(annotationKey, existingAccessors);
     }
+
+    /// <summary>
+    /// Sets the topic specification for a message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="topicSpecification">The topic specification to set.</param>
+    public static void SetTopicSpecification<T>(this IMutableModel model, Confluent.Kafka.Admin.TopicSpecification topicSpecification)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.TopicSpecification(typeof(T));
+        model.SetAnnotation(annotationKey, topicSpecification);
+    }
+
+    /// <summary>
+    /// Gets the topic specification for a message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The topic specification, or null if not set.</returns>
+    public static Confluent.Kafka.Admin.TopicSpecification? GetTopicSpecification<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.TopicSpecification(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as Confluent.Kafka.Admin.TopicSpecification;
+    }
+
+    /// <summary>
+    /// Gets all topic specifications stored in the model with their corresponding message types.
+    /// </summary>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>Dictionary mapping message types to their topic specifications.</returns>
+    public static Dictionary<Type, Confluent.Kafka.Admin.TopicSpecification> GetAllTopicSpecifications(this IModel model)
+    {
+        var result = new Dictionary<Type, Confluent.Kafka.Admin.TopicSpecification>();
+        var prefix = ModelAnnotationKeys.TopicSpecification(typeof(object)).Replace("[System.Object]", "");
+
+        foreach (var annotation in model.GetAnnotations())
+        {
+            if (!annotation.Name.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (annotation.Value is not Confluent.Kafka.Admin.TopicSpecification specification)
+            {
+                continue;
+            }
+
+            var typeName = annotation.Name[prefix.Length..].Trim('[', ']');
+
+            var messageType = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .FirstOrDefault(t => t.FullName == typeName);
+
+            if (messageType != null)
+            {
+                result[messageType] = specification;
+            }
+        }
+
+        return result;
+    }
 }

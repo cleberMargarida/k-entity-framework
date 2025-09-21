@@ -19,6 +19,8 @@
   href: ../features/outbox.md
 - name: Consumer Configuration
   href: ../features/consumer-configuration.md
+- name: Topic Provisioning
+  href: ../features/topic-provisioning.md
 
 - name: Architecture
   topicHtml: <span class="text-body-tertiary">Architecture</span>

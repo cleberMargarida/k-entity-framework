@@ -91,7 +91,9 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The topic builder instance for method chaining.</returns>
     public TopicTypeBuilder<T> HasSetting(Action<TopicSpecification> settings)
     {
-        // TODO: Topic settings need to be handled
+        var topicSpecification = new TopicSpecification();
+        settings(topicSpecification);
+        modelBuilder.Model.SetTopicSpecification<T>(topicSpecification);
         return this;
     }
 
@@ -209,6 +211,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
 
         // TODO: Forget builder configuration needs to be handled differently
         // For now, middleware settings will be configured at runtime
+        _ = configure; // Suppress unused parameter warning - will be implemented later
 
         return this;
     }
