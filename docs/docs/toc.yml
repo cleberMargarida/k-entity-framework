@@ -33,3 +33,16 @@
   href: ../guides/connection-management.md
 - name: Kafka Configuration
   href: ../guides/kafka-configuration.md
+- name: Debezium Integration
+  items:
+  - name: Overview
+    href: ../guides/debezium-overview.md
+  - name: SQL Server Setup
+    href: ../guides/debezium-sqlserver.md
+  - name: PostgreSQL Setup
+    href: ../guides/debezium-postgresql.md
+  - name: Complete Example
+    href: ../guides/debezium-example.md
+  - name: Aspire Integration
+    href: ../guides/debezium-aspire.md
+# docfx build docs/docfx.json --serve

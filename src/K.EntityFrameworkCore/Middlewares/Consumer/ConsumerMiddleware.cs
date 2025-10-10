@@ -1,5 +1,6 @@
 ﻿using K.EntityFrameworkCore.Middlewares.Core;
 using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
@@ -21,7 +22,12 @@ internal class ConsumerMiddleware<T>(Channel<T> channel, ConsumerMiddlewareSetti
 
             envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
 
-            envelope.Headers = result.Message.Headers.ToImmutableDictionary(h => h.Key, h => System.Text.Encoding.UTF8.GetString(h.GetValueBytes()));
+            var header = result.Message.Headers[^1];
+
+            envelope.Headers = header.Key == "__debezium.outbox.headers"
+                ? JsonSerializer.Deserialize<ImmutableDictionary<string, string>>(header.GetValueBytes())
+                : result.Message.Headers.ToImmutableDictionary(h => h.Key, h => System.Text.Encoding.UTF8.GetString(h.GetValueBytes()));
+
             envelope.Key = result.Message.Key;
             envelope.Payload = result.Message.Value;
 

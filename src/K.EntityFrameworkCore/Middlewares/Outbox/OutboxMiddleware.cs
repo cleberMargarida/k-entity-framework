@@ -1,12 +1,14 @@
 ﻿using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Producer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 
-internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentDbContext dbContext) : Middleware<T>(outbox)
+internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ProducerMiddlewareSettings<T> producerMiddlewareSettings, ICurrentDbContext dbContext) : Middleware<T>(outbox)
     where T : class
 {
+    private readonly string topicName = producerMiddlewareSettings.TopicName;
     private readonly DbContext context = dbContext.Context;
 
     public override ValueTask<T?> InvokeAsync(scoped Envelope<T> envelope, CancellationToken cancellationToken = default)
@@ -23,7 +25,7 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentD
         };
     }
 
-    private static OutboxMessage ConvertToOutbox(scoped Envelope<T> envelope)
+    private OutboxMessage ConvertToOutbox(scoped Envelope<T> envelope)
     {
         Type runtimeType = envelope.Message!.GetType();
         Type compiledType = typeof(T);
@@ -36,9 +38,10 @@ internal class OutboxMiddleware<T>(OutboxMiddlewareSettings<T> outbox, ICurrentD
         {
             Type = compiledType.AssemblyQualifiedName!,
             RuntimeType = runtimeTypeAssemblyQualifiedName,
-            Payload = envelope.Payload.ToArray(),
+            Topic = this.topicName,
             Headers = envelope.Headers,
             AggregateId = envelope.Key,
+            Payload = envelope.Payload.ToArray(),
         };
     }
 }

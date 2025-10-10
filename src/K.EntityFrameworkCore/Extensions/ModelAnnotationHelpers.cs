@@ -1,3 +1,4 @@
+using Confluent.Kafka.Admin;
 using K.EntityFrameworkCore.Middlewares.Outbox;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
@@ -482,7 +483,7 @@ internal static class ModelAnnotationHelpers
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
     /// <param name="topicSpecification">The topic specification to set.</param>
-    public static void SetTopicSpecification<T>(this IMutableModel model, Confluent.Kafka.Admin.TopicSpecification topicSpecification)
+    public static void SetTopicSpecification<T>(this IMutableModel model, TopicSpecification topicSpecification)
         where T : class
     {
         var annotationKey = ModelAnnotationKeys.TopicSpecification(typeof(T));
@@ -495,11 +496,12 @@ internal static class ModelAnnotationHelpers
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
     /// <returns>The topic specification, or null if not set.</returns>
-    public static Confluent.Kafka.Admin.TopicSpecification? GetTopicSpecification<T>(this IModel model)
+    public static TopicSpecification? GetTopicSpecification<T>(this IModel model)
         where T : class
     {
         var annotationKey = ModelAnnotationKeys.TopicSpecification(typeof(T));
-        return model.FindAnnotation(annotationKey)?.Value as Confluent.Kafka.Admin.TopicSpecification;
+        var topicSpecification = model.FindAnnotation(annotationKey)?.Value as TopicSpecification;
+        return topicSpecification;
     }
 
     /// <summary>
@@ -507,9 +509,9 @@ internal static class ModelAnnotationHelpers
     /// </summary>
     /// <param name="model">The Entity Framework model.</param>
     /// <returns>Dictionary mapping message types to their topic specifications.</returns>
-    public static Dictionary<Type, Confluent.Kafka.Admin.TopicSpecification> GetAllTopicSpecifications(this IModel model)
+    public static Dictionary<Type, TopicSpecification> GetAllTopicSpecifications(this IModel model)
     {
-        var result = new Dictionary<Type, Confluent.Kafka.Admin.TopicSpecification>();
+        var result = new Dictionary<Type, TopicSpecification>();
         var prefix = ModelAnnotationKeys.TopicSpecification(typeof(object)).Replace("[System.Object]", "");
 
         foreach (var annotation in model.GetAnnotations())
@@ -519,7 +521,7 @@ internal static class ModelAnnotationHelpers
                 continue;
             }
 
-            if (annotation.Value is not Confluent.Kafka.Admin.TopicSpecification specification)
+            if (annotation.Value is not TopicSpecification specification)
             {
                 continue;
             }

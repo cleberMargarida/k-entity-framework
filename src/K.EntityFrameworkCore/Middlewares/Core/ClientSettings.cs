@@ -1,14 +1,14 @@
 ﻿using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
+using System.Diagnostics.CodeAnalysis;
 
 namespace K.EntityFrameworkCore.Middlewares.Core;
 
 internal interface IClientSettings
 {
     ClientConfig ClientConfig { get; }
-    string TopicName { get; set; }
+    string TopicName { get; }
 }
 
 internal class ClientSettings<T>(ClientConfig clientConfig, ICurrentDbContext currentDbContext) : MiddlewareSettings<T>, IClientSettings where T : class
@@ -16,15 +16,17 @@ internal class ClientSettings<T>(ClientConfig clientConfig, ICurrentDbContext cu
     public virtual ClientConfig ClientConfig => clientConfig;
     private readonly ICurrentDbContext currentDbContext = currentDbContext;
 
+    [field: AllowNull]
     public string TopicName
     {
         get
         {
-            return this.currentDbContext.Context.Model.GetTopicName<T>() ?? (typeof(T).IsNested ? typeof(T).FullName!.Replace('+', '.') : typeof(T).FullName!);
-        }
-        set
-        {
-            ((IMutableModel)this.currentDbContext.Context.Model).SetTopicName<T>(value);
+            field ??= this.currentDbContext.Context.Model.GetTopicName<T>()
+                  ?? throw new InvalidOperationException(
+                      $"The type '{typeof(T).Name}' is not configured. " +
+                       "Did you register it using modelBuilder.Topic<OrderEvent>(topic => ...) in OnModelCreating()");
+
+            return field;
         }
     }
 }

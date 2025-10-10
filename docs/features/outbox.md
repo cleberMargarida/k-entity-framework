@@ -194,3 +194,20 @@ Producer usage is identical from the app perspective — call SaveChanges and th
 ### Batch publishing notes
 
 When producing many messages in one DbContext SaveChanges operation, the library will handle batching according to the worker settings and producer configuration. Tune worker batch sizes and polling intervals in `AddOutboxKafkaWorker` options.
+
+## Alternative: Debezium CDC Integration
+
+For high-throughput scenarios requiring minimal latency, you can integrate the outbox table with Debezium and Kafka Connect for Change Data Capture (CDC). This approach:
+
+- Eliminates polling overhead by capturing changes directly from transaction logs
+- Provides near real-time event delivery (milliseconds vs seconds)
+- Offloads event publishing to dedicated infrastructure
+- Maintains strict ordering guarantees
+
+**See the comprehensive guide**: [Debezium Integration](../guides/debezium-integration.md)
+
+This guide includes:
+- Complete Docker Compose setup for Debezium, Kafka Connect, and SQL Server
+- Connector configuration for the outbox pattern
+- CDC enablement steps
+- Comparison between polling worker and Debezium approaches

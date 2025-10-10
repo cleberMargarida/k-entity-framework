@@ -110,6 +110,9 @@ csharp_style_expression_bodied_accessors = true:silent
 csharp_style_expression_bodied_lambdas = true:silent
 csharp_style_expression_bodied_local_functions = false:silent
 
+# IDE0055: Fix formatting
+dotnet_diagnostic.IDE0055.severity = silent
+
 [*.{cs,vb}]
 #### Naming styles ####
 

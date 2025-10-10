@@ -3,6 +3,7 @@ using K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -46,10 +47,23 @@ public static class ModelBuilderExtensions
 /// Provides a fluent API for configuring a topic for a specific message type.
 /// </summary>
 /// <typeparam name="T">The message type for this topic.</typeparam>
-/// <param name="modelBuilder">The model builder instance.</param>
-public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
+public class TopicTypeBuilder<T>
     where T : class
 {
+    private readonly ModelBuilder modelBuilder;
+
+    /// <summary>
+    /// Initialize instance.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder instance.</param>
+    public TopicTypeBuilder(ModelBuilder modelBuilder)
+    {
+        this.modelBuilder = modelBuilder;
+        string topicName = typeof(T).IsNested ? typeof(T).FullName!.Replace('+', '.') : typeof(T).FullName ?? typeof(T).Name;
+        this.modelBuilder.Model.SetTopicName<T>(topicName);
+        this.modelBuilder.Model.SetTopicSpecification<T>(new TopicSpecification { Name = topicName });
+    }
+
     /// <summary>
     /// Configures a consumer for this topic.
     /// </summary>
@@ -57,7 +71,7 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The topic builder instance for method chaining.</returns>
     public TopicTypeBuilder<T> HasConsumer(Action<ConsumerBuilder<T>> consumer)
     {
-        consumer(new ConsumerBuilder<T>(modelBuilder));
+        consumer(new ConsumerBuilder<T>(this.modelBuilder));
         return this;
     }
 
@@ -68,7 +82,7 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The topic builder instance for method chaining.</returns>
     public TopicTypeBuilder<T> HasName(string name)
     {
-        modelBuilder.Model.SetTopicName<T>(name);
+        this.modelBuilder.Model.SetTopicName<T>(name);
 
         return this;
     }
@@ -80,7 +94,7 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
     /// <returns>The topic builder instance for method chaining.</returns>
     public TopicTypeBuilder<T> HasProducer(Action<ProducerBuilder<T>> producer)
     {
-        producer(new ProducerBuilder<T>(modelBuilder));
+        producer(new ProducerBuilder<T>(this.modelBuilder));
         return this;
     }
 
@@ -93,7 +107,7 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
     {
         var topicSpecification = new TopicSpecification();
         settings(topicSpecification);
-        modelBuilder.Model.SetTopicSpecification<T>(topicSpecification);
+        this.modelBuilder.Model.SetTopicSpecification<T>(topicSpecification);
         return this;
     }
 
@@ -110,7 +124,7 @@ public class TopicTypeBuilder<T>(ModelBuilder modelBuilder)
     {
         var serializer = new TSerializer();
         configure?.Invoke(serializer.Options);
-        modelBuilder.Model.SetSerializer<T, TSerializer>(serializer);
+        this.modelBuilder.Model.SetSerializer<T, TSerializer>(serializer);
 
         return this;
     }
@@ -183,7 +197,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
         {
             outbox.HasQueryFilter(outbox => !outbox.IsSuccessfullyProcessed);
 
-            outbox.ToTable("OutboxMessages");
+            outbox.ToTable("outbox_messages");
 
             outbox.HasKey(x => x.Id);
 
@@ -192,6 +206,25 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
                   .IsRequired();
 
             outbox.HasIndex(x => x.SequenceNumber);
+
+            outbox.Property(outbox => outbox.Topic)
+                  .HasMaxLength(255)
+                  .IsRequired();
+
+            var headersProperty = outbox.Property(outbox => outbox.Headers)
+                  .HasConversion(
+                      headers => JsonSerializer.Serialize(headers, default(JsonSerializerOptions)),
+                      json => JsonSerializer.Deserialize<ImmutableDictionary<string, string>>(json, default(JsonSerializerOptions))!);
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            if (assemblies.Any(a => a.GetName().Name?.StartsWith("Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase) == true))
+                headersProperty.HasColumnType("jsonb");
+            else if (assemblies.Any(a => a.GetName().Name?.Contains("SqlServer", StringComparison.OrdinalIgnoreCase) == true))
+                headersProperty.HasColumnType("nvarchar(max)");
+            else if (assemblies.Any(a => a.GetName().Name?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true))
+                headersProperty.HasColumnType("TEXT");
+
         });
 
         configure?.Invoke(new OutboxBuilder<T>(modelBuilder.Model));

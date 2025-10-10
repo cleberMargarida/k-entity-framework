@@ -31,6 +31,12 @@ namespace K.EntityFrameworkCore
         /// </summary>
         public string Type { get; set; } = default!;
 
+        /// <summary>
+        /// The Kafka topic name for routing this message.
+        /// Used by Debezium for proper topic routing. Always populated with either custom topic name or default based on message type.
+        /// </summary>
+        public string Topic { get; set; } = default!;
+
         [JsonIgnore, NotMapped]
         internal Type? TypeLoaded { get; set; }
 
