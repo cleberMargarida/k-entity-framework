@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="docs/images/logo-full.png" alt="K-Entity-Framework Logo">
-</div>
+</div> 
 
 [![Build Status](https://github.com/cleberMargarida/k-entity-framework/actions/workflows/dotnet.yml/badge.svg)](https://github.com/cleberMargarida/k-entity-framework/actions/workflows/dotnet.yml)
 [![codecov](https://codecov.io/gh/cleberMargarida/k-entity-framework/branch/master/graph/badge.svg)](https://codecov.io/gh/cleberMargarida/k-entity-framework)
