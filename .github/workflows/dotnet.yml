@@ -1,7 +1,6 @@
 # dotnet.yml
 #
 # Build & test on master. This workflow replaces the former
-# "master-ci.yml" and runs every push to the master branch.
 #
 # It compiles the solution and executes unit+integration tests
 # (integration tests can be skipped with [skip-integration]).
@@ -9,7 +8,7 @@
 # No fancy conditionals are required because it always runs for
 # every master push; logic is intentionally minimal.
 
-name: .NET CI
+name: .NET Build
 
 on:
   push:
