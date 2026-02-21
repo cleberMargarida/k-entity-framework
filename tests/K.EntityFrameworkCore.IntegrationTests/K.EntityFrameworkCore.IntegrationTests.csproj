@@ -1,20 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <LangVersion>preview</LangVersion>
+    <!-- executable output required for xUnit v3; conditional prevents empty TFM on outer multi-targeting build -->
+    <OutputType Condition="'$(TargetFramework)' != ''">Exe</OutputType>
   </PropertyGroup>
 
+  <!-- Framework-agnostic packages -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-    <PackageReference Include="xunit" Version="2.9.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+    <!-- .NET 10+ includes AsyncEnumerable in the BCL; only needed for earlier TFMs -->
+    <PackageReference Include="System.Linq.Async" Version="6.0.3" Condition="'$(TargetFramework)' != 'net10.0'" />
+    <!-- migrate to xUnit v3 core package -->
+    <PackageReference Include="xunit.v3" Version="3.0.0" />
+    <!-- visual studio runner updated to 3.x for compatibility with v3 projects -->
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -22,25 +27,51 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    
     <!-- TestContainers for Kafka and Database -->
     <PackageReference Include="Testcontainers" Version="4.0.0" />
     <PackageReference Include="Testcontainers.Kafka" Version="4.0.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.0.0" />
     <PackageReference Include="Testcontainers.MsSql" Version="4.0.0" />
-    
-    <!-- Database providers -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
-    
-    <!-- Additional testing dependencies -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.10.1" />
+  </ItemGroup>
+
+  <!-- net8.0 specific packages -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="[8,9)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="[8,9)" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="[8,9)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="[8,9)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[8,9)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="[8,9)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[8,9)" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="[8,9)" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="[8,9)" />
+  </ItemGroup>
+
+  <!-- net9.0 specific packages -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="[9,10)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="[9,10)" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="[9,10)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="[9,10)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[9,10)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="[9,10)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[9,10)" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="[9,10)" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="[9,10)" />
+  </ItemGroup>
+
+  <!-- net10.0 specific packages -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="[10,11)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="[10,11)" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="[10,11)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="[10,11)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10,11)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="[10,11)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10,11)" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="[10,11)" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="[10,11)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -22,10 +22,10 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         context.DefaultMessages.Produce(new DefaultMessage(2000, "DeduplicationTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var firstMessage = await context.DefaultMessages.FirstAsync();
@@ -53,7 +53,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
         {
             context.DefaultMessages.Produce(new DefaultMessage(i, $"BackpressureMessage{i}"));
         }
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert - Some messages may be dropped due to backpressure
         var results = await context.Topic<DefaultMessage>().Take(15).ToListAsync();
@@ -78,7 +78,7 @@ public class ConsumerFeatureTests(KafkaFixture kafka, PostgreSqlFixture postgreS
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(2200, "ExclusiveConnectionTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var result = await context.DefaultMessages.FirstAsync();

@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Builder;
 using Testcontainers.Kafka;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
 
@@ -13,7 +14,8 @@ public class KafkaFixture : IAsyncLifetime
 
     public string BootstrapAddress => Container.GetBootstrapAddress();
 
-    public Task InitializeAsync() => Container.StartAsync();
+    // xUnit v3's IAsyncLifetime now expects ValueTask
+    public ValueTask InitializeAsync() => new ValueTask(Container.StartAsync());
 
-    public Task DisposeAsync() => Container.DisposeAsync().AsTask();
+    public ValueTask DisposeAsync() => Container.DisposeAsync();
 }

@@ -16,7 +16,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
         {
             context.DefaultMessages.Produce(new DefaultMessage(i, $"BatchMessage{i}"));
         }
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var results = await context.Topic<DefaultMessage>().Take(50).ToListAsync();
@@ -35,15 +35,15 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1800, "First"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(100); // Small delay
 
         context.DefaultMessages.Produce(new DefaultMessage(1801, "Second"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         context.DefaultMessages.Produce(new DefaultMessage(1802, "Third"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var results = await context.Topic<DefaultMessage>().Take(3).ToListAsync();
@@ -66,7 +66,7 @@ public class AdvancedScenarioTests(KafkaFixture kafka, PostgreSqlFixture postgre
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1900, largeContent));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var result = await context.DefaultMessages.FirstAsync();

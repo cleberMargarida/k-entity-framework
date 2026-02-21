@@ -16,10 +16,10 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(700, "JsonSerialized"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(700, result.Id);
         Assert.Equal("JsonSerialized", result.Name);
         Assert.True(TopicExist("json-serialization-topic"));
@@ -40,10 +40,10 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1200, "CustomJsonOptions"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1200, result.Id);
         Assert.Equal("CustomJsonOptions", result.Name);
         Assert.True(TopicExist("custom-json-topic"));
@@ -74,11 +74,11 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(2600, "CamelCaseJson"));
         context.AlternativeMessages.Produce(new AlternativeMessage(2601, "SnakeCaseJson"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result1 = await context.DefaultMessages.FirstAsync();
-        var result2 = await context.AlternativeMessages.FirstAsync();
+        var result1 = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
+        var result2 = await context.AlternativeMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2600, result1.Id);
         Assert.Equal(2601, result2.Id);
         Assert.True(TopicExist("json-camel-case-topic"));
@@ -100,10 +100,10 @@ public class SerializationTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
 
         // Act
         context.DefaultMessages.Produce(new ExtendedMessage(4000, "PolymorphicMessage", "Technology", 499.99m));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.IsType<ExtendedMessage>(result);
         var extendedResult = (ExtendedMessage)result;
         Assert.Equal(4000, extendedResult.Id);
