@@ -1,0 +1,85 @@
+# _check-commits.yml
+#
+# Reusable workflow. Checks whether the push that triggered the caller
+# contains commits that should drive a release or a docs deployment.
+#
+# Outputs
+# -------
+#   is-merge-commit      – true when github.sha has more than one parent
+#                          (i.e. a PR merge). Merge commits always trigger
+#                          both release and docs.
+#   has-release-commits  – true when any commit in the push range starts
+#                          with "fix:" or "feat:".
+#   has-docs-commits     – true when any commit in the push range starts
+#                          with "docs:" or "feat:".
+
+name: Check Commits
+
+on:
+  workflow_call:
+    outputs:
+      is-merge-commit:
+        description: Whether the triggering SHA is a merge commit
+        value: ${{ jobs.check.outputs.is-merge-commit }}
+      has-release-commits:
+        description: Whether the push range contains fix/feat commits
+        value: ${{ jobs.check.outputs.has-release-commits }}
+      has-docs-commits:
+        description: Whether the push range contains docs/feat commits
+        value: ${{ jobs.check.outputs.has-docs-commits }}
+
+jobs:
+  check:
+    name: Inspect commit messages
+    runs-on: ubuntu-latest
+    outputs:
+      is-merge-commit:     ${{ steps.inspect.outputs.is-merge-commit }}
+      has-release-commits: ${{ steps.inspect.outputs.has-release-commits }}
+      has-docs-commits:    ${{ steps.inspect.outputs.has-docs-commits }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Inspect commit messages
+        id: inspect
+        run: |
+          # ── Detect merge commits (PR squash/merge) ──────────────────────
+          PARENT_COUNT=$(git rev-list --parents -n 1 ${{ github.sha }} | awk '{print NF-1}')
+
+          if [ "$PARENT_COUNT" -gt 1 ]; then
+            echo "Merge commit detected — all flags set to true."
+            echo "is-merge-commit=true"     >> "$GITHUB_OUTPUT"
+            echo "has-release-commits=true" >> "$GITHUB_OUTPUT"
+            echo "has-docs-commits=true"    >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "is-merge-commit=false" >> "$GITHUB_OUTPUT"
+
+          # ── Determine commit range ───────────────────────────────────────
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            # First push to a branch: inspect the single incoming commit only.
+            RANGE="${{ github.sha }}~1..${{ github.sha }}"
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          fi
+
+          echo "Commit range: $RANGE"
+          git log --oneline "$RANGE"
+
+          # ── Release flag (fix: | feat:) ──────────────────────────────────
+          if git log --pretty=format:"%s" "$RANGE" | grep -qE "^(fix|feat):"; then
+            echo "has-release-commits=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-release-commits=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # ── Docs flag (docs: | feat:) ────────────────────────────────────
+          if git log --pretty=format:"%s" "$RANGE" | grep -qE "^(docs|feat):"; then
+            echo "has-docs-commits=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-docs-commits=false" >> "$GITHUB_OUTPUT"
+          fi

@@ -1,0 +1,34 @@
+name: Setup .NET and Build
+description: >
+  Composite action that checks out the repository (full history),
+  installs .NET 8 and 9, restores NuGet dependencies, and builds
+  the solution. Used by every job that needs a compiled workspace.
+
+inputs:
+  build-configuration:
+    description: MSBuild configuration (Debug | Release)
+    required: false
+    default: Debug
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # Required by Nerdbank.GitVersioning
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+      shell: bash
+
+    - name: Build
+      run: dotnet build --no-restore -c ${{ inputs.build-configuration }}
+      shell: bash

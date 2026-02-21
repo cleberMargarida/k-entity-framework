@@ -1,0 +1,108 @@
+# master-ci.yml
+#
+# Post-merge validation. Runs on every push to master to confirm
+# the branch is green after a merge.
+#
+# Unlike ci.yml (which guards PRs) this workflow has no complex
+# conditional logic — it always runs build + unit + integration
+# tests on master, keeping the gate simple and unconditional.
+#
+# Use [skip-integration] in the commit message to skip integration
+# tests (e.g. for pure documentation or chore commits).
+
+name: Master CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  # ── 1. Build ─────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup .NET and build
+        uses: ./.github/actions/dotnet-setup
+
+  # ── 2. Unit Tests ─────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup .NET and build
+        uses: ./.github/actions/dotnet-setup
+
+      - name: Run unit tests
+        run: >
+          dotnet test tests/K.EntityFrameworkCore.UnitTests/
+          --no-build
+          --collect:"XPlat Code Coverage"
+          --results-directory coverage/unit
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Exclude="[K.EntityFrameworkCore.CodeGen]*"
+
+      - name: Generate unit test coverage report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage/unit/**/*.cobertura.xml
+          badge: true
+          format: markdown
+          output: both
+          tag: unit-tests
+
+      - name: Upload unit coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/unit/**/*.cobertura.xml
+          flags: unit-tests
+          name: unit-tests
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Write unit test coverage to job summary
+        run: |
+          echo "## Unit Test Coverage" >> "$GITHUB_STEP_SUMMARY"
+          cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+
+  # ── 3. Integration Tests ──────────────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip-integration]')"
+    steps:
+      - name: Setup .NET and build
+        uses: ./.github/actions/dotnet-setup
+
+      - name: Run integration tests
+        run: >
+          dotnet test tests/K.EntityFrameworkCore.IntegrationTests/
+          --no-build
+          --collect:"XPlat Code Coverage"
+          --results-directory coverage/integration
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Exclude="[K.EntityFrameworkCore.CodeGen]*"
+
+      - name: Generate integration test coverage report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage/integration/**/*.cobertura.xml
+          badge: true
+          format: markdown
+          output: both
+          tag: integration-tests
+
+      - name: Upload integration coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/integration/**/*.cobertura.xml
+          flags: integration-tests
+          name: integration-tests
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Write integration test coverage to job summary
+        run: |
+          echo "## Integration Test Coverage" >> "$GITHUB_STEP_SUMMARY"
+          cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"

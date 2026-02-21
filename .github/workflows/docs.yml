@@ -1,0 +1,68 @@
+# docs.yml
+#
+# Builds DocFX documentation and deploys it to GitHub Pages.
+#
+# Triggered on every push to master. Uses _check-commits.yml to
+# determine whether the push contains docs- or feat-worthy changes
+# (or is a merge commit); skips the deploy job otherwise, avoiding
+# unnecessary Pages deployments for chore / fix-only pushes.
+
+name: Documentation
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  # ── 0. Commit inspection ──────────────────────────────────────────────────────
+  check-commits:
+    name: Check commits
+    uses: ./.github/workflows/_check-commits.yml
+
+  # ── 1. Build & Deploy ─────────────────────────────────────────────────────────
+  deploy:
+    name: Build and deploy documentation
+    needs: [check-commits]
+    runs-on: ubuntu-latest
+
+    # Deploy only when a docs: or feat: commit is present, or on a merge.
+    if: |
+      needs.check-commits.outputs.is-merge-commit == 'true' ||
+      needs.check-commits.outputs.has-docs-commits == 'true'
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Setup .NET and build (Release)
+        uses: ./.github/actions/dotnet-setup
+        with:
+          build-configuration: Release
+
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
+
+      - name: Build documentation
+        run: |
+          cd docs
+          docfx metadata docfx.json
+          docfx build docfx.json
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./bin/docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

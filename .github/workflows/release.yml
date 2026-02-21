@@ -1,0 +1,149 @@
+# release.yml
+#
+# Triggered on every push to master. Delegates commit inspection to the
+# reusable _check-commits.yml workflow, then conditionally:
+#
+#   publish  – packs and pushes the NuGet package using the version
+#              computed by Nerdbank.GitVersioning
+#   release  – creates a tagged GitHub Release with auto-generated
+#              changelog and attaches the .nupkg / .snupkg artifacts
+#
+# Both jobs are skipped automatically when the push contains neither
+# a fix: / feat: commit nor a merge commit (e.g. chore: or docs: only).
+
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  # ── 0. Commit inspection (delegated to reusable workflow) ─────────────────────
+  check-commits:
+    name: Check commits
+    uses: ./.github/workflows/_check-commits.yml
+
+  # ── 1. Publish NuGet Package ──────────────────────────────────────────────────
+  publish:
+    name: Publish to NuGet
+    needs: [check-commits]
+    runs-on: ubuntu-latest
+
+    # Proceed only when the push contains a release-worthy commit or is a merge.
+    if: |
+      needs.check-commits.outputs.is-merge-commit == 'true' ||
+      needs.check-commits.outputs.has-release-commits == 'true'
+
+    steps:
+      - name: Setup .NET and build (Release)
+        uses: ./.github/actions/dotnet-setup
+        with:
+          build-configuration: Release
+
+      - name: Install Nerdbank.GitVersioning CLI
+        run: dotnet tool install --global nbgv || dotnet tool update --global nbgv
+
+      - name: Resolve version from git history
+        id: version
+        run: |
+          nbgv get-version --format json > nbgv-version.json
+          VERSION=$(jq -r '.NuGetPackageVersion' nbgv-version.json)
+          echo "Resolved NuGet version: $VERSION"
+          echo "nuget-version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Pack NuGet package
+        run: |
+          dotnet pack src/K.EntityFrameworkCore/K.EntityFrameworkCore.csproj \
+            -c Release \
+            -p:Version=${{ steps.version.outputs.nuget-version }} \
+            --no-build \
+            --include-symbols \
+            -p:SymbolPackageFormat=snupkg
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            src/K.EntityFrameworkCore/bin/Release/*.nupkg
+            src/K.EntityFrameworkCore/bin/Release/*.snupkg
+
+      - name: Push to NuGet.org
+        run: |
+          PACKAGE=$(find src/K.EntityFrameworkCore/bin/Release -name '*.nupkg' | head -1)
+          if [ -z "$PACKAGE" ]; then
+            echo "::error::No .nupkg file found after pack step." && exit 1
+          fi
+          echo "Pushing: $PACKAGE"
+          dotnet nuget push "$PACKAGE" \
+            -k "${{ secrets.NUGET_API_KEY }}" \
+            -s https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+  # ── 2. GitHub Release ─────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [check-commits, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    if: |
+      always() &&
+      needs.publish.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Extract version from package filename
+        id: version
+        run: |
+          PACKAGE=$(find ./packages -name '*.nupkg' | head -1)
+          if [ -z "$PACKAGE" ]; then
+            echo "::error::No .nupkg found in artifact." && exit 1
+          fi
+          # Matches K.EntityFrameworkCore.1.2.3.nupkg → 1.2.3
+          VERSION=$(basename "$PACKAGE" | sed 's/.*\.\([0-9]\+\.[0-9]\+\.[0-9]\+[^.]*\)\.nupkg$/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            LOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            LOG=$(git log "$PREVIOUS_TAG..HEAD" --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$LOG"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...v${{ steps.version.outputs.version }}"
+          } > changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          body_path: changelog.md
+          files: |
+            packages/*.nupkg
+            packages/*.snupkg
+          draft: false
+          prerelease: false
+          generate_release_notes: true
