@@ -9,7 +9,7 @@
 # No fancy conditionals are required because it always runs for
 # every master push; logic is intentionally minimal.
 
-name: DotNet CI
+name: .NET CI
 
 on:
   push:
