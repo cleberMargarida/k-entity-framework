@@ -12,11 +12,11 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1, default));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(TopicExist("custom-name"));
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1, result.Id);
     }
 
@@ -30,10 +30,10 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1600, "SpecialCharsTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1600, result.Id);
         Assert.Equal("SpecialCharsTest", result.Name);
         Assert.True(TopicExist("special-chars_topic.test-123"));
@@ -57,10 +57,10 @@ public class TopicConfigurationTests(KafkaFixture kafka, PostgreSqlFixture postg
         {
             context.DefaultMessages.Produce(new DefaultMessage(i, $"ComplexSettings{i}"));
         }
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var results = await context.Topic<DefaultMessage>().Take(6).ToListAsync();
+        var results = await context.Topic<DefaultMessage>().Take(6).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(6, results.Count);
         Assert.True(TopicExist("complex-settings-topic"));
     }

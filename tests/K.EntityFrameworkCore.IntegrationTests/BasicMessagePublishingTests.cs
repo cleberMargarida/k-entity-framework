@@ -11,10 +11,10 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1, default));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1, result.Id);
     }
 
@@ -27,10 +27,10 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
         context.DefaultMessages.Produce(new DefaultMessage(2, default));
 
         // Act
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.Topic<DefaultMessage>().Take(2).ToListAsync();
+        var result = await context.Topic<DefaultMessage>().Take(2).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, result.Count);
         Assert.Equal(1, result[0].Id);
         Assert.Equal(2, result[1].Id);
@@ -43,13 +43,13 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
         await StartHostAsync();
 
         context.DefaultMessages.Produce(new DefaultMessage(1, default));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         context.DefaultMessages.Produce(new DefaultMessage(2, default));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.Topic<DefaultMessage>().Take(2).ToListAsync();
+        var result = await context.Topic<DefaultMessage>().Take(2).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, result.Count);
         Assert.Equal(1, result[0].Id);
         Assert.Equal(2, result[1].Id);
@@ -65,14 +65,14 @@ public class BasicMessageProducingTests(KafkaFixture kafka, PostgreSqlFixture po
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1, "TopicA"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         context.AlternativeMessages.Produce(new AlternativeMessage(2, "TopicB"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var message1 = await context.DefaultMessages.FirstAsync();
-        var message2 = await context.AlternativeMessages.FirstAsync();
+        var message1 = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
+        var message2 = await context.AlternativeMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.True(message1.Id == 1 && message1.Name == "TopicA");
         Assert.True(message2.Id == 2 && message2.Name == "TopicB");
     }

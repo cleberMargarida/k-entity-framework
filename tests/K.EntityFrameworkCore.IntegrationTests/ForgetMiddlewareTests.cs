@@ -17,10 +17,10 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(400, "ForgetSemantic"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(400, result.Id);
         Assert.Equal("ForgetSemantic", result.Name);
         Assert.True(TopicExist("forget-topic"));
@@ -40,10 +40,10 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(2300, "AwaitForgetTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2300, result.Id);
         Assert.Equal("AwaitForgetTest", result.Name);
         Assert.True(TopicExist("await-forget-topic"));
@@ -63,10 +63,10 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(2400, "FireForgetTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2400, result.Id);
         Assert.Equal("FireForgetTest", result.Name);
         Assert.True(TopicExist("fire-forget-topic"));

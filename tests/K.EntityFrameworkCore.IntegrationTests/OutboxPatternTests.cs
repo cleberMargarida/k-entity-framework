@@ -17,10 +17,10 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(42, "OutboxTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(42, result.Id);
         Assert.Equal("OutboxTest", result.Name);
         Assert.True(TopicExist("outbox-test-topic"));
@@ -41,10 +41,10 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(300, "ImmediateFallback"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(300, result.Id);
         Assert.Equal("ImmediateFallback", result.Name);
         Assert.True(TopicExist("immediate-fallback-topic"));
@@ -68,10 +68,10 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         {
             context.DefaultMessages.Produce(new DefaultMessage(i, $"ImmediateFallbackBatch{i}"));
         }
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var results = await context.Topic<DefaultMessage>().Take(4).ToListAsync();
+        var results = await context.Topic<DefaultMessage>().Take(4).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(4, results.Count);
         Assert.Equal(1400, results.First().Id);
         Assert.Equal(1403, results.Last().Id);

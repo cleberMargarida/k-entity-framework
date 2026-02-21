@@ -1,5 +1,7 @@
 using Testcontainers.PostgreSql;
 
+using System.Threading.Tasks;
+
 namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
 
 public class PostgreSqlFixture : IAsyncLifetime
@@ -8,7 +10,8 @@ public class PostgreSqlFixture : IAsyncLifetime
 
     public string Connection => Postgres.GetConnectionString();
 
-    public Task InitializeAsync() => Postgres.StartAsync();
+    // IAsyncLifetime now returns ValueTask
+    public ValueTask InitializeAsync() => new ValueTask(Postgres.StartAsync());
 
-    public Task DisposeAsync() => Postgres.DisposeAsync().AsTask();
+    public ValueTask DisposeAsync() => Postgres.DisposeAsync();
 }

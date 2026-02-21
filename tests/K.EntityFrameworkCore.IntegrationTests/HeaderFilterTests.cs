@@ -27,10 +27,10 @@ public class HeaderFilterTests(KafkaFixture kafka, PostgreSqlFixture postgreSql)
         context.DefaultMessages.Produce(new(3002, "tenant-456"));
         context.DefaultMessages.Produce(new(3003, "tenant-123"));
         context.DefaultMessages.Produce(new(3004, "tenant-789"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert - Only tenant-123 messages should be processed
-        var results = await context.DefaultMessages.Take(2).ToListAsync();
+        var results = await context.DefaultMessages.Take(2).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, results.Count);
         Assert.All(results, message => Assert.Equal("tenant-123", message.Name));
         Assert.Contains(results, msg => msg.Id == 3001);
@@ -65,9 +65,9 @@ public class HeaderFilterTests(KafkaFixture kafka, PostgreSqlFixture postgreSql)
         context.DefaultMessages.Produce(new(1, "US")); // Pass both filters
         context.DefaultMessages.Produce(new(2, "US")); // Pass region filter only
         context.DefaultMessages.Produce(new(1, "BR")); // Pass tenant filter only
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var results = await context.DefaultMessages.Take(3).ToListAsync();
+        var results = await context.DefaultMessages.Take(3).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(3, results.Count);
     }
 }

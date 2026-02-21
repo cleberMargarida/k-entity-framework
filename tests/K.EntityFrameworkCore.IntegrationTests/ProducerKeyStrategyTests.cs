@@ -13,10 +13,10 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(100, "CustomKey"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(100, result.Id);
         Assert.Equal("CustomKey", result.Name);
         Assert.True(TopicExist("custom-key-topic"));
@@ -33,10 +33,10 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(200, "RandomPartition"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(200, result.Id);
         Assert.Equal("RandomPartition", result.Name);
         Assert.True(TopicExist("random-partition-topic"));
@@ -54,10 +54,10 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(800, "SameKeyMessage1"));
         context.DefaultMessages.Produce(new DefaultMessage(801, "SameKeyMessage2"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var results = await context.Topic<DefaultMessage>().Take(2).ToListAsync();
+        var results = await context.Topic<DefaultMessage>().Take(2).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, results.Count);
         Assert.Equal(800, results[0].Id);
         Assert.Equal(801, results[1].Id);
@@ -74,10 +74,10 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
 
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(900, "ComplexKeyTest"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result = await context.DefaultMessages.FirstAsync();
+        var result = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(900, result.Id);
         Assert.Equal("ComplexKeyTest", result.Name);
         Assert.True(TopicExist("complex-key-topic"));
@@ -98,11 +98,11 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         // Act
         context.DefaultMessages.Produce(new DefaultMessage(1000, "WithKey"));
         context.AlternativeMessages.Produce(new AlternativeMessage(2000, "WithoutKey"));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var result1 = await context.DefaultMessages.FirstAsync();
-        var result2 = await context.AlternativeMessages.FirstAsync();
+        var result1 = await context.DefaultMessages.FirstAsync(TestContext.Current.CancellationToken);
+        var result2 = await context.AlternativeMessages.FirstAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1000, result1.Id);
         Assert.Equal(2000, result2.Id);
         Assert.True(TopicExist("topic-with-key"));
@@ -126,10 +126,10 @@ public class ProducerKeyStrategyTests(KafkaFixture kafka, PostgreSqlFixture post
         {
             context.DefaultMessages.Produce(new DefaultMessage(i, $"CompositeKey{i}"));
         }
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        var results = await context.Topic<DefaultMessage>().Take(11).ToListAsync();
+        var results = await context.Topic<DefaultMessage>().Take(11).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(11, results.Count);
         Assert.True(results.All(r => r.Id is >= 2800 and <= 2810));
         Assert.True(TopicExist("composite-key-topic"));
