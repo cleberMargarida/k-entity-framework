@@ -36,6 +36,10 @@ jobs:
       needs.check-commits.outputs.has-release-commits == 'true'
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET and build (Release)
         uses: ./.github/actions/dotnet-setup
         with:

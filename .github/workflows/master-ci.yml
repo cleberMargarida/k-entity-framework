@@ -23,6 +23,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET and build
         uses: ./.github/actions/dotnet-setup
 
@@ -32,6 +36,10 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET and build
         uses: ./.github/actions/dotnet-setup
 
@@ -73,6 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip-integration]')"
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET and build
         uses: ./.github/actions/dotnet-setup
 
