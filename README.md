@@ -28,10 +28,10 @@ No more scattered configuration files or learning yet another messaging framewor
 builder.Services.AddDbContext<MyDbContext>(options => options
 
     // Configure EF Core to use SQL Server
-    .UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Integrated Security=True;Initial Catalog=Hello World")
+    .UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"))
 
     // Enable Kafka extensibility for EF Core (publishing/consuming integration)
-  .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
+    .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
 
 dbContext.Orders.Add(new Order { Id = 1232 });
 

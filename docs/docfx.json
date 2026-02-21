@@ -36,6 +36,7 @@
     "output": "../bin/docs",
     "template": ["default", "modern"],
     "globalMetadata": {
+      "defaultTheme": "dark",
       "_appTitle": "K.EntityFrameworkCore Documentation",
       "_appName": "K.EntityFrameworkCore",
       "_appLogoPath": "images/logo.png",
