@@ -1,16 +1,15 @@
-# master-ci.yml
+# dotnet.yml
 #
-# Post-merge validation. Runs on every push to master to confirm
-# the branch is green after a merge.
+# Build & test on master. This workflow replaces the former
+# "master-ci.yml" and runs every push to the master branch.
 #
-# Unlike ci.yml (which guards PRs) this workflow has no complex
-# conditional logic — it always runs build + unit + integration
-# tests on master, keeping the gate simple and unconditional.
+# It compiles the solution and executes unit+integration tests
+# (integration tests can be skipped with [skip-integration]).
 #
-# Use [skip-integration] in the commit message to skip integration
-# tests (e.g. for pure documentation or chore commits).
+# No fancy conditionals are required because it always runs for
+# every master push; logic is intentionally minimal.
 
-name: Master CI
+name: DotNet CI
 
 on:
   push:

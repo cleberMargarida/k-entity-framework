@@ -1,13 +1,13 @@
 # docs.yml
 #
-# Builds DocFX documentation and deploys it to GitHub Pages.
+# Builds DocFX GitHub Pages Deployment and deploys it to GitHub Pages.
 #
 # Triggered on every push to master. Uses _check-commits.yml to
 # determine whether the push contains docs- or feat-worthy changes
 # (or is a merge commit); skips the deploy job otherwise, avoiding
 # unnecessary Pages deployments for chore / fix-only pushes.
 
-name: Documentation
+name: GitHub Pages Deployment
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
 
   # ── 1. Build & Deploy ─────────────────────────────────────────────────────────
   deploy:
-    name: Build and deploy documentation
+    name: Build and deploy GitHub Pages Deployment
     needs: [check-commits]
     runs-on: ubuntu-latest
 
@@ -53,7 +53,7 @@ jobs:
       - name: Install DocFX
         run: dotnet tool install -g docfx
 
-      - name: Build documentation
+      - name: Build GitHub Pages Deployment
         run: |
           cd docs
           docfx metadata docfx.json
