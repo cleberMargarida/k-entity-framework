@@ -93,6 +93,8 @@ public abstract class IntegrationTest : IDisposable
     public void Dispose()
     {
         DeleteKafkaTopics();
+        host?.StopAsync();
+        (host as IDisposable)?.Dispose();
         context.Dispose();
     }
 }
