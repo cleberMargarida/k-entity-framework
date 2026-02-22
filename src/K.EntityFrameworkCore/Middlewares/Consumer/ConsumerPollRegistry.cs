@@ -92,10 +92,18 @@ internal class ConsumerPollRegistry(ILogger<ConsumerPollRegistry> logger, IServi
 
     private static Type LoadGenericTypeFromConsumeResult(ConsumeResult<string, byte[]> result)
     {
-        if (!result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes))
-            throw new InvalidOperationException("The required '$type' Kafka header was not found on the message.");
+        if (result.Message.Headers == null)
+            throw new InvalidOperationException("The message headers are missing; cannot determine the message type.");
 
-        string typeName = Encoding.UTF8.GetString(typeNameBytes);
+        string? typeName = null;
+
+        if (result.Message.Headers.TryGetLastBytes("$runtimeType", out byte[] runtimeTypeBytes))
+            typeName = Encoding.UTF8.GetString(runtimeTypeBytes);
+        else if (result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes))
+            typeName = Encoding.UTF8.GetString(typeNameBytes);
+
+        if (typeName == null)
+            throw new InvalidOperationException("The required '$runtimeType' or '$type' Kafka header was not found on the message.");
 
         return Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type '{typeName}' could not be loaded from the current running assemblies.");
     }
