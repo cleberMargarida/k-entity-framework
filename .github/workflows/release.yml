@@ -1,6 +1,6 @@
 # release.yml
 #
-# Triggered on every push to master. Delegates commit inspection to the
+# Manually triggered via workflow_dispatch. Delegates commit inspection to the
 # reusable _check-commits.yml workflow, then conditionally:
 #
 #   publish  – packs and pushes the NuGet package using the version
@@ -14,9 +14,7 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
 
 jobs:
   # ── 0. Commit inspection (delegated to reusable workflow) ─────────────────────
