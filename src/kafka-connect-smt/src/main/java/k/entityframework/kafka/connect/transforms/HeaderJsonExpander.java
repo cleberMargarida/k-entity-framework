@@ -109,6 +109,7 @@ public class HeaderJsonExpander<R extends ConnectRecord<R>> implements Transform
 
             for (Map.Entry<String, String> entry : entries.entrySet()) {
                 if (entry.getValue() != null) {
+                    headers.remove(entry.getKey());
                     headers.addString(entry.getKey(), entry.getValue());
                 }
             }
