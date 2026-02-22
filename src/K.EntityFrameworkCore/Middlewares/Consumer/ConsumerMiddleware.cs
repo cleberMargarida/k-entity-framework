@@ -23,8 +23,13 @@ internal class ConsumerMiddleware<T>(Channel<T> channel, ConsumerMiddlewareSetti
             envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
 
             envelope.Headers = result.Message.Headers
-                .ToImmutableDictionary(h => h.Key, h => Encoding.UTF8.GetString(h.GetValueBytes()));
-
+                .ToImmutableDictionary(
+                    h => h.Key,
+                    h =>
+                    {
+                        var bytes = h.GetValueBytes();
+                        return bytes is null ? string.Empty : Encoding.UTF8.GetString(bytes);
+                    });
             envelope.Key = result.Message.Key;
             envelope.Payload = result.Message.Value;
 
