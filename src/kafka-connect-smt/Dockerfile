@@ -7,7 +7,7 @@ COPY src ./src
 RUN mvn package -DskipTests -q
 
 # ── Stage 2: Extend Debezium Connect with the custom SMT ─────────────
-FROM quay.io/debezium/connect:latest
+FROM quay.io/debezium/connect:3.2.5.Final
 COPY --from=build \
      /build/target/header-json-expander-1.0.0.jar \
      /kafka/connect/header-json-expander/header-json-expander-1.0.0.jar
