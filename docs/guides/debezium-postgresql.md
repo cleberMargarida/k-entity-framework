@@ -150,7 +150,8 @@ Create a `postgresql-connector.json` file:
     "transforms.expandHeaders.type": "k.entityframework.kafka.connect.transforms.HeaderJsonExpander",
     
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
     
     "slot.name": "dbz_outbox_slot",
     "tombstones.on.delete": "false"
