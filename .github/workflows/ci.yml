@@ -24,6 +24,11 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    # Skip pull_request events from the same repo – the push event already covers
+    # them. Fork PRs (no push event on the base repo) are always processed.
+    if: >
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,6 +42,9 @@ jobs:
     name: Unit Tests
     needs: [build]
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -90,7 +98,9 @@ jobs:
     runs-on: ubuntu-latest
 
     # Skip when PR title or commit message contains [skip-integration].
+    # Also skip pull_request events from the same repo (push event covers them).
     if: |
+      (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository) &&
       !(github.event_name == 'pull_request' &&
         contains(github.event.pull_request.title, '[skip-integration]')) &&
       !(github.event_name == 'push' &&
