@@ -62,7 +62,11 @@ public class OrderDb(DbContextOptions<OrderDb> options) : DbContext(options)
     {
         modelBuilder.Topic<OrderPlaced>(topic => 
         {
-            topic.HasProducer(producer => producer.HasOutbox());
+            topic.HasProducer(producer =>
+            {
+                producer.HasHeader(x => x.PlacedAt);
+                producer.HasOutbox();
+            });
         });
     }
 

@@ -2,6 +2,8 @@
 
 This guide covers setting up Debezium with PostgreSQL and K-Entity-Framework's outbox pattern.
 
+> **Prerequisite:** Read the [Debezium Overview](debezium-overview.md) to understand the custom `HeaderJsonExpander` SMT that is required for correct header propagation.
+
 ## Prerequisites
 
 - PostgreSQL 10 or later
@@ -45,8 +47,10 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  # Use the custom image that bundles the HeaderJsonExpander SMT.
+  # See the Debezium Overview for build instructions.
   kafka-connect:
-    image: debezium/connect:2.5
+    image: clebermargarida/kafka-connect-smt:latest
     depends_on: [kafka, postgres]
     ports: ["8083:8083"]
     environment:
@@ -136,17 +140,17 @@ Create a `postgresql-connector.json` file:
     "publication.name": "dbz_publication",
     "plugin.name": "pgoutput",
     
-    "transforms": "outbox",
+    "transforms": "outbox,expandHeaders",
     "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
     "transforms.outbox.table.field.event.id": "Id",
     "transforms.outbox.table.field.event.key": "AggregateId",
-    "transforms.outbox.table.field.event.type": "Type",
-    "transforms.outbox.table.field.payload": "Payload",
+    "transforms.outbox.table.field.event.payload": "Payload",
     "transforms.outbox.route.by.field": "Topic",
+    "transforms.outbox.table.fields.additional.placement": "Headers:header:__debezium.outbox.headers",
+    "transforms.expandHeaders.type": "k.entityframework.kafka.connect.transforms.HeaderJsonExpander",
     
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
     
     "slot.name": "dbz_outbox_slot",
     "tombstones.on.delete": "false"
@@ -212,7 +216,8 @@ For most cases, use `pgoutput`:
 }
 ```
 
-⚠️ **Important**: Set `slot.drop.on.stop` to `false` in production to prevent data loss when the connector restarts.
+> [!WARNING]
+> Set `slot.drop.on.stop` to `false` in production to prevent data loss when the connector restarts.
 
 ## Monitoring
 
@@ -251,22 +256,7 @@ docker logs kafka-connect 2>&1 | Select-String "postgres-outbox-connector"
 
 ## Application Configuration
 
-### Configure Topics in Your DbContext
-
-```csharp
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    modelBuilder.Topic<OrderCreated>(topic =>
-    {
-        topic.HasName("orders-topic");
-        topic.HasProducer(producer =>
-        {
-            producer.HasKey(order => order.OrderId);
-            producer.HasOutbox();
-        });
-    });
-}
-```
+For EF Core topic and producer configuration, see [Common Configuration](debezium-overview.md#custom-smt-requirement) in the Debezium Overview.
 
 ### Configure PostgreSQL Provider
 

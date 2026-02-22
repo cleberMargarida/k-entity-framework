@@ -2,6 +2,8 @@
 
 This guide covers setting up Debezium with SQL Server and K-Entity-Framework's outbox pattern.
 
+> **Prerequisite:** Read the [Debezium Overview](debezium-overview.md) to understand the custom `HeaderJsonExpander` SMT that is required for correct header propagation.
+
 ## Prerequisites
 
 - SQL Server 2016 or later (Express, Standard, or Enterprise)
@@ -26,8 +28,10 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  # Use the custom image that bundles the HeaderJsonExpander SMT.
+  # See the Debezium Overview for build instructions.
   kafka-connect:
-    image: debezium/connect:2.5
+    image: clebermargarida/kafka-connect-smt:latest
     depends_on: [kafka]
     ports: ["8083:8083"]
     environment:
@@ -127,17 +131,17 @@ Create a `sqlserver-connector.json` file:
     "database.encrypt": "false",
     "database.trustServerCertificate": "true",
     
-    "transforms": "outbox",
+    "transforms": "outbox,expandHeaders",
     "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
     "transforms.outbox.table.field.event.id": "Id",
     "transforms.outbox.table.field.event.key": "AggregateId",
-    "transforms.outbox.table.field.event.type": "Type",
-    "transforms.outbox.table.field.payload": "Payload",
+    "transforms.outbox.table.field.event.payload": "Payload",
     "transforms.outbox.route.by.field": "Topic",
-    
+    "transforms.outbox.table.fields.additional.placement": "Headers:header:__debezium.outbox.headers",
+    "transforms.expandHeaders.type": "k.entityframework.kafka.connect.transforms.HeaderJsonExpander",
+
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "false"
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
   }
 }
 ```

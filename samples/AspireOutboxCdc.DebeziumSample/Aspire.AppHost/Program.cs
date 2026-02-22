@@ -8,9 +8,12 @@ var postgres = builder.AddPostgres("postgres")
     .WithImageTag("16.4")
     .WithArgs("-c", "wal_level=logical");//required for cdc
 
-var kafka = builder.AddKafka("kafka", 56535);
+var kafka = builder.AddKafka("kafka")
+                   .WithKafkaUI();
 
-var kafkaConnect = builder.AddContainer("kafka-connect", "quay.io/debezium/connect", "latest")
+// Kafka Connect with Debezium + custom HeaderJsonExpander SMT.
+// Build the image first:  docker build -t k-entity-framework/kafka-connect-smt ../../../../src/kafka-connect-smt
+var kafkaConnect = builder.AddContainer("kafka-connect", "k-entity-framework/kafka-connect-smt")
     .WithHttpEndpoint(port: 8083, targetPort: 8083, name: "http")
     .WithEnvironment("BOOTSTRAP_SERVERS", "kafka:9093")
     .WithEnvironment("GROUP_ID", "debezium-cluster")
@@ -42,7 +45,7 @@ builder.AddExecutable("connector-setup", "powershell.exe", ".", "-Command",
         "publication.name": "dbz_publication",
         "plugin.name": "pgoutput",
         "topic.prefix": "pgserver1",
-        "transforms": "outbox",
+        "transforms": "outbox,expandHeaders",
         "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
         "transforms.outbox.table.field.event.id": "Id",
         "transforms.outbox.table.field.event.key": "AggregateId",
@@ -52,6 +55,7 @@ builder.AddExecutable("connector-setup", "powershell.exe", ".", "-Command",
         "transforms.outbox.route.topic.replacement": "$1",
         "transforms.outbox.table.expand.json.payload": "false",
         "transforms.outbox.table.fields.additional.placement": "Headers:header:__debezium.outbox.headers",
+        "transforms.expandHeaders.type": "k.entityframework.kafka.connect.transforms.HeaderJsonExpander",
         "key.converter": "org.apache.kafka.connect.storage.StringConverter",
         "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
         "slot.name": "dbz_outbox_slot",

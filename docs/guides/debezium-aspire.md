@@ -394,6 +394,7 @@ $connector = @{
         "transforms.outbox.table.field.event.type" = "Type"
         "transforms.outbox.table.field.payload" = "Payload"
         "transforms.outbox.route.by.field" = "Topic"
+        "transforms.outbox.table.fields.additional.placement" = "HeaderType:header:`$type,HeaderRuntimeType:header:`$runtimeType,Headers:header:__debezium.outbox.headers"
         
         "key.converter" = "org.apache.kafka.connect.storage.StringConverter"
         "value.converter" = "org.apache.kafka.connect.json.JsonConverter"
