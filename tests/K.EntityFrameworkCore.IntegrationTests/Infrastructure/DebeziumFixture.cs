@@ -54,7 +54,7 @@ public class DebeziumFixture : IAsyncLifetime
         await Task.WhenAll(_postgres.StartAsync(), _kafka.StartAsync());
 
         _kafkaConnect = new ContainerBuilder()
-            .WithImage("k-entity-framework/kafka-connect-smt")
+            .WithImage("clebermargarida/kafka-connect-smt")
             .WithNetwork(_network)
             .WithNetworkAliases("kafka-connect")
             .WithPortBinding(8083, true)
