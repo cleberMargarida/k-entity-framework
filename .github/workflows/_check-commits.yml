@@ -60,11 +60,23 @@ jobs:
           echo "is-merge-commit=false" >> "$GITHUB_OUTPUT"
 
           # ── Determine commit range ───────────────────────────────────────
-          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+          BEFORE="${{ github.event.before }}"
+
+          if [ -z "$BEFORE" ]; then
+            # workflow_dispatch or other events without a 'before' SHA —
+            # compare from the most recent tag to HEAD.
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+            if [ -n "$PREVIOUS_TAG" ]; then
+              RANGE="${PREVIOUS_TAG}..${{ github.sha }}"
+            else
+              # No tags exist yet — inspect all reachable commits.
+              RANGE="${{ github.sha }}"
+            fi
+          elif [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
             # First push to a branch: inspect the single incoming commit only.
             RANGE="${{ github.sha }}~1..${{ github.sha }}"
           else
-            RANGE="${{ github.event.before }}..${{ github.sha }}"
+            RANGE="${BEFORE}..${{ github.sha }}"
           fi
 
           echo "Commit range: $RANGE"
