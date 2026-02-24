@@ -204,7 +204,7 @@ For high-throughput scenarios requiring minimal latency, you can integrate the o
 - Offloads event publishing to dedicated infrastructure
 - Maintains strict ordering guarantees
 
-**See the comprehensive guide**: [Debezium Integration](../guides/debezium-integration.md)
+**See the comprehensive guide**: [Debezium Overview](../guides/debezium-overview.md)
 
 This guide includes:
 - Complete Docker Compose setup for Debezium, Kafka Connect, and SQL Server

@@ -1,6 +1,9 @@
 # Debezium with .NET Aspire Integration
 
-Deploy Debezium and K-Entity-Framework applications using .NET Aspire for streamlined local development and production deployment.
+> [!NOTE]
+> **.NET Aspire is optional.** If you prefer a simpler, dependency-free setup, the `samples/DebeziumSample/` directory contains a standalone `docker-compose.yml` + .NET console app that demonstrates the same CDC outbox flow without the Aspire workload.
+
+Deploy Debezium and K-Entity-Framework applications using .NET Aspire for streamlined local development and production deployment with richer observability and service-discovery features.
 
 ## What is .NET Aspire?
 
@@ -394,6 +397,7 @@ $connector = @{
         "transforms.outbox.table.field.event.type" = "Type"
         "transforms.outbox.table.field.payload" = "Payload"
         "transforms.outbox.route.by.field" = "Topic"
+        "transforms.outbox.table.fields.additional.placement" = "HeaderType:header:`$type,HeaderRuntimeType:header:`$runtimeType,Headers:header:__debezium.outbox.headers"
         
         "key.converter" = "org.apache.kafka.connect.storage.StringConverter"
         "value.converter" = "org.apache.kafka.connect.json.JsonConverter"

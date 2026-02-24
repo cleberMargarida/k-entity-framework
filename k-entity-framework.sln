@@ -27,12 +27,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HelloWorld", "HelloWorld", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld", "samples\HelloWorld\HelloWorld\HelloWorld.csproj", "{0AAD918F-91B8-43DF-9DBA-79E5B6E4ACCA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AspireOutboxCdc.DebeziumSample", "AspireOutboxCdc.DebeziumSample", "{7C670D89-E47A-4140-8948-624CE2C9970A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DebeziumSample", "DebeziumSample", "{7C670D89-E47A-4140-8948-624CE2C9970A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiWeb", "samples\AspireOutboxCdc.DebeziumSample\ApiWeb\ApiWeb.csproj", "{4882E74E-B160-485C-BB52-AEB18F13768F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebeziumSample", "samples\DebeziumSample\DebeziumSample\DebeziumSample.csproj", "{4882E74E-B160-485C-BB52-AEB18F13768F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.AppHost", "samples\AspireOutboxCdc.DebeziumSample\Aspire.AppHost\Aspire.AppHost.csproj", "{AEDF69DD-38F3-4D0A-AF4E-EE7AB90E6C01}"
-EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,10 +62,6 @@ Global
 		{4882E74E-B160-485C-BB52-AEB18F13768F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4882E74E-B160-485C-BB52-AEB18F13768F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4882E74E-B160-485C-BB52-AEB18F13768F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AEDF69DD-38F3-4D0A-AF4E-EE7AB90E6C01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AEDF69DD-38F3-4D0A-AF4E-EE7AB90E6C01}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AEDF69DD-38F3-4D0A-AF4E-EE7AB90E6C01}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AEDF69DD-38F3-4D0A-AF4E-EE7AB90E6C01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,6 +75,5 @@ Global
 		{0AAD918F-91B8-43DF-9DBA-79E5B6E4ACCA} = {3C01AD1B-CCBC-47B1-95E3-6001D1ECCB6A}
 		{7C670D89-E47A-4140-8948-624CE2C9970A} = {795B1636-AA48-432A-AC3A-880CD5DBA288}
 		{4882E74E-B160-485C-BB52-AEB18F13768F} = {7C670D89-E47A-4140-8948-624CE2C9970A}
-		{AEDF69DD-38F3-4D0A-AF4E-EE7AB90E6C01} = {7C670D89-E47A-4140-8948-624CE2C9970A}
 	EndGlobalSection
 EndGlobal

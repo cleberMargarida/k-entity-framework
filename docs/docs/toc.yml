@@ -32,7 +32,13 @@
 - name: Connection Management
   href: ../guides/connection-management.md
 - name: Kafka Configuration
-  href: ../guides/kafka-configuration.md
+  items:
+  - name: Configuration
+    href: ../guides/kafka-configuration.md
+  - name: Security
+    href: ../guides/kafka-security.md
+  - name: Performance & Monitoring
+    href: ../guides/kafka-performance.md
 - name: Debezium Integration
   items:
   - name: Overview

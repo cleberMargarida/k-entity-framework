@@ -84,21 +84,26 @@ internal class ConsumerPollRegistry(ILogger<ConsumerPollRegistry> logger, IServi
     {
         if (typeof(T) == typeof(Null))
         {
-            return (Channel)serviceProvider.GetRequiredService(typeof(Channel<>).MakeGenericType(LoadGenericTypeFromConsumeResult(result)));
+            Type messageType = ResolveMessageType(result);
+            Type channelType = typeof(Channel<>).MakeGenericType(messageType);
+            return (Channel)serviceProvider.GetRequiredService(channelType);
         }
 
         return serviceProvider.GetRequiredService<Channel<T>>();
     }
 
-    private static Type LoadGenericTypeFromConsumeResult(ConsumeResult<string, byte[]> result)
+    private static Type ResolveMessageType(ConsumeResult<string, byte[]> result)
     {
-        result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes);
+        if (result.Message.Headers == null)
+            throw new InvalidOperationException("The message headers are missing; cannot determine the message type.");
 
-        string typeName = Encoding.UTF8.GetString(typeNameBytes);
+        if (!result.Message.Headers.TryGetLastBytes("$type", out byte[] typeNameBytes))
+            throw new InvalidOperationException("The required '$runtimeType' or '$type' Kafka header was not found on the message.");
 
-        Type otherType = Type.GetType(typeName) ?? throw new InvalidOperationException($"The supplied type {typeName} could not be loaded from the current running assemblies.");
+        var typeName = Encoding.UTF8.GetString(typeNameBytes);
 
-        return otherType;
+        return Type.GetType(typeName) 
+            ?? throw new InvalidOperationException($"The supplied type '{typeName}' could not be loaded from the current running assemblies.");
     }
 
     public void Dispose()

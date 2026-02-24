@@ -46,7 +46,7 @@ namespace K.EntityFrameworkCore
         public string? RuntimeType { get => field ?? Type; set; } = default!;
 
         /// <summary>
-        /// The message headers.
+        /// The message headers (user-defined custom headers).
         /// </summary>
         public ImmutableDictionary<string, string> Headers { get; set; } = default!;
 
