@@ -1,15 +1,18 @@
 # Kafka Configuration
 
-This guide provides comprehensive information on configuring Kafka settings in K-Entity-Framework. The framework provides a strongly-typed configuration API that covers all aspects of Kafka client configuration.
+This guide covers configuring Kafka client, producer, and consumer settings in K-Entity-Framework.
+
+- [Security (TLS, SASL, Kerberos, cloud providers)](kafka-security.md)
+- [Performance tuning, monitoring, and health checks](kafka-performance.md)
 
 ## Overview
 
 K-Entity-Framework provides multiple levels of configuration:
 
-1. **Client-level configuration** - Global settings that apply to all producers and consumers
-2. **Producer-specific configuration** - Settings that only apply to message production
-3. **Consumer-specific configuration** - Settings that only apply to message consumption
-4. **Topic-specific configuration** - Settings that apply to specific message types
+1. **Client-level configuration** — Global settings that apply to all producers and consumers
+2. **Producer-specific configuration** — Settings that only apply to message production
+3. **Consumer-specific configuration** — Settings that only apply to message consumption
+4. **Topic-specific configuration** — Settings that apply to specific message types
 
 ## Basic Configuration
 
@@ -34,12 +37,12 @@ builder.Services.AddDbContext<MyDbContext>(options =>
            {
                kafka.BootstrapServers = "localhost:9092";
                kafka.ClientId = "my-dev-app";
-               
+
                // Development-friendly settings
                kafka.Consumer.GroupId = "dev-consumer-group";
                kafka.Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
                kafka.Producer.Acks = Acks.Leader; // Faster for development
-               
+
                // Enable detailed logging
                kafka.LogLevel = 7; // Debug level
                kafka.Debug = "broker,topic,msg";
@@ -69,105 +72,60 @@ kafka.ReconnectBackoffMs = 50;
 kafka.ReconnectBackoffMaxMs = 10000;
 ```
 
-### Security Configuration
-
-#### SSL/TLS Configuration
-
-```csharp
-kafka.SecurityProtocol = SecurityProtocol.Ssl;
-kafka.SslCaLocation = "/path/to/ca-cert.pem";
-kafka.SslCertificateLocation = "/path/to/client-cert.pem";
-kafka.SslKeyLocation = "/path/to/client-key.pem";
-kafka.SslKeyPassword = "key-password";
-kafka.EnableSslCertificateVerification = true;
-kafka.SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https;
-```
-
-#### SASL Authentication
-
-```csharp
-// SASL/PLAIN
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.Plain;
-kafka.SaslUsername = "my-username";
-kafka.SaslPassword = "my-password";
-
-// SASL/SCRAM
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.ScramSha256;
-kafka.SaslUsername = "my-username";
-kafka.SaslPassword = "my-password";
-
-// SASL/OAUTHBEARER
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.OAuthBearer;
-kafka.SaslOauthbearerConfig = "principalClaimName=sub";
-```
-
-#### Kerberos Authentication
-
-```csharp
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.Gssapi;
-kafka.SaslKerberosServiceName = "kafka";
-kafka.SaslKerberosPrincipal = "client@REALM.COM";
-kafka.SaslKerberosKeytab = "/path/to/client.keytab";
-```
+For security and authentication settings (TLS, SASL, Kerberos, cloud providers), see [Kafka Security](kafka-security.md).
 
 ## Producer Configuration
 
 ### Basic Producer Settings
 
 ```csharp
-kafka.Producer.Acks = Acks.All; // Wait for all replicas
+kafka.Producer.Acks = Acks.All;          // Wait for all replicas
 kafka.Producer.EnableIdempotence = true; // Exactly-once semantics
-kafka.Producer.MaxInFlight = 5; // Allow up to 5 unacknowledged requests
-kafka.Producer.Retries = int.MaxValue; // Retry indefinitely
-kafka.Producer.RetryBackoffMs = 100; // Wait 100ms between retries
+kafka.Producer.MaxInFlight = 5;
+kafka.Producer.Retries = int.MaxValue;
+kafka.Producer.RetryBackoffMs = 100;
 ```
 
 ### Performance Optimization
 
 ```csharp
-// Batching settings
-kafka.Producer.BatchSize = 16384; // 16KB batch size
-kafka.Producer.LingerMs = 5.0; // Wait up to 5ms to fill batch
-kafka.Producer.QueueBufferingMaxMessages = 100000; // Buffer up to 100k messages
-kafka.Producer.QueueBufferingMaxKbytes = 1048576; // 1GB memory buffer
+// Batching
+kafka.Producer.BatchSize = 16384;                          // 16 KB batch size
+kafka.Producer.LingerMs = 5.0;                             // Wait up to 5 ms to fill batch
+kafka.Producer.QueueBufferingMaxMessages = 100000;
+kafka.Producer.QueueBufferingMaxKbytes = 1048576;          // 1 GB memory buffer
 
 // Compression
-kafka.Producer.CompressionType = CompressionType.Snappy; // Fast compression
-// kafka.Producer.CompressionType = CompressionType.Lz4; // Alternative
-// kafka.Producer.CompressionType = CompressionType.Gzip; // Better compression ratio
+kafka.Producer.CompressionType = CompressionType.Snappy;   // Fast compression
 
-// Timeout settings
-kafka.Producer.MessageTimeoutMs = 300000; // 5 minutes total timeout
-kafka.Producer.RequestTimeoutMs = 30000; // 30 seconds per request
+// Timeouts
+kafka.Producer.MessageTimeoutMs = 300000;                  // 5 minutes total
+kafka.Producer.RequestTimeoutMs = 30000;
+```
+
+### Delivery Guarantees
+
+```csharp
+// Exactly-once delivery (recommended for production)
+kafka.Producer.Acks = Acks.All;
+kafka.Producer.EnableIdempotence = true;
+kafka.Producer.MaxInFlight = 5;
+
+// At-least-once delivery
+kafka.Producer.Acks = Acks.Leader;
+kafka.Producer.EnableIdempotence = false;
+
+// Fire-and-forget (best performance, possible data loss)
+kafka.Producer.Acks = Acks.None;
+kafka.Producer.EnableDeliveryReports = false;
 ```
 
 ### Transactional Configuration
 
 ```csharp
 kafka.Producer.TransactionalId = "my-transactional-producer";
-kafka.Producer.TransactionTimeoutMs = 60000; // 1 minute transaction timeout
+kafka.Producer.TransactionTimeoutMs = 60000;
 kafka.Producer.EnableIdempotence = true; // Required for transactions
-```
-
-### Delivery Guarantees
-
-```csharp
-// At-least-once delivery (default)
-kafka.Producer.Acks = Acks.Leader;
-kafka.Producer.EnableIdempotence = false;
-
-// Exactly-once delivery
-kafka.Producer.Acks = Acks.All;
-kafka.Producer.EnableIdempotence = true;
-kafka.Producer.MaxInFlight = 5;
-
-// Fire-and-forget (best performance, possible data loss)
-kafka.Producer.Acks = Acks.None;
-kafka.Producer.EnableDeliveryReports = false;
 ```
 
 ## Consumer Configuration
@@ -184,150 +142,80 @@ kafka.Consumer.IsolationLevel = IsolationLevel.ReadCommitted;
 ### Session and Heartbeat Settings
 
 ```csharp
-kafka.Consumer.SessionTimeoutMs = 10000; // 10 seconds
-kafka.Consumer.HeartbeatIntervalMs = 3000; // 3 seconds (1/3 of session timeout)
+kafka.Consumer.SessionTimeoutMs = 10000;   // 10 seconds
+kafka.Consumer.HeartbeatIntervalMs = 3000; // Should be ~1/3 of session timeout
 kafka.Consumer.MaxPollIntervalMs = 300000; // 5 minutes max processing time
 ```
 
 ### Fetch Settings
 
 ```csharp
-kafka.Consumer.FetchMinBytes = 1; // Minimum bytes to fetch
-kafka.Consumer.FetchMaxBytes = 52428800; // 50MB max fetch size
-kafka.Consumer.MaxPartitionFetchBytes = 1048576; // 1MB per partition
-kafka.Consumer.FetchMaxWaitMs = 500; // Wait up to 500ms for min bytes
+kafka.Consumer.FetchMinBytes = 1;
+kafka.Consumer.FetchMaxBytes = 52428800;          // 50 MB max fetch size
+kafka.Consumer.MaxPartitionFetchBytes = 1048576;  // 1 MB per partition
+kafka.Consumer.FetchMaxWaitMs = 500;
 ```
 
 ### Partition Assignment
 
 ```csharp
-// Cooperative sticky assignment (recommended)
+// Cooperative sticky (recommended — minimizes rebalancing)
 kafka.Consumer.PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky;
 
-// Range assignment
-kafka.Consumer.PartitionAssignmentStrategy = PartitionAssignmentStrategy.Range;
-
-// Round-robin assignment
+// Round-robin
 kafka.Consumer.PartitionAssignmentStrategy = PartitionAssignmentStrategy.RoundRobin;
-
-// Sticky assignment
-kafka.Consumer.PartitionAssignmentStrategy = PartitionAssignmentStrategy.Sticky;
 ```
 
-### Auto-Commit Configuration
+### Auto-Commit
 
 ```csharp
-// Enable auto-commit (simpler but less control)
+// Auto-commit (simpler, less control)
 kafka.Consumer.EnableAutoCommit = true;
-kafka.Consumer.AutoCommitIntervalMs = 5000; // Commit every 5 seconds
+kafka.Consumer.AutoCommitIntervalMs = 5000;
 
-// Disable auto-commit (manual control)
+// Manual commit (recommended)
 kafka.Consumer.EnableAutoCommit = false;
-// Handle commits manually in your application code
 ```
 
 ## Environment-Specific Configuration
 
-### Development Environment
+### Development
 
 ```csharp
 kafka.BootstrapServers = "localhost:9092";
 kafka.ClientId = "dev-client";
-
-// Fast feedback for development
 kafka.Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
-kafka.Producer.Acks = Acks.Leader; // Faster, less durability
-kafka.Producer.LingerMs = 0; // No batching delay
-
-// Detailed logging
+kafka.Producer.Acks = Acks.Leader;
+kafka.Producer.LingerMs = 0;
 kafka.LogLevel = 7;
 kafka.Debug = "broker,topic,msg";
 ```
 
-### Staging Environment
+### Staging
 
 ```csharp
 kafka.BootstrapServers = "staging-kafka:9092";
 kafka.ClientId = "staging-client";
-
-// Production-like settings
 kafka.Consumer.AutoOffsetReset = AutoOffsetReset.Latest;
 kafka.Producer.Acks = Acks.All;
 kafka.Producer.EnableIdempotence = true;
-
-// Moderate logging
 kafka.LogLevel = 5; // Notice level
 ```
 
-### Production Environment
+### Production
 
 ```csharp
 kafka.BootstrapServers = "prod-kafka1:9092,prod-kafka2:9092,prod-kafka3:9092";
 kafka.ClientId = "prod-client-v1.0";
-
-// Maximum durability and reliability
 kafka.Producer.Acks = Acks.All;
 kafka.Producer.EnableIdempotence = true;
 kafka.Producer.Retries = int.MaxValue;
-
-// Conservative consumer settings
 kafka.Consumer.AutoOffsetReset = AutoOffsetReset.Latest;
-kafka.Consumer.EnableAutoCommit = false; // Manual commit control
-kafka.Consumer.SessionTimeoutMs = 30000; // Longer timeout for stability
-
-// Security
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.ScramSha256;
-kafka.SaslUsername = Environment.GetEnvironmentVariable("KAFKA_USERNAME");
-kafka.SaslPassword = Environment.GetEnvironmentVariable("KAFKA_PASSWORD");
-
-// Minimal logging
+kafka.Consumer.EnableAutoCommit = false;
+kafka.Consumer.SessionTimeoutMs = 30000;
 kafka.LogLevel = 3; // Error level only
-```
 
-## Cloud Provider Configurations
-
-### Confluent Cloud
-
-```csharp
-kafka.BootstrapServers = "pkc-xxxxx.region.provider.confluent.cloud:9092";
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.Plain;
-kafka.SaslUsername = "your-api-key";
-kafka.SaslPassword = "your-api-secret";
-
-// Optimize for cloud
-kafka.Producer.CompressionType = CompressionType.Snappy;
-kafka.Producer.BatchSize = 32768; // Larger batches for network efficiency
-kafka.Producer.LingerMs = 10; // Allow time for batching
-```
-
-### Amazon MSK
-
-```csharp
-kafka.BootstrapServers = "b-1.msk-cluster.xxxxx.region.amazonaws.com:9092";
-
-// MSK with IAM authentication
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.OAuthBearer;
-kafka.SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc;
-kafka.SaslOauthbearerClientId = "your-client-id";
-kafka.SaslOauthbearerClientSecret = "your-client-secret";
-kafka.SaslOauthbearerTokenEndpointUrl = "https://sts.region.amazonaws.com/";
-```
-
-### Azure Event Hubs
-
-```csharp
-kafka.BootstrapServers = "your-namespace.servicebus.windows.net:9093";
-kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-kafka.SaslMechanism = SaslMechanism.Plain;
-kafka.SaslUsername = "$ConnectionString";
-kafka.SaslPassword = "Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=your-key";
-
-// Event Hubs specific optimizations
-kafka.Producer.MessageMaxBytes = 1000000; // 1MB max message size
-kafka.Consumer.FetchMaxBytes = 1048576; // 1MB fetch size
+// Always configure security in production — see kafka-security.md
 ```
 
 ## Configuration from appsettings.json
@@ -339,10 +227,6 @@ kafka.Consumer.FetchMaxBytes = 1048576; // 1MB fetch size
   "Kafka": {
     "BootstrapServers": "localhost:9092",
     "ClientId": "my-application",
-    "SecurityProtocol": "SaslSsl",
-    "SaslMechanism": "Plain",
-    "SaslUsername": "username",
-    "SaslPassword": "password",
     "Producer": {
       "Acks": "All",
       "EnableIdempotence": true,
@@ -367,10 +251,6 @@ public class KafkaSettings
 {
     public string BootstrapServers { get; set; }
     public string ClientId { get; set; }
-    public SecurityProtocol SecurityProtocol { get; set; }
-    public SaslMechanism SaslMechanism { get; set; }
-    public string SaslUsername { get; set; }
-    public string SaslPassword { get; set; }
     public ProducerSettings Producer { get; set; } = new();
     public ConsumerSettings Consumer { get; set; } = new();
 }
@@ -392,7 +272,7 @@ public class ConsumerSettings
     public int SessionTimeoutMs { get; set; }
 }
 
-// In Startup.cs or Program.cs
+// Usage
 var kafkaSettings = builder.Configuration.GetSection("Kafka").Get<KafkaSettings>();
 
 builder.Services.AddDbContext<MyDbContext>(options =>
@@ -401,19 +281,11 @@ builder.Services.AddDbContext<MyDbContext>(options =>
            {
                kafka.BootstrapServers = kafkaSettings.BootstrapServers;
                kafka.ClientId = kafkaSettings.ClientId;
-               kafka.SecurityProtocol = kafkaSettings.SecurityProtocol;
-               kafka.SaslMechanism = kafkaSettings.SaslMechanism;
-               kafka.SaslUsername = kafkaSettings.SaslUsername;
-               kafka.SaslPassword = kafkaSettings.SaslPassword;
-               
-               // Producer settings
                kafka.Producer.Acks = kafkaSettings.Producer.Acks;
                kafka.Producer.EnableIdempotence = kafkaSettings.Producer.EnableIdempotence;
                kafka.Producer.BatchSize = kafkaSettings.Producer.BatchSize;
                kafka.Producer.LingerMs = kafkaSettings.Producer.LingerMs;
                kafka.Producer.CompressionType = kafkaSettings.Producer.CompressionType;
-               
-               // Consumer settings
                kafka.Consumer.GroupId = kafkaSettings.Consumer.GroupId;
                kafka.Consumer.AutoOffsetReset = kafkaSettings.Consumer.AutoOffsetReset;
                kafka.Consumer.EnableAutoCommit = kafkaSettings.Consumer.EnableAutoCommit;
@@ -430,38 +302,30 @@ public class CustomKafkaConfigurationProvider
 {
     public void ConfigureKafka(KafkaClientSettings kafka)
     {
-        // Load from environment variables
         kafka.BootstrapServers = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
         kafka.ClientId = Environment.GetEnvironmentVariable("KAFKA_CLIENT_ID");
-        
-        // Load from Azure Key Vault, AWS Secrets Manager, etc.
         kafka.SaslUsername = GetSecretValue("kafka-username");
         kafka.SaslPassword = GetSecretValue("kafka-password");
-        
-        // Environment-specific settings
+
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
-        {
             ConfigureProductionSettings(kafka);
-        }
         else
-        {
             ConfigureDevelopmentSettings(kafka);
-        }
     }
-    
+
     private void ConfigureProductionSettings(KafkaClientSettings kafka)
     {
         kafka.Producer.Acks = Acks.All;
         kafka.Producer.EnableIdempotence = true;
         kafka.Consumer.EnableAutoCommit = false;
-        kafka.LogLevel = 3; // Error level
+        kafka.LogLevel = 3;
     }
-    
+
     private void ConfigureDevelopmentSettings(KafkaClientSettings kafka)
     {
         kafka.Producer.Acks = Acks.Leader;
         kafka.Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
-        kafka.LogLevel = 7; // Debug level
+        kafka.LogLevel = 7;
         kafka.Debug = "broker,topic,msg";
     }
 }
@@ -476,162 +340,17 @@ builder.Services.AddDbContext<MyDbContext>(options =>
            }));
 ```
 
-### Accessing Underlying Configuration
+### Accessing the Underlying ClientConfig
 
 ```csharp
 kafka.ClientConfig.Set("custom.property", "custom.value");
-
-// Access the underlying Confluent.Kafka ClientConfig
 var underlyingConfig = kafka.ClientConfig;
-underlyingConfig.BootstrapServers = "localhost:9092";
 underlyingConfig.SslCaLocation = "/path/to/ca.pem";
 ```
 
-## Monitoring and Debugging
+## Related
 
-### Enable Statistics
-
-```csharp
-kafka.StatisticsIntervalMs = 5000; // Emit statistics every 5 seconds
-kafka.EnableDeliveryReports = true; // Enable producer delivery reports
-```
-
-### Debug Logging
-
-```csharp
-kafka.LogLevel = 7; // Debug level (0-7, where 7 is most verbose)
-kafka.Debug = "broker,topic,msg"; // Debug categories
-
-// Available debug categories:
-// - broker: Broker communication
-// - topic: Topic metadata
-// - msg: Message handling  
-// - protocol: Protocol details
-// - cgrp: Consumer group
-// - security: Security/authentication
-// - fetch: Message fetching
-// - interceptor: Interceptors
-// - plugin: Plugins
-// - assignor: Partition assignment
-// - conf: Configuration
-```
-
-### Health Checks
-
-```csharp
-public class KafkaHealthCheck : IHealthCheck
-{
-    private readonly KafkaClientSettings _settings;
-    
-    public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context, 
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            using var adminClient = new AdminClientBuilder(_settings.ClientConfig).Build();
-            var metadata = adminClient.GetMetadata(TimeSpan.FromSeconds(10));
-            
-            return HealthCheckResult.Healthy($"Kafka cluster healthy. Brokers: {metadata.Brokers.Count}");
-        }
-        catch (Exception ex)
-        {
-            return HealthCheckResult.Unhealthy($"Kafka cluster unhealthy: {ex.Message}");
-        }
-    }
-}
-
-// Register health check
-builder.Services.AddHealthChecks()
-       .AddCheck<KafkaHealthCheck>("kafka");
-```
-
-## Performance Tuning
-
-### High Throughput Configuration
-
-```csharp
-// Producer optimizations
-kafka.Producer.BatchSize = 65536; // 64KB batches
-kafka.Producer.LingerMs = 20; // Wait up to 20ms for batching
-kafka.Producer.CompressionType = CompressionType.Lz4; // Fast compression
-kafka.Producer.QueueBufferingMaxMessages = 1000000; // Large buffer
-kafka.Producer.QueueBufferingMaxKbytes = 2097152; // 2GB buffer
-
-// Consumer optimizations
-kafka.Consumer.FetchMinBytes = 50000; // Fetch at least 50KB
-kafka.Consumer.FetchMaxWaitMs = 50; // Don't wait too long
-kafka.Consumer.MaxPartitionFetchBytes = 10485760; // 10MB per partition
-```
-
-### Low Latency Configuration
-
-```csharp
-// Producer optimizations
-kafka.Producer.LingerMs = 0; // Send immediately
-kafka.Producer.BatchSize = 0; // No batching
-kafka.Producer.QueueBufferingMaxMs = 0; // No queuing delay
-
-// Consumer optimizations
-kafka.Consumer.FetchMinBytes = 1; // Fetch any available data
-kafka.Consumer.FetchMaxWaitMs = 1; // Minimal wait time
-```
-
-## Best Practices
-
-### 1. Start with Defaults
-
-Begin with sensible defaults and tune based on your specific requirements:
-
-```csharp
-// Good starting point
-kafka.Producer.Acks = Acks.All;
-kafka.Producer.EnableIdempotence = true;
-kafka.Consumer.EnableAutoCommit = false;
-kafka.Consumer.IsolationLevel = IsolationLevel.ReadCommitted;
-```
-
-### 2. Environment-Specific Configuration
-
-Use different configurations for different environments:
-
-```csharp
-var environment = builder.Environment.EnvironmentName;
-kafka.ClientId = $"my-app-{environment}";
-kafka.Consumer.GroupId = $"my-group-{environment}";
-
-if (environment == "Production")
-{
-    kafka.LogLevel = 3; // Error level
-    kafka.Producer.Acks = Acks.All;
-}
-else
-{
-    kafka.LogLevel = 6; // Info level
-    kafka.Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
-}
-```
-
-### 3. Security First
-
-Always use security in production:
-
-```csharp
-if (builder.Environment.IsProduction())
-{
-    kafka.SecurityProtocol = SecurityProtocol.SaslSsl;
-    kafka.SaslMechanism = SaslMechanism.ScramSha256;
-    kafka.SaslUsername = GetSecretValue("kafka-username");
-    kafka.SaslPassword = GetSecretValue("kafka-password");
-}
-```
-
-### 4. Monitor Performance
-
-Enable monitoring to understand your system's behavior:
-
-```csharp
-kafka.StatisticsIntervalMs = 60000; // Statistics every minute
-kafka.EnableDeliveryReports = true; // Track delivery success
-```
+- [Kafka Security](kafka-security.md) — TLS, SASL, Kerberos, Confluent Cloud, MSK, Azure Event Hubs
+- [Kafka Performance & Monitoring](kafka-performance.md) — high-throughput, low-latency, health checks, debug logging
+- [Connection Management](connection-management.md) — producer/consumer singleton patterns
 

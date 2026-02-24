@@ -2,6 +2,8 @@
 
 This guide covers setting up Debezium with SQL Server and K-Entity-Framework's outbox pattern.
 
+> **Prerequisite:** Read the [Debezium Overview](debezium-overview.md) to understand the custom `HeaderJsonExpander` SMT that is required for correct header propagation.
+
 ## Prerequisites
 
 - SQL Server 2016 or later (Express, Standard, or Enterprise)
@@ -13,21 +15,26 @@ This guide covers setting up Debezium with SQL Server and K-Entity-Framework's o
 Create a `docker-compose.yml` file:
 
 ```yaml
-version: '3.8'
 services:
   kafka:
-    image: confluentinc/confluent-local:7.7.1
+    image: apache/kafka:latest
     ports: 
       - "9092:9092"
-      - "9093:9093"
     environment:
-      KAFKA_LISTENERS: PLAINTEXT://localhost:29092,CONTROLLER://localhost:29093,PLAINTEXT_HOST://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092,PLAINTEXT_HOST://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  # Use the custom image that bundles the HeaderJsonExpander SMT.
+  # See the Debezium Overview for build instructions.
   kafka-connect:
-    image: debezium/connect:2.5
+    image: clebermargarida/kafka-connect-smt:latest
     depends_on: [kafka]
     ports: ["8083:8083"]
     environment:
@@ -127,17 +134,17 @@ Create a `sqlserver-connector.json` file:
     "database.encrypt": "false",
     "database.trustServerCertificate": "true",
     
-    "transforms": "outbox",
+    "transforms": "outbox,expandHeaders",
     "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
     "transforms.outbox.table.field.event.id": "Id",
     "transforms.outbox.table.field.event.key": "AggregateId",
-    "transforms.outbox.table.field.event.type": "Type",
-    "transforms.outbox.table.field.payload": "Payload",
+    "transforms.outbox.table.field.event.payload": "Payload",
     "transforms.outbox.route.by.field": "Topic",
-    
+    "transforms.outbox.table.fields.additional.placement": "Headers:header:__debezium.outbox.headers",
+    "transforms.expandHeaders.type": "k.entityframework.kafka.connect.transforms.HeaderJsonExpander",
+
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "false"
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
   }
 }
 ```
@@ -299,5 +306,6 @@ For high-throughput scenarios, adjust connector settings:
 ## Next Steps
 
 - [Complete Example](debezium-example.md) - Full working implementation
-- [Aspire Integration](debezium-aspire.md) - Deploy with .NET Aspire
+- [Runnable Sample](https://github.com/cleberMargarida/k-entity-framework/blob/master/samples/DebeziumSample/README.md) - Standalone `docker-compose` + .NET console app
+- [Aspire Integration](debezium-aspire.md) - Optional: deploy with .NET Aspire for richer local orchestration
 - [Overview](debezium-overview.md) - Back to Debezium overview

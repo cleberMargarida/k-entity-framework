@@ -606,7 +606,7 @@ docker-compose down
 - Add error handling and retries in consumer
 - Implement dead-letter queue for failed messages
 - Add monitoring with Application Insights or Prometheus
-- Deploy to production with [Aspire](debezium-aspire.md)
+- Deploy to production; the sample includes a `docker-compose.yml` for local services, or integrate with your own orchestration
 - Explore [PostgreSQL setup](debezium-postgresql.md) as an alternative
 
 ## Troubleshooting

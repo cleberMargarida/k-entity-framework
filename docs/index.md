@@ -500,7 +500,7 @@ await foreach (var orderEvent in dbContext.OrderEvents)
         </div>
         
         <div class="button-grid">
-            <a href="getting-started/" class="cta-button btn-primary">
+            <a href="getting-started/index.md" class="cta-button btn-primary">
                 <span>📖</span>
                 <strong>Quick Start Guide</strong>
             </a>
