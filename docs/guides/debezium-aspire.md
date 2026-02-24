@@ -1,6 +1,9 @@
 # Debezium with .NET Aspire Integration
 
-Deploy Debezium and K-Entity-Framework applications using .NET Aspire for streamlined local development and production deployment.
+> [!NOTE]
+> **.NET Aspire is optional.** If you prefer a simpler, dependency-free setup, the `samples/DebeziumSample/` directory contains a standalone `docker-compose.yml` + .NET console app that demonstrates the same CDC outbox flow without the Aspire workload.
+
+Deploy Debezium and K-Entity-Framework applications using .NET Aspire for streamlined local development and production deployment with richer observability and service-discovery features.
 
 ## What is .NET Aspire?
 

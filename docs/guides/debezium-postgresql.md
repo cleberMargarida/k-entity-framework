@@ -12,39 +12,38 @@ This guide covers setting up Debezium with PostgreSQL and K-Entity-Framework's o
 
 ## Step 1: Docker Infrastructure
 
+> [!TIP]
+> The `samples/DebeziumSample/` directory contains a **ready-to-run** version of this setup — a `docker-compose.yml` paired with a .NET console app. Run `docker compose up -d` inside that folder and `dotnet run` in the console project to see the full CDC flow in action without any extra tooling.
+
 Create a `docker-compose.yml` file:
 
 ```yaml
-version: '3.8'
 services:
   postgres:
-    image: postgres:15
+    image: postgres:16.4
     ports: 
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: mydb
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"  # Required for CDC
-      - "-c"
-      - "max_replication_slots=4"
-      - "-c"
-      - "max_wal_senders=4"
+    command: ["postgres", "-c", "wal_level=logical"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   kafka:
-    image: confluentinc/confluent-local:7.7.1
+    image: apache/kafka:latest
     ports: 
       - "9092:9092"
-      - "9093:9093"
     environment:
-      KAFKA_LISTENERS: PLAINTEXT://localhost:29092,CONTROLLER://localhost:29093,PLAINTEXT_HOST://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092,PLAINTEXT_HOST://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   # Use the custom image that bundles the HeaderJsonExpander SMT.
@@ -415,5 +414,6 @@ host    replication    debezium    172.17.0.0/16    md5
 ## Next Steps
 
 - [Complete Example](debezium-example.md) - Full working implementation
-- [Aspire Integration](debezium-aspire.md) - Deploy with .NET Aspire
+- [Runnable Sample](https://github.com/cleberMargarida/k-entity-framework/blob/master/samples/DebeziumSample/README.md) - Standalone `docker-compose` + .NET console app
+- [Aspire Integration](debezium-aspire.md) - Optional: deploy with .NET Aspire for richer local orchestration
 - [Overview](debezium-overview.md) - Back to Debezium overview

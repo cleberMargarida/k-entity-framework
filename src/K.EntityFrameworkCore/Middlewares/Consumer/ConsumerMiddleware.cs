@@ -18,18 +18,15 @@ internal class ConsumerMiddleware<T>(Channel<T> channel, ConsumerMiddlewareSetti
         {
             var result = await channel.ReadAsync(cancellationToken);
 
-            scoped Envelope<T> envelope = default;
+            scoped Envelope<T> envelope = new();
 
             envelope.WeakReference.SetTarget(result.TopicPartitionOffset);
 
             envelope.Headers = result.Message.Headers
                 .ToImmutableDictionary(
                     h => h.Key,
-                    h =>
-                    {
-                        var bytes = h.GetValueBytes();
-                        return bytes is null ? string.Empty : Encoding.UTF8.GetString(bytes);
-                    });
+                    h => Encoding.UTF8.GetString(h?.GetValueBytes() ?? [])
+                );
             envelope.Key = result.Message.Key;
             envelope.Payload = result.Message.Value;
 

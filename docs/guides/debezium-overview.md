@@ -187,7 +187,7 @@ New versions are published via the **Publish SMT Docker Image** GitHub Actions w
 If you are upgrading from a version that did not use the `HeaderJsonExpander` SMT:
 
 1. **Build or pull the custom image** — follow [Building the Custom Image Manually](#building-the-custom-image-manually) or `docker pull clebermargarida/kafka-connect-smt`.
-2. **Update `docker-compose.yml` / Aspire AppHost** — replace `quay.io/debezium/connect` with the custom image.
+2. **Update `docker-compose.yml`** — replace `quay.io/debezium/connect` with the custom image.
 3. **Reconfigure the Debezium connector** — add `expandHeaders` to `transforms` and set `transforms.expandHeaders.type` as shown in [Transform Chain](#transform-chain).
 4. **Restart the connector** — delete and recreate it, or `PUT /connectors/{name}/config`.
 
@@ -200,7 +200,8 @@ If you are upgrading from a version that did not use the `HeaderJsonExpander` SM
 - [SQL Server Setup](debezium-sqlserver.md) - Configure CDC for SQL Server
 - [PostgreSQL Setup](debezium-postgresql.md) - Configure CDC for PostgreSQL
 - [Complete Example](debezium-example.md) - Full working implementation with SQL Server
-- [Aspire Integration](debezium-aspire.md) - Deploy with .NET Aspire and PostgreSQL
+- [Runnable Sample](https://github.com/cleberMargarida/k-entity-framework/blob/master/samples/DebeziumSample/README.md) - Standalone `docker-compose` + .NET console app, zero extra tooling required
+- [Aspire Integration](debezium-aspire.md) - Optional: deploy with .NET Aspire for richer local orchestration
 
 ## Resources
 
