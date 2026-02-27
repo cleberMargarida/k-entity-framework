@@ -54,8 +54,9 @@ public abstract class DebeziumIntegrationTest : IDisposable
 
     public void Dispose()
     {
-        host?.StopAsync();
+        host?.StopAsync().GetAwaiter().GetResult();
         (host as IDisposable)?.Dispose();
         context?.Dispose();
+        DebeziumTestContext.Annotations.Clear();
     }
 }

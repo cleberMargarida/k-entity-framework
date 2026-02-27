@@ -67,28 +67,28 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
 
     internal ulong Hash(T message)
     {
-        byte[] dataToHash;
-
-        var accessor = DeduplicationValueAccessor;
-        if (accessor != null)
-        {
-            var value = accessor(message);
-            var jsonValue = value.ToString()!;
-            dataToHash = Encoding.UTF8.GetBytes(jsonValue);
-        }
-        else
-        {
-            throw new InvalidOperationException(
+        var accessor = DeduplicationValueAccessor
+            ?? throw new InvalidOperationException(
                 $"No deduplication value accessor has been configured for type '{typeof(T).Name}'. " +
                 $"Use HasDeduplicateProperties() to specify which properties should be used for duplicate detection.");
-        }
 
-        byte[] saltedData = new byte[dataToHash.Length + TypeSalt.Length];
-        Array.Copy(TypeSalt, 0, saltedData, 0, TypeSalt.Length);
-        Array.Copy(dataToHash, 0, saltedData, TypeSalt.Length, dataToHash.Length);
+        var value = accessor(message);
+        var jsonValue = value.ToString()!;
 
-        var hashBytes = XxHash64.Hash(saltedData);
+        // Calculate required byte counts without allocating
+        int valueByteCount = Encoding.UTF8.GetByteCount(jsonValue);
+        int totalLength = TypeSalt.Length + valueByteCount;
 
-        return BitConverter.ToUInt64(hashBytes, 0);
+        // Use stackalloc for small buffers, rent from pool for large ones
+        const int StackAllocThreshold = 512;
+        Span<byte> saltedData = totalLength <= StackAllocThreshold
+            ? stackalloc byte[totalLength]
+            : new byte[totalLength]; // fallback for abnormally large keys
+
+        // Copy salt prefix, then encode value directly into the span
+        TypeSalt.CopyTo(saltedData);
+        Encoding.UTF8.GetBytes(jsonValue.AsSpan(), saltedData.Slice(TypeSalt.Length));
+
+        return XxHash64.HashToUInt64(saltedData);
     }
 }

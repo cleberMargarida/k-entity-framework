@@ -142,23 +142,42 @@ namespace K.EntityFrameworkCore.CodeGen
             sb.AppendLine($"using K.EntityFrameworkCore;");
             sb.AppendLine($"using K.EntityFrameworkCore.Extensions;");
             sb.AppendLine($"using K.EntityFrameworkCore.Middlewares.Outbox;");
+            sb.AppendLine($"using System.Threading;");
+            sb.AppendLine($"using System.Threading.Tasks;");
             sb.AppendLine();
             sb.AppendLine($"namespace {namespaceName}");
             sb.AppendLine($"{{");
             sb.AppendLine($"    public class {dbContext.Name}MiddlewareSpecifier : IMiddlewareSpecifier<{dbContext.Name}>");
             sb.AppendLine($"    {{");
-            sb.AppendLine($"        public ScopedCommand DeferedExecution(OutboxMessage outboxMessage) => outboxMessage.Type switch");
+
+            // CanHandle method
+            sb.AppendLine($"        public bool CanHandle(OutboxMessage outboxMessage) => outboxMessage.Type switch");
+            sb.AppendLine($"        {{");
+
+            foreach (var type in distinctMessageTypes)
+            {
+                var fullTypeName = type.GetAssemblyQualifiedName();
+                sb.AppendLine($"            \"{fullTypeName}\" => true,");
+            }
+
+            sb.AppendLine($"            _ => false");
+            sb.AppendLine($"        }};");
+            sb.AppendLine();
+
+            // ExecuteAsync method
+            sb.AppendLine($"        public ValueTask ExecuteAsync(OutboxMessage outboxMessage, System.IServiceProvider sp, CancellationToken ct) => outboxMessage.Type switch");
             sb.AppendLine($"        {{");
 
             foreach (var type in distinctMessageTypes)
             {
                 var fullTypeName = type.GetAssemblyQualifiedName();
                 var simpleTypeName = type.Name;
-                sb.AppendLine($"            \"{fullTypeName}\" => OutboxPollingWorker<{dbContext.Name}>.DeferedExecution<{simpleTypeName}>(outboxMessage),");
+                sb.AppendLine($"            \"{fullTypeName}\" => OutboxPollRegistry.InvokeMiddleware<{simpleTypeName}>(outboxMessage, sp, ct),");
             }
 
-            sb.AppendLine($"            _ => null");
+            sb.AppendLine($"            _ => ValueTask.CompletedTask");
             sb.AppendLine($"        }};");
+
             sb.AppendLine($"    }}");
             sb.AppendLine($"}}");
 

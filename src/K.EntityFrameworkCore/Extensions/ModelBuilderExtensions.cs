@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka.Admin;
 using K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Immutable;
@@ -27,6 +28,27 @@ public static class ModelBuilderExtensions
     public static ModelBuilder Topic<T>(this ModelBuilder modelBuilder, Action<TopicTypeBuilder<T>> topic) where T : class
     {
         topic(new TopicTypeBuilder<T>(modelBuilder));
+        return modelBuilder;
+    }
+
+    /// <summary>
+    /// Configures worker-global outbox settings such as polling interval, batch size,
+    /// and coordination strategy. These settings apply to the single background outbox
+    /// worker and are shared across all message types.
+    /// </summary>
+    /// <param name="modelBuilder">The model builder instance.</param>
+    /// <param name="configure">Action to configure global outbox worker settings via <see cref="OutboxGlobalBuilder"/>.</param>
+    /// <returns>The model builder instance.</returns>
+    /// <example>
+    /// <code>
+    /// modelBuilder.HasOutboxWorker(worker => worker
+    ///     .WithPollingInterval(TimeSpan.FromSeconds(5))
+    ///     .WithMaxMessagesPerPoll(50));
+    /// </code>
+    /// </example>
+    public static ModelBuilder HasOutboxWorker(this ModelBuilder modelBuilder, Action<OutboxGlobalBuilder> configure)
+    {
+        configure(new OutboxGlobalBuilder(modelBuilder.Model));
         return modelBuilder;
     }
 
@@ -242,9 +264,9 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     {
         modelBuilder.Model.SetProducerForgetEnabled<T>();
 
-        // TODO: Forget builder configuration needs to be handled differently
-        // For now, middleware settings will be configured at runtime
-        _ = configure; // Suppress unused parameter warning - will be implemented later
+        var settings = new ProducerForgetMiddlewareSettings<T>();
+        configure?.Invoke(new ProducerForgetBuilder<T>(settings));
+        modelBuilder.Model.SetProducerForgetStrategy<T>(settings.Strategy);
 
         return this;
     }

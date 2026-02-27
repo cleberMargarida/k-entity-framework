@@ -68,6 +68,11 @@ internal static class ModelAnnotationKeys
     public static string ProducerForgetEnabled(Type messageType) => $"{BasePrefix}ProducerForgetEnabled[{messageType.FullName}]";
 
     /// <summary>
+    /// Annotation key for storing the producer forget strategy for a message type.
+    /// </summary>
+    public static string ProducerForgetStrategy(Type messageType) => $"{BasePrefix}ProducerForgetStrategy[{messageType.FullName}]";
+
+    /// <summary>
     /// Annotation key for storing InboxMiddlewareSettings by message type.
     /// </summary>
     public static string InboxMiddlewareSettings(Type messageType) => $"{BasePrefix}InboxMiddlewareSettings[{messageType.FullName}]";
@@ -127,4 +132,19 @@ internal static class ModelAnnotationKeys
     /// Annotation key for storing topic specifications for a message type.
     /// </summary>
     public static string TopicSpecification(Type messageType) => $"{BasePrefix}TopicSpecification[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing the outbox polling interval (global, not per-type).
+    /// </summary>
+    public const string OutboxPollingInterval = BasePrefix + "OutboxPollingInterval";
+
+    /// <summary>
+    /// Annotation key for storing the maximum messages per outbox poll (global, not per-type).
+    /// </summary>
+    public const string OutboxMaxMessagesPerPoll = BasePrefix + "OutboxMaxMessagesPerPoll";
+
+    /// <summary>
+    /// Annotation key for storing the outbox coordination strategy (global, not per-type).
+    /// </summary>
+    public const string OutboxCoordinationStrategy = BasePrefix + "OutboxCoordinationStrategy";
 }

@@ -1,48 +1,87 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using K.EntityFrameworkCore.Middlewares.Outbox;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
 
-namespace K.EntityFrameworkCore.Extensions
+namespace K.EntityFrameworkCore.Extensions;
+
+internal class KafkaMiddlewareInterceptor : SaveChangesInterceptor
 {
-    internal class KafkaMiddlewareInterceptor : SaveChangesInterceptor
+    /// <remarks>
+    /// This synchronous override uses Confluent Kafka's synchronous <c>Produce</c> method
+    /// with a delivery-error handler. It requires all producer types to be configured with
+    /// <c>ForgetStrategy.FireForget</c> via <c>.HasForget(f => f.UseFireForget())</c>.
+    /// If a producer is not configured for fire-and-forget, an <see cref="InvalidOperationException"/>
+    /// is thrown. Prefer <see cref="SavingChangesAsync"/> for full delivery guarantees.
+    /// </remarks>
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+        var dbContext = eventData.Context;
+        if (dbContext == null)
         {
-            var dbContext = eventData.Context;
-            if (dbContext == null)
-            {
-                return base.SavingChanges(eventData, result);
-            }
-
-            IServiceProvider serviceProvider = dbContext.GetInfrastructure();
-
-            // first database operation result
-            result = base.SavingChanges(eventData, result);
-
-            // second kafka operation
-            serviceProvider.GetRequiredService<ScopedCommandRegistry>().ExecuteAsync(serviceProvider).AsTask().GetAwaiter().GetResult();
-
-            return result;
+            return base.SavingChanges(eventData, result);
         }
 
-        public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        IServiceProvider serviceProvider = dbContext.GetInfrastructure();
+
+        var scopedCommandRegistry = serviceProvider.GetRequiredService<ScopedCommandRegistry>();
+
+        scopedCommandRegistry.Execute(serviceProvider);
+
+        result = base.SavingChanges(eventData, result);
+
+        TryStartOutboxWorker(dbContext, serviceProvider);
+
+        return result;
+    }
+
+    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    {
+        var dbContext = eventData.Context;
+        if (dbContext == null)
         {
-            var dbContext = eventData.Context;
-            if (dbContext == null)
-            {
-                return await base.SavingChangesAsync(eventData, result, cancellationToken);
-            }
+            return await base.SavingChangesAsync(eventData, result, cancellationToken);
+        }
 
-            IServiceProvider serviceProvider = dbContext.GetInfrastructure();
+        IServiceProvider serviceProvider = dbContext.GetInfrastructure();
 
-            // first database operation result
-            result = await base.SavingChangesAsync(eventData, result, cancellationToken);
+        var scopedCommandRegistry = serviceProvider.GetRequiredService<ScopedCommandRegistry>();
 
-            // second kafka operation
-            await serviceProvider.GetRequiredService<ScopedCommandRegistry>().ExecuteAsync(serviceProvider, cancellationToken);
+        await scopedCommandRegistry.ExecuteAsync(serviceProvider, cancellationToken);
 
-            return result;
+        result = await base.SavingChangesAsync(eventData, result, cancellationToken);
+
+        TryStartOutboxWorker(dbContext, serviceProvider);
+
+        return result;
+    }
+
+    private static void TryStartOutboxWorker(DbContext dbContext, IServiceProvider serviceProvider)
+    {
+        var outboxRegistry = serviceProvider.GetService<OutboxPollRegistry>();
+        if (outboxRegistry == null || outboxRegistry.Started)
+            return;
+
+        var model = dbContext.Model;
+        bool hasOutbox = model.FindEntityType(typeof(OutboxMessage)) != null;
+
+        if (!hasOutbox)
+            return;
+
+        var options = dbContext.GetService<IDbContextOptions>();
+        var coreOptions = options.FindExtension<CoreOptionsExtension>();
+        var appServiceProvider = coreOptions?.ApplicationServiceProvider;
+
+        if (appServiceProvider == null)
+            return;
+
+        try
+        {
+            outboxRegistry.EnsureStarted(appServiceProvider, model, dbContext.GetType());
+        }
+        catch (Exception)
+        {
         }
     }
 }

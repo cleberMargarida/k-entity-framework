@@ -21,7 +21,6 @@ public sealed class DebeziumTestContext(DbContextOptions<DebeziumTestContext> op
 
     public override void Dispose()
     {
-        Annotations.Clear();
         base.Dispose();
     }
 }
