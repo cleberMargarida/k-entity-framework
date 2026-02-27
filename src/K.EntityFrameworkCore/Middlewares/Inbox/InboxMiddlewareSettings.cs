@@ -73,7 +73,7 @@ public class InboxMiddlewareSettings<T>(IModel model) : MiddlewareSettings<T>(mo
                 $"Use HasDeduplicateProperties() to specify which properties should be used for duplicate detection.");
 
         var value = accessor(message);
-        var jsonValue = value.ToString()!;
+        var jsonValue = value?.ToString() ?? "null";
 
         // Calculate required byte counts without allocating
         int valueByteCount = Encoding.UTF8.GetByteCount(jsonValue);

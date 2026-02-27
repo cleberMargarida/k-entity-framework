@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace K.EntityFrameworkCore.Extensions;
 
@@ -60,7 +61,7 @@ internal class KafkaMiddlewareInterceptor : SaveChangesInterceptor
     private static void TryStartOutboxWorker(DbContext dbContext, IServiceProvider serviceProvider)
     {
         var outboxRegistry = serviceProvider.GetService<OutboxPollRegistry>();
-        if (outboxRegistry == null || outboxRegistry.Started)
+        if (outboxRegistry == null || outboxRegistry.IsStarted(dbContext.GetType()))
             return;
 
         var model = dbContext.Model;
@@ -80,8 +81,13 @@ internal class KafkaMiddlewareInterceptor : SaveChangesInterceptor
         {
             outboxRegistry.EnsureStarted(appServiceProvider, model, dbContext.GetType());
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            var logger = appServiceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger<KafkaMiddlewareInterceptor>();
+            logger.LogError(ex, "Failed to start outbox polling for DbContext {DbContextType}.",
+                dbContext.GetType().Name);
+            throw;
         }
     }
 }

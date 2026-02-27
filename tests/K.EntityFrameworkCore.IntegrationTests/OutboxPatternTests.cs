@@ -156,6 +156,10 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
 
         Assert.True(TopicExist("outbox-bg-isolation-topic"));
         Assert.True(TopicExist("forget-isolation-topic"));
+
+        var forgetResults = await context.Topic<AlternativeMessage>().Take(3).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(3, forgetResults.Count);
+        Assert.All(forgetResults, r => Assert.InRange(r.Id, 3300, 3302));
     }
 
     [Fact(Timeout = 60_000)]
@@ -296,7 +300,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     }
 
     [Fact(Timeout = 60_000)]
-    public async Task Given_OutboxWithDifferentPollingIntervals_When_ProducingToBoth_Then_MessagesAreDeliveredWithoutCrossTalk()
+    public async Task Given_OutboxWorkerWithCustomPollingInterval_When_ProducingToBothTopics_Then_MessagesAreDeliveredWithoutCrossTalk()
     {
         // Arrange - polling interval is a worker-global setting;
         // calling HasOutboxWorker on either topic builder affects the whole worker.
@@ -343,7 +347,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     }
 
     [Fact(Timeout = 60_000)]
-    public async Task Given_OutboxWithDifferentMaxMessagesPerPoll_When_ProducingBatches_Then_AllMessagesEventuallyDeliveredInIsolation()
+    public async Task Given_OutboxWorkerWithCustomMaxMessagesPerPoll_When_ProducingBatches_Then_AllMessagesEventuallyDelivered()
     {
         // Arrange - max messages per poll is a worker-global setting;
         // calling HasOutboxWorker on either topic builder affects the whole worker.

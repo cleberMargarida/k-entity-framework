@@ -12,8 +12,9 @@ public enum OutboxCoordinationStrategy
     SingleNode,
 
     /// <summary>
-    /// Exclusive-node coordination. Clustered deployment where only one node processes outbox rows at a time.
+    /// (NOT YET IMPLEMENTED) Exclusive-node coordination. Clustered deployment where only one node processes outbox rows at a time.
     /// Currently behaves identically to <see cref="SingleNode"/> (placeholder for future implementation).
     /// </summary>
+    [Obsolete("ExclusiveNode is not implemented — behaves like SingleNode. Do not rely on exclusivity in clustered deployments.", error: false)]
     ExclusiveNode
 }

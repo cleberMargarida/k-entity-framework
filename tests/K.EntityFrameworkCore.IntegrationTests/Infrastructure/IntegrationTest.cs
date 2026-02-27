@@ -96,9 +96,9 @@ public abstract class IntegrationTest : IDisposable
 
     public void Dispose()
     {
-        host.Dispose();
+        host?.Dispose();
         DeleteKafkaTopics();
-        context.Dispose();
-        PostgreTestContext.Annotations.Clear();
+        context?.Dispose();
+        PostgreTestContext.Annotations?.Clear();
     }
 }

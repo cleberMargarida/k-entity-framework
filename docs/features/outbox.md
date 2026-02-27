@@ -78,7 +78,7 @@ The outbox background poller starts automatically on the first `SaveChanges` —
 modelBuilder.HasOutboxWorker(worker => worker
     .WithPollingInterval(TimeSpan.FromSeconds(5))
     .WithMaxMessagesPerPoll(50)
-    .UseSingleNode()); // or .UseExclusiveNode() for clustered deployments
+    .UseSingleNode()); // .UseExclusiveNode() is not yet implemented — avoid in production
 
 modelBuilder.Topic<OrderCreated>(topic =>
 {

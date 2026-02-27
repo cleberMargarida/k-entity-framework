@@ -1,9 +1,13 @@
 global using IConsumer = Confluent.Kafka.IConsumer<string, byte[]>;
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
+using K.EntityFrameworkCore.Middlewares.Outbox;
+using K.EntityFrameworkCore.Middlewares.Producer;
+using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace K.EntityFrameworkCore.UnitTests;
@@ -81,43 +85,55 @@ internal static class TrackingExecutor
         };
 }
 
+/// <summary>
+/// Test double for <see cref="ProducerMiddlewareInvoker{T}"/> that captures invoked messages.
+/// Created via <see cref="RuntimeHelpers.GetUninitializedObject"/> to bypass complex constructor dependencies.
+/// </summary>
+internal class CapturingProducerInvoker : ProducerMiddlewareInvoker<TestMessage>
+{
+    public List<TestMessage?> CapturedMessages = null!;
+
+    // Constructor satisfies the compiler but is never called at runtime;
+    // instances are created with RuntimeHelpers.GetUninitializedObject.
+    public CapturingProducerInvoker(
+        SerializerMiddleware<TestMessage> a,
+        OutboxMiddleware<TestMessage> b,
+        ProducerMiddleware<TestMessage> c) : base(a, b, c) { }
+
+    public override ValueTask<TestMessage?> InvokeAsync(
+        Envelope<TestMessage> envelope, CancellationToken cancellationToken = default)
+    {
+        CapturedMessages.Add(envelope.Message);
+        return ValueTask.FromResult((TestMessage?)envelope.Message);
+    }
+}
+
 public class ScopedCommandRegistryTests
 {
     [Fact]
     public async Task AddProduce_then_ExecuteAsync_resolves_and_invokes_ProducerMiddlewareInvoker()
     {
-        // Arrange — use a tracking executor to verify the cached delegate path works
-        var registry = new ScopedCommandRegistry();
-        var log = new List<string>();
-        var message = new TestMessage { Value = "hello" };
-
-        // Register a tracking executor via the low-level buffer for produce verification
-        // We test the public AddProduce<T> → ProducerExecutorCache<T>.Instance → DI resolve path
-        // by injecting an executor that captures the message:
-        var capturedMessages = new List<object?>();
-        CommandExecutor trackingExecutor = (arg0, arg1, sp, ct) =>
-        {
-            capturedMessages.Add(arg0);
-            return ValueTask.CompletedTask;
-        };
-
-        // Use reflection to verify ProducerExecutorCache<T>.Instance is the same delegate each time
-        // This confirms zero-allocation caching behavior
-        var registry2 = new ScopedCommandRegistry();
-
-        // Test via AddCommit (simpler DI-free path) to verify the buffer mechanics
-        var fakeConsumer = new FakeConsumer();
-        var offset = new TopicPartitionOffset("test-topic", new Partition(0), new Offset(41), leaderEpoch: 1);
+        // Arrange — create a capturing invoker via RuntimeHelpers.GetUninitializedObject
+        // to bypass the complex constructor of ProducerMiddlewareInvoker<TestMessage>
+        var invoker = (CapturingProducerInvoker)
+            RuntimeHelpers.GetUninitializedObject(typeof(CapturingProducerInvoker));
+        invoker.CapturedMessages = [];
 
         var services = new ServiceCollection();
+        services.AddSingleton<ProducerMiddlewareInvoker<TestMessage>>(invoker);
         using var sp = services.BuildServiceProvider();
 
-        registry.AddCommit(fakeConsumer, offset);
+        var registry = new ScopedCommandRegistry();
+        var message = new TestMessage { Value = "hello" };
+
+        // Act — AddProduce queues the message; ExecuteAsync resolves the invoker from DI
+        registry.AddProduce(message);
         await registry.ExecuteAsync(sp);
 
-        // Assert commit was invoked correctly (proves the buffer→execute pipeline)
-        Assert.Single(fakeConsumer.StoredOffsets);
-        Assert.Equal(42, fakeConsumer.StoredOffsets[0].Offset.Value);
+        // Assert — the produce executor resolved ProducerMiddlewareInvoker<TestMessage>
+        // from DI and called InvokeAsync with the correct message inside an Envelope<T>
+        var captured = Assert.Single(invoker.CapturedMessages);
+        Assert.Same(message, captured);
     }
 
     [Fact]

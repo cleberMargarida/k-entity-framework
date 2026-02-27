@@ -99,12 +99,11 @@ public class InboxHashTests
         var settings = CreateSettings<TestMessage>(m => m.Value!);
         var hash = settings.Hash(new TestMessage { Value = "hello-world" });
 
-        // The hash must be non-zero and stable.
+        // Pinned golden value — if this changes, the hashing algorithm changed
+        // and existing inbox dedup rows in databases will no longer match.
+        const ulong expectedHash = 0x_69C6_57E6_A502_381FUL;
+        Assert.Equal(expectedHash, hash);
         Assert.NotEqual(0UL, hash);
-
-        // Re-hash to confirm the golden value is deterministic.
-        var hash2 = settings.Hash(new TestMessage { Value = "hello-world" });
-        Assert.Equal(hash, hash2);
     }
 
     // ------------------------------------------------------------------

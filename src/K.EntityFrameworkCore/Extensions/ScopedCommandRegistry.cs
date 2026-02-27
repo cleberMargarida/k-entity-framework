@@ -145,24 +145,29 @@ internal class ScopedCommandRegistry
 
     public async ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default)
     {
-        int inlineCount = Math.Min(this.count, 4);
-        for (int i = 0; i < inlineCount; i++)
+        try
         {
-            var entry = this.buffer[i];
-            await entry.Executor(entry.Arg0, entry.Arg1, serviceProvider, cancellationToken);
-        }
-
-        if (this.overflow is { Count: > 0 } overflow)
-        {
-            for (int i = 0; i < overflow.Count; i++)
+            int inlineCount = Math.Min(this.count, 4);
+            for (int i = 0; i < inlineCount; i++)
             {
-                var entry = overflow[i];
+                var entry = this.buffer[i];
                 await entry.Executor(entry.Arg0, entry.Arg1, serviceProvider, cancellationToken);
             }
-        }
 
-        this.count = 0;
-        this.overflow?.Clear();
+            if (this.overflow is { Count: > 0 } overflow)
+            {
+                for (int i = 0; i < overflow.Count; i++)
+                {
+                    var entry = overflow[i];
+                    await entry.Executor(entry.Arg0, entry.Arg1, serviceProvider, cancellationToken);
+                }
+            }
+        }
+        finally
+        {
+            this.count = 0;
+            this.overflow?.Clear();
+        }
     }
 
     /// <summary>
@@ -173,29 +178,34 @@ internal class ScopedCommandRegistry
     /// <param name="serviceProvider">The scoped service provider.</param>
     public void Execute(IServiceProvider serviceProvider)
     {
-        int inlineCount = Math.Min(this.count, 4);
-        for (int i = 0; i < inlineCount; i++)
+        try
         {
-            var entry = this.buffer[i];
-            if (entry.SyncExecutor is null)
-                throw new InvalidOperationException(
-                    "No synchronous executor registered for this command type. Use SaveChangesAsync() instead.");
-            entry.SyncExecutor(entry.Arg0, entry.Arg1, serviceProvider);
-        }
-
-        if (this.overflow is { Count: > 0 } overflow)
-        {
-            for (int i = 0; i < overflow.Count; i++)
+            int inlineCount = Math.Min(this.count, 4);
+            for (int i = 0; i < inlineCount; i++)
             {
-                var entry = overflow[i];
+                var entry = this.buffer[i];
                 if (entry.SyncExecutor is null)
                     throw new InvalidOperationException(
                         "No synchronous executor registered for this command type. Use SaveChangesAsync() instead.");
                 entry.SyncExecutor(entry.Arg0, entry.Arg1, serviceProvider);
             }
-        }
 
-        this.count = 0;
-        this.overflow?.Clear();
+            if (this.overflow is { Count: > 0 } overflow)
+            {
+                for (int i = 0; i < overflow.Count; i++)
+                {
+                    var entry = overflow[i];
+                    if (entry.SyncExecutor is null)
+                        throw new InvalidOperationException(
+                            "No synchronous executor registered for this command type. Use SaveChangesAsync() instead.");
+                    entry.SyncExecutor(entry.Arg0, entry.Arg1, serviceProvider);
+                }
+            }
+        }
+        finally
+        {
+            this.count = 0;
+            this.overflow?.Clear();
+        }
     }
 }

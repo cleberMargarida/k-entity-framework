@@ -53,16 +53,19 @@ public class OutboxGlobalBuilder(IMutableModel model)
     }
 
     /// <summary>
-    /// Configures exclusive-node coordination for clustered deployments.
+    /// (NOT YET IMPLEMENTED) Configures exclusive-node coordination for clustered deployments.
     /// Only one node processes outbox rows at a time.
     /// </summary>
     /// <remarks>
     /// Currently behaves identically to <see cref="UseSingleNode"/> (placeholder for future implementation).
     /// </remarks>
     /// <returns>The builder instance for chaining.</returns>
+    [Obsolete("ExclusiveNode is not implemented — behaves like SingleNode.", error: false)]
     public OutboxGlobalBuilder UseExclusiveNode()
     {
+#pragma warning disable CS0618 // Intentional: method body references the obsolete enum member
         model.SetOutboxCoordinationStrategy(OutboxCoordinationStrategy.ExclusiveNode);
+#pragma warning restore CS0618
         return this;
     }
 }

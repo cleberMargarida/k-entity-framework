@@ -171,8 +171,8 @@ namespace K.EntityFrameworkCore.CodeGen
             foreach (var type in distinctMessageTypes)
             {
                 var fullTypeName = type.GetAssemblyQualifiedName();
-                var simpleTypeName = type.Name;
-                sb.AppendLine($"            \"{fullTypeName}\" => OutboxPollRegistry.InvokeMiddleware<{simpleTypeName}>(outboxMessage, sp, ct),");
+                var globalTypeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                sb.AppendLine($"            \"{fullTypeName}\" => OutboxPollRegistry.InvokeMiddleware<{globalTypeName}>(outboxMessage, sp, ct),");
             }
 
             sb.AppendLine($"            _ => ValueTask.CompletedTask");
