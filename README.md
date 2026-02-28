@@ -66,3 +66,4 @@ Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTIN
 ## License
 
 This project is licensed under the MIT License.
+
