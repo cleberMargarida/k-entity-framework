@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Consumer;
+using K.EntityFrameworkCore.UnitTests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -39,8 +40,8 @@ public class ConsumerPollRegistryPauseResumeTests
         // Act
         registry.Register<TestMessage>(consumer);
 
-        // Wait for messages to be processed
-        await Task.Delay(500);
+        // Wait for messages to be processed and pause to trigger
+        await WaitForConditionAsync(() => consumer.WasPaused);
 
         // Assert — consumer should have been paused
         Assert.True(consumer.WasPaused, "Consumer should have been paused when channel reached high water mark.");
@@ -73,7 +74,7 @@ public class ConsumerPollRegistryPauseResumeTests
         registry.Register<TestMessage>(consumer);
 
         // Wait for messages to fill channel and trigger pause
-        await Task.Delay(500);
+        await WaitForConditionAsync(() => consumer.WasPaused);
 
         // Drain the channel below LWM
         for (int i = 0; i < 5; i++)
@@ -82,7 +83,7 @@ public class ConsumerPollRegistryPauseResumeTests
         }
 
         // Wait for resume check cycle
-        await Task.Delay(500);
+        await WaitForConditionAsync(() => consumer.WasResumed);
 
         // Assert — consumer should have been resumed after drain
         Assert.True(consumer.WasResumed, "Consumer should have been resumed when channel drained below low water mark.");
@@ -114,7 +115,8 @@ public class ConsumerPollRegistryPauseResumeTests
         // Act
         registry.Register<TestMessage>(consumer);
 
-        await Task.Delay(500);
+        // Wait enough time for messages to be consumed; consumer should not be paused
+        await WaitForConditionAsync(() => consumer.ConsumedAll, timeoutMs: 3_000);
 
         // Assert — consumer should NOT have been paused
         Assert.False(consumer.WasPaused, "Consumer should not be paused when channel is below high water mark.");
@@ -122,16 +124,7 @@ public class ConsumerPollRegistryPauseResumeTests
         registry.Dispose();
     }
 
-    /// <summary>
-    /// Test implementation of <see cref="IConsumerProcessingConfig"/>.
-    /// </summary>
-    private sealed class TestConsumerProcessingConfig : IConsumerProcessingConfig
-    {
-        public int MaxBufferedMessages { get; set; } = 1000;
-        public ConsumerBackpressureMode BackpressureMode { get; set; } = ConsumerBackpressureMode.ApplyBackpressure;
-        public double HighWaterMarkRatio { get; set; } = 0.80;
-        public double LowWaterMarkRatio { get; set; } = 0.50;
-    }
+
 
     /// <summary>
     /// Minimal fake implementation of <see cref="IConsumer{TKey, TValue}"/> for testing pause/resume behavior.
@@ -143,6 +136,7 @@ public class ConsumerPollRegistryPauseResumeTests
 
         public bool WasPaused { get; private set; }
         public bool WasResumed { get; private set; }
+        public bool ConsumedAll => consumeIndex >= messages.Count;
         public int PauseCount { get; private set; }
         public int ResumeCount { get; private set; }
 
@@ -239,5 +233,21 @@ public class ConsumerPollRegistryPauseResumeTests
         public void Subscribe(string topic) { }
         public void Unassign() { }
         public void Unsubscribe() { }
+    }
+
+    /// <summary>
+    /// Polls <paramref name="condition"/> until it returns <c>true</c> or the timeout elapses.
+    /// </summary>
+    private static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 5_000, int pollIntervalMs = 50)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < timeoutMs)
+        {
+            if (condition())
+                return;
+            await Task.Delay(pollIntervalMs);
+        }
+
+        Assert.Fail($"Condition was not met within {timeoutMs}ms.");
     }
 }

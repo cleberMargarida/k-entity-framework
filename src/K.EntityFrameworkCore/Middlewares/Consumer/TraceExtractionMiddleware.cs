@@ -19,12 +19,21 @@ internal class TraceExtractionMiddleware<T>(TraceExtractionMiddlewareSettings<T>
     {
         var parentContext = TraceContextPropagator.Extract(envelope.Headers);
 
-        using var activity = parentContext.HasValue
+        var activity = parentContext.HasValue
             ? KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.Consume", ActivityKind.Consumer, parentContext.Value)
             : KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.Consume", ActivityKind.Consumer);
 
-        KafkaDiagnostics.MessagesConsumed.Add(1);
-
-        return base.InvokeAsync(envelope, cancellationToken);
+        try
+        {
+            var task = base.InvokeAsync(envelope, cancellationToken);
+            if (!task.IsCompletedSuccessfully)
+                task.GetAwaiter().GetResult();
+            KafkaDiagnostics.MessagesConsumed.Add(1);
+            return task;
+        }
+        finally
+        {
+            activity?.Dispose();
+        }
     }
 }

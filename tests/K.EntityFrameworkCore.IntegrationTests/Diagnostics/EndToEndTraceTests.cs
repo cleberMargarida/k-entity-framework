@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace K.EntityFrameworkCore.IntegrationTests.Diagnostics;
@@ -11,7 +12,7 @@ public class EndToEndTraceTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
     };
 
-    private readonly List<Activity> capturedActivities = [];
+    private readonly ConcurrentBag<Activity> capturedActivities = [];
 
     [Fact]
     public async Task Given_ProduceAndConsume_When_TracingEnabled_Then_TraceIdPropagated()

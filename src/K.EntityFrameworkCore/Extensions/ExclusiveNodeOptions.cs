@@ -33,4 +33,30 @@ public record ExclusiveNodeOptions
     /// </summary>
     /// <remarks>Default is <c>30 seconds</c>.</remarks>
     public TimeSpan SessionTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Validates the options and throws if any constraint is violated.
+    /// </summary>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <see cref="TopicName"/> or <see cref="GroupId"/> is null or empty.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <see cref="HeartbeatInterval"/> or <see cref="SessionTimeout"/> is not positive,
+    /// or when <see cref="HeartbeatInterval"/> is not less than <see cref="SessionTimeout"/>.
+    /// </exception>
+    internal void Validate()
+    {
+        ArgumentException.ThrowIfNullOrEmpty(TopicName);
+        ArgumentException.ThrowIfNullOrEmpty(GroupId);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(HeartbeatInterval, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(SessionTimeout, TimeSpan.Zero);
+
+        if (HeartbeatInterval >= SessionTimeout)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(HeartbeatInterval),
+                HeartbeatInterval,
+                $"HeartbeatInterval ({HeartbeatInterval}) must be less than SessionTimeout ({SessionTimeout}).");
+        }
+    }
 }

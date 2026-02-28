@@ -15,11 +15,11 @@ public class ProducerForgetMiddlewareSettings<T>(IModel model) : ForgetMiddlewar
     /// Gets the forget strategy from model annotations.
     /// Default is AwaitForget.
     /// </summary>
-    public new ForgetStrategy Strategy => model.GetProducerForgetStrategy<T>() ?? ForgetStrategy.AwaitForget;
+    public override ForgetStrategy Strategy => model.GetProducerForgetStrategy<T>() ?? ForgetStrategy.AwaitForget;
 
     /// <summary>
     /// Gets the forget timeout from model annotations.
     /// Default is 30 seconds.
     /// </summary>
-    public new TimeSpan Timeout => model.GetProducerForgetTimeout<T>() ?? TimeSpan.FromSeconds(30);
+    public override TimeSpan Timeout => model.GetProducerForgetTimeout<T>() ?? TimeSpan.FromSeconds(30);
 }

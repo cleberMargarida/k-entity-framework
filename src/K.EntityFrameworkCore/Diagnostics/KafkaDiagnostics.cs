@@ -52,13 +52,19 @@ internal static class KafkaDiagnostics
     internal static readonly Histogram<double> OutboxPublishDuration =
         Meter.CreateHistogram<double>("k_ef.outbox.publish_duration", unit: "ms", description: "Duration of outbox publish operations");
 
+    private static ObservableInstrument<int>? _outboxPendingGauge;
+
     /// <summary>
     /// Registers an observable gauge that reports the number of pending outbox messages awaiting publishing.
+    /// This method is idempotent; subsequent calls after the first registration are no-ops.
     /// </summary>
     /// <param name="observeValue">A callback that returns the current count of pending outbox messages.</param>
     internal static void RegisterOutboxPendingGauge(Func<int> observeValue)
     {
-        Meter.CreateObservableGauge(
+        if (_outboxPendingGauge is not null)
+            return;
+
+        _outboxPendingGauge = Meter.CreateObservableGauge(
             "k_ef.outbox.pending",
             () => observeValue(),
             description: "Number of pending outbox messages");

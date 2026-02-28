@@ -6,7 +6,7 @@ K-Entity-Framework includes a **circuit breaker** for consumers that automatical
 
 The circuit breaker follows the classic three-state pattern:
 
-```
+```text
                       failures ≥ threshold
   ┌────────┐       ─────────────────────────►     ┌────────┐
   │ Closed │                                      │  Open  │

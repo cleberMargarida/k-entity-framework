@@ -1265,6 +1265,18 @@ public enum ConsumerBackpressureMode
 public interface IConsumerConfig : IWorkerConfig, IConsumerProcessingConfig
 {
     /// <summary>
+    /// The ratio of channel capacity at which the consumer should be paused.
+    /// Default is 0.80 (80%). Must be between 0.0 and 1.0.
+    /// </summary>
+    new double HighWaterMarkRatio { get; set; }
+
+    /// <summary>
+    /// The ratio of channel capacity at which a paused consumer should be resumed.
+    /// Default is 0.50 (50%). Must be between 0.0 and 1.0 and less than <see cref="HighWaterMarkRatio"/>.
+    /// </summary>
+    new double LowWaterMarkRatio { get; set; }
+
+    /// <summary>
     /// The frequency in milliseconds that the consumer offsets are auto-committed to Kafka if enable.auto.commit is set to true.
     /// </summary>
     int? AutoCommitIntervalMs { get; set; }
@@ -1517,10 +1529,39 @@ internal class ConsumerConfigInternal : ConsumerConfig, IConsumerConfig
         EnableAutoOffsetStore = false;
     }
 
+    private double _highWaterMarkRatio = 0.80;
+    private double _lowWaterMarkRatio = 0.50;
+
     public int MaxBufferedMessages { get; set; } = 10_000;
     public ConsumerBackpressureMode BackpressureMode { get; set; } = ConsumerBackpressureMode.ApplyBackpressure;
-    public double HighWaterMarkRatio { get; set; } = 0.80;
-    public double LowWaterMarkRatio { get; set; } = 0.50;
+
+    public double HighWaterMarkRatio
+    {
+        get => _highWaterMarkRatio;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, 0.0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 1.0);
+            if (value <= _lowWaterMarkRatio)
+                throw new ArgumentOutOfRangeException(nameof(HighWaterMarkRatio), value,
+                    $"HighWaterMarkRatio ({value}) must be greater than LowWaterMarkRatio ({_lowWaterMarkRatio}).");
+            _highWaterMarkRatio = value;
+        }
+    }
+
+    public double LowWaterMarkRatio
+    {
+        get => _lowWaterMarkRatio;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 0.0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(value, 1.0);
+            if (value >= _highWaterMarkRatio)
+                throw new ArgumentOutOfRangeException(nameof(LowWaterMarkRatio), value,
+                    $"LowWaterMarkRatio ({value}) must be less than HighWaterMarkRatio ({_highWaterMarkRatio}).");
+            _lowWaterMarkRatio = value;
+        }
+    }
 
     // ISharedOperationalConfig implementation - properties that can be configured separately for consumers
     // These delegate to the underlying ConsumerConfig which inherits from ClientConfig

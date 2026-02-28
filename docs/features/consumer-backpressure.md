@@ -9,7 +9,7 @@ Each message type in K-Entity-Framework has its own bounded in-memory channel th
 - **High Water Mark (HWM)**: When the channel fill level reaches this ratio of capacity, the Kafka consumer is **paused**. Pausing stops new message fetches from the broker while keeping the consumer group heartbeat alive.
 - **Low Water Mark (LWM)**: When the channel fill level drops to this ratio of capacity, the Kafka consumer is **resumed** and message fetching continues.
 
-```
+```text
 Channel Fill Level
 ┌─────────────────────────────────┐
 │                                 │ ← Capacity (MaxBufferedMessages)

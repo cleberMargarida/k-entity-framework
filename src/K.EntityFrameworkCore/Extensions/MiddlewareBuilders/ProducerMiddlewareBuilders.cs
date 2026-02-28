@@ -55,8 +55,10 @@ public class ProducerForgetBuilder<T> where T : class
     /// <returns>The builder instance.</returns>
     public ProducerForgetBuilder<T> UseAwaitForget(TimeSpan? timeout = null)
     {
+        var resolved = timeout ?? TimeSpan.FromSeconds(30);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(resolved, TimeSpan.Zero, nameof(timeout));
         _model.SetProducerForgetStrategy<T>(ForgetStrategy.AwaitForget);
-        _model.SetProducerForgetTimeout<T>(timeout ?? TimeSpan.FromSeconds(30));
+        _model.SetProducerForgetTimeout<T>(resolved);
         return this;
     }
 

@@ -1,5 +1,6 @@
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Consumer;
+using K.EntityFrameworkCore.UnitTests.Helpers;
 using Xunit;
 
 namespace K.EntityFrameworkCore.UnitTests.Consumer;
@@ -241,14 +242,4 @@ public class ChannelWatermarkTests
         };
     }
 
-    /// <summary>
-    /// Test implementation of <see cref="IConsumerProcessingConfig"/> for unit testing.
-    /// </summary>
-    private sealed class TestConsumerProcessingConfig : IConsumerProcessingConfig
-    {
-        public int MaxBufferedMessages { get; set; } = 1000;
-        public ConsumerBackpressureMode BackpressureMode { get; set; } = ConsumerBackpressureMode.ApplyBackpressure;
-        public double HighWaterMarkRatio { get; set; } = 0.80;
-        public double LowWaterMarkRatio { get; set; } = 0.50;
-    }
 }

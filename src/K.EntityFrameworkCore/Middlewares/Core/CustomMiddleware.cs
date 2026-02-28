@@ -17,7 +17,9 @@ internal class CustomMiddleware<T>(IMiddleware<T> inner)
     /// <inheritdoc />
     public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        _ = inner.InvokeAsync(envelope, cancellationToken);
+        var innerTask = inner.InvokeAsync(envelope, cancellationToken);
+        if (!innerTask.IsCompletedSuccessfully)
+            innerTask.GetAwaiter().GetResult();
         return base.InvokeAsync(envelope, cancellationToken);
     }
 }

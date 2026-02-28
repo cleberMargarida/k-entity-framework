@@ -69,9 +69,8 @@ public class ConsumerCircuitBreakerTests
         cb.RecordFailure();
         Assert.Equal(CircuitBreakerState.Open, cb.State);
 
-        await Task.Delay(150);
+        await WaitForConditionAsync(() => cb.AllowRequest());
 
-        Assert.True(cb.AllowRequest());
         Assert.Equal(CircuitBreakerState.HalfOpen, cb.State);
     }
 
@@ -81,8 +80,7 @@ public class ConsumerCircuitBreakerTests
         var cb = new ConsumerCircuitBreaker(DefaultConfig(tripThreshold: 1, windowSize: 1, resetInterval: TimeSpan.FromMilliseconds(100)));
 
         cb.RecordFailure();
-        await Task.Delay(150);
-        cb.AllowRequest(); // Transition to HalfOpen
+        await WaitForConditionAsync(() => cb.AllowRequest()); // Transition to HalfOpen
 
         Assert.Equal(CircuitBreakerState.HalfOpen, cb.State);
 
@@ -96,8 +94,7 @@ public class ConsumerCircuitBreakerTests
         var cb = new ConsumerCircuitBreaker(DefaultConfig(tripThreshold: 1, windowSize: 1, resetInterval: TimeSpan.FromMilliseconds(100)));
 
         cb.RecordFailure();
-        await Task.Delay(150);
-        cb.AllowRequest(); // Transition to HalfOpen
+        await WaitForConditionAsync(() => cb.AllowRequest()); // Transition to HalfOpen
 
         Assert.Equal(CircuitBreakerState.HalfOpen, cb.State);
 
@@ -142,7 +139,7 @@ public class ConsumerCircuitBreakerTests
     }
 
     [Fact]
-    public void FullCycle_ClosedToOpenToHalfOpenToClosed()
+    public async Task FullCycle_ClosedToOpenToHalfOpenToClosed()
     {
         var cb = new ConsumerCircuitBreaker(DefaultConfig(tripThreshold: 2, windowSize: 5, resetInterval: TimeSpan.FromMilliseconds(50)));
 
@@ -152,8 +149,7 @@ public class ConsumerCircuitBreakerTests
         Assert.Equal(CircuitBreakerState.Open, cb.State);
 
         // Open → HalfOpen
-        Thread.Sleep(100);
-        cb.AllowRequest();
+        await WaitForConditionAsync(() => cb.AllowRequest());
         Assert.Equal(CircuitBreakerState.HalfOpen, cb.State);
 
         // HalfOpen → Closed
@@ -167,8 +163,7 @@ public class ConsumerCircuitBreakerTests
         var cb = new ConsumerCircuitBreaker(DefaultConfig(tripThreshold: 1, windowSize: 1, activeThreshold: 3, resetInterval: TimeSpan.FromMilliseconds(100)));
 
         cb.RecordFailure();
-        await Task.Delay(150);
-        cb.AllowRequest(); // HalfOpen
+        await WaitForConditionAsync(() => cb.AllowRequest()); // HalfOpen
 
         cb.RecordSuccess();
         Assert.Equal(CircuitBreakerState.HalfOpen, cb.State);
@@ -178,5 +173,21 @@ public class ConsumerCircuitBreakerTests
 
         cb.RecordSuccess();
         Assert.Equal(CircuitBreakerState.Closed, cb.State);
+    }
+
+    /// <summary>
+    /// Polls <paramref name="condition"/> until it returns <c>true</c> or the timeout elapses.
+    /// </summary>
+    private static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 5_000, int pollIntervalMs = 10)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < timeoutMs)
+        {
+            if (condition())
+                return;
+            await Task.Delay(pollIntervalMs);
+        }
+
+        Assert.Fail($"Condition was not met within {timeoutMs}ms.");
     }
 }

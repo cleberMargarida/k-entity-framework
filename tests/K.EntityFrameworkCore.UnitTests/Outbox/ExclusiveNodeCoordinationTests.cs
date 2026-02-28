@@ -54,7 +54,7 @@ public class ExclusiveNodeCoordinationTests
         var coordination = CreateCoordination();
 
         // Simulate becoming leader
-        coordination.OnPartitionsAssigned(null!, []);
+        coordination.OnPartitionsAssigned(null!, [new TopicPartition("t", 0)]);
 
         var source = CreateOutboxMessages(3);
         var result = coordination.ApplyScope(source);
@@ -79,10 +79,10 @@ public class ExclusiveNodeCoordinationTests
     {
         var coordination = CreateCoordination();
 
-        coordination.OnPartitionsAssigned(null!, []);
+        coordination.OnPartitionsAssigned(null!, [new TopicPartition("t", 0)]);
         Assert.True(coordination.IsLeader);
 
-        coordination.OnPartitionsRevoked(null!, []);
+        coordination.OnPartitionsRevoked(null!, []);  
         Assert.False(coordination.IsLeader);
 
         var source = CreateOutboxMessages(2);
@@ -111,7 +111,7 @@ public class ExclusiveNodeCoordinationTests
     {
         var coordination = CreateCoordination();
 
-        coordination.OnPartitionsAssigned(null!, []);
+        coordination.OnPartitionsAssigned(null!, [new TopicPartition("t", 0)]);
         Assert.True(coordination.IsLeader);
 
         coordination.OnPartitionsRevoked(null!, [new TopicPartitionOffset("t", 0, Offset.Unset)]);
@@ -124,8 +124,8 @@ public class ExclusiveNodeCoordinationTests
     {
         var coordination = CreateCoordination();
 
-        coordination.OnPartitionsAssigned(null!, []);
-        coordination.OnPartitionsAssigned(null!, []);
+        coordination.OnPartitionsAssigned(null!, [new TopicPartition("t", 0)]);
+        coordination.OnPartitionsAssigned(null!, [new TopicPartition("t", 0)]);
 
         Assert.True(coordination.IsLeader);
     }
@@ -140,7 +140,7 @@ public class ExclusiveNodeCoordinationTests
         var coordination = CreateCoordination();
 
         // Simulate becoming leader
-        coordination.OnPartitionsAssigned(null!, []);
+        coordination.OnPartitionsAssigned(null!, [new TopicPartition("t", 0)]);
         Assert.True(coordination.IsLeader);
 
         await coordination.StopAsync(CancellationToken.None);

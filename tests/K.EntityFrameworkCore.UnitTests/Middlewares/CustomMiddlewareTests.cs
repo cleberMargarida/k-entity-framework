@@ -65,7 +65,7 @@ public class CustomMiddlewareTests
         var envelope = new Envelope<TestMessage>(new TestMessage(1, "test"));
 
         // Act
-        custom.InvokeAsync(envelope);
+        custom.InvokeAsync(envelope).GetAwaiter().GetResult();
 
         // Assert
         Assert.True(inner.InvokeWasCalled);
@@ -127,7 +127,7 @@ public class CustomMiddlewareTests
         var envelope = new Envelope<TestMessage>(new TestMessage(1, "test"));
 
         // Act
-        invoker.InvokeAsync(envelope);
+        invoker.InvokeAsync(envelope).GetAwaiter().GetResult();
 
         // Assert — inner was called and chain continued to terminal
         Assert.True(inner.InvokeWasCalled);

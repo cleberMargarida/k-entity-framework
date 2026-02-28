@@ -16,12 +16,21 @@ internal class TracePropagationMiddleware<T>(TracePropagationMiddlewareSettings<
     /// <inheritdoc />
     public override ValueTask<T?> InvokeAsync(Envelope<T> envelope, CancellationToken cancellationToken = default)
     {
-        using var activity = KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.Produce", ActivityKind.Producer);
+        var activity = KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.Produce", ActivityKind.Producer);
 
-        envelope.Headers = TraceContextPropagator.Inject(envelope.Headers, Activity.Current);
+        try
+        {
+            envelope.Headers = TraceContextPropagator.Inject(envelope.Headers, Activity.Current);
 
-        KafkaDiagnostics.MessagesProduced.Add(1);
-
-        return base.InvokeAsync(envelope, cancellationToken);
+            var task = base.InvokeAsync(envelope, cancellationToken);
+            if (!task.IsCompletedSuccessfully)
+                task.GetAwaiter().GetResult();
+            KafkaDiagnostics.MessagesProduced.Add(1);
+            return task;
+        }
+        finally
+        {
+            activity?.Dispose();
+        }
     }
 }

@@ -20,6 +20,7 @@ public class CircuitBreakerBuilder
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder TripAfter(int failures)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(failures, 1);
         _tripThreshold = failures;
         return this;
     }
@@ -32,6 +33,7 @@ public class CircuitBreakerBuilder
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder HasWindowSize(int size)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(size, 1);
         _windowSize = size;
         return this;
     }
@@ -44,6 +46,7 @@ public class CircuitBreakerBuilder
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder HasResetInterval(TimeSpan interval)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(interval, TimeSpan.Zero);
         _resetInterval = interval;
         return this;
     }
@@ -56,6 +59,7 @@ public class CircuitBreakerBuilder
     /// <returns>The builder instance.</returns>
     public CircuitBreakerBuilder HasActiveThreshold(int successes)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(successes, 1);
         _activeThreshold = successes;
         return this;
     }
@@ -64,11 +68,20 @@ public class CircuitBreakerBuilder
     /// Builds the circuit breaker configuration.
     /// </summary>
     /// <returns>The circuit breaker configuration.</returns>
-    internal CircuitBreakerConfig Build() => new()
+    internal CircuitBreakerConfig Build()
     {
-        TripThreshold = _tripThreshold,
-        WindowSize = _windowSize,
-        ActiveThreshold = _activeThreshold,
-        ResetInterval = _resetInterval
-    };
+        if (_tripThreshold > _windowSize)
+        {
+            throw new InvalidOperationException(
+                $"TripThreshold ({_tripThreshold}) must be less than or equal to WindowSize ({_windowSize}).");
+        }
+
+        return new()
+        {
+            TripThreshold = _tripThreshold,
+            WindowSize = _windowSize,
+            ActiveThreshold = _activeThreshold,
+            ResetInterval = _resetInterval
+        };
+    }
 }

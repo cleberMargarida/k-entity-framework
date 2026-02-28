@@ -446,6 +446,8 @@ internal static class ModelAnnotationHelpers
     public static void SetHighWaterMarkRatio<T>(this IMutableModel model, double ratio)
         where T : class
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(ratio, 0.0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(ratio, 1.0);
         var annotationKey = ModelAnnotationKeys.ConsumerHighWaterMarkRatio(typeof(T));
         model.SetAnnotation(annotationKey, ratio);
     }
@@ -472,6 +474,8 @@ internal static class ModelAnnotationHelpers
     public static void SetLowWaterMarkRatio<T>(this IMutableModel model, double ratio)
         where T : class
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(ratio, 0.0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(ratio, 1.0);
         var annotationKey = ModelAnnotationKeys.ConsumerLowWaterMarkRatio(typeof(T));
         model.SetAnnotation(annotationKey, ratio);
     }

@@ -11,9 +11,15 @@ public class ExclusiveNodeCoordinationTests(KafkaFixture kafka, PostgreSqlFixtur
     public async Task Given_ExclusiveNodeCoordination_When_SingleNode_Then_CoordinationTopicIsCreated()
     {
         // Arrange
+        var coordinationTopic = $"__k_outbox_exclusive_{Guid.NewGuid():N}";
+        var coordinationGroup = $"k-outbox-exclusive-{Guid.NewGuid():N}";
         builder.Services.AddOutboxKafkaWorker<PostgreTestContext>(worker =>
         {
-            worker.UseExclusiveNode();
+            worker.UseExclusiveNode(options =>
+            {
+                options.TopicName = coordinationTopic;
+                options.GroupId = coordinationGroup;
+            });
         });
         defaultTopic.HasName("exclusive-node-test-topic").HasProducer(producer =>
         {
@@ -23,25 +29,25 @@ public class ExclusiveNodeCoordinationTests(KafkaFixture kafka, PostgreSqlFixtur
 
         // Act
         await StartHostAsync();
-        // Allow time for leader election
-        await Task.Delay(5000, TestContext.Current.CancellationToken);
+        await WaitForConditionAsync(() => TopicExist(coordinationTopic));
 
         // Assert — the coordination topic should have been auto-created
-        Assert.True(TopicExist("__k_outbox_exclusive"));
+        Assert.True(TopicExist(coordinationTopic));
     }
 
     [Fact(Timeout = 60_000)]
     public async Task Given_ExclusiveNodeCoordination_When_CustomOptions_Then_CustomTopicIsCreated()
     {
         // Arrange
-        const string customTopic = "__k_outbox_exclusive_custom";
+        var customTopic = $"__k_outbox_exclusive_custom_{Guid.NewGuid():N}";
+        var customGroup = $"k-outbox-exclusive-custom-{Guid.NewGuid():N}";
 
         builder.Services.AddOutboxKafkaWorker<PostgreTestContext>(worker =>
         {
             worker.UseExclusiveNode(options =>
             {
                 options.TopicName = customTopic;
-                options.GroupId = "k-outbox-exclusive-custom";
+                options.GroupId = customGroup;
             });
         });
         defaultTopic.HasName("exclusive-custom-test-topic").HasProducer(producer =>
@@ -52,7 +58,7 @@ public class ExclusiveNodeCoordinationTests(KafkaFixture kafka, PostgreSqlFixtur
 
         // Act
         await StartHostAsync();
-        await Task.Delay(5000, TestContext.Current.CancellationToken);
+        await WaitForConditionAsync(() => TopicExist(customTopic));
 
         // Assert
         Assert.True(TopicExist(customTopic));
@@ -62,9 +68,15 @@ public class ExclusiveNodeCoordinationTests(KafkaFixture kafka, PostgreSqlFixtur
     public async Task Given_ExclusiveNodeCoordination_When_SingleNode_Then_ConsumerGroupIsCreated()
     {
         // Arrange
+        var coordinationTopic = $"__k_outbox_exclusive_{Guid.NewGuid():N}";
+        var coordinationGroup = $"k-outbox-exclusive-{Guid.NewGuid():N}";
         builder.Services.AddOutboxKafkaWorker<PostgreTestContext>(worker =>
         {
-            worker.UseExclusiveNode();
+            worker.UseExclusiveNode(options =>
+            {
+                options.TopicName = coordinationTopic;
+                options.GroupId = coordinationGroup;
+            });
         });
         defaultTopic.HasName("exclusive-group-test-topic").HasProducer(producer =>
         {
@@ -74,9 +86,25 @@ public class ExclusiveNodeCoordinationTests(KafkaFixture kafka, PostgreSqlFixtur
 
         // Act
         await StartHostAsync();
-        await Task.Delay(5000, TestContext.Current.CancellationToken);
+        await WaitForConditionAsync(() => GroupExist(coordinationGroup));
 
         // Assert
-        Assert.True(GroupExist("k-outbox-exclusive"));
+        Assert.True(GroupExist(coordinationGroup));
+    }
+
+    /// <summary>
+    /// Polls <paramref name="condition"/> until it returns <c>true</c> or the timeout elapses.
+    /// </summary>
+    private static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 15_000, int pollIntervalMs = 200)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < timeoutMs)
+        {
+            if (condition())
+                return;
+            await Task.Delay(pollIntervalMs, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Fail($"Condition was not met within {timeoutMs}ms.");
     }
 }

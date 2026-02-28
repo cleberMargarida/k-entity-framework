@@ -1,7 +1,7 @@
 using K.EntityFrameworkCore.Extensions;
 using Xunit;
 
-namespace K.EntityFrameworkCore.UnitTests.Consumer;
+namespace K.EntityFrameworkCore.UnitTests.Extensions;
 
 /// <summary>
 /// Tests for <see cref="CircuitBreakerBuilder"/>.

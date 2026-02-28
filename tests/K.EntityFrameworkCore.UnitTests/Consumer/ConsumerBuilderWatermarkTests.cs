@@ -110,6 +110,8 @@ public class ConsumerBuilderWatermarkTests
 
         // Assert
         Assert.Same(builder, result);
+        var ratio = ((IModel)modelBuilder.Model).GetHighWaterMarkRatio<TestMessage>();
+        Assert.Equal(1.0, ratio);
     }
 
     [Fact]
@@ -124,6 +126,8 @@ public class ConsumerBuilderWatermarkTests
 
         // Assert
         Assert.Same(builder, result);
+        var ratio = ((IModel)modelBuilder.Model).GetLowWaterMarkRatio<TestMessage>();
+        Assert.Equal(0.0, ratio);
     }
 
     [Fact]

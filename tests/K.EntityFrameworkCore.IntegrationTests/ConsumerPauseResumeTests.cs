@@ -40,6 +40,7 @@ public class ConsumerPauseResumeTests(KafkaFixture kafka, PostgreSqlFixture post
         defaultTopic.HasConsumer(consumer =>
         {
             consumer.HasMaxBufferedMessages(20);
+            consumer.HasBackpressureMode(ConsumerBackpressureMode.ApplyBackpressure);
             consumer.WithHighWaterMark(0.70); // HWM = 14
             consumer.WithLowWaterMark(0.30);  // LWM = 6
         });

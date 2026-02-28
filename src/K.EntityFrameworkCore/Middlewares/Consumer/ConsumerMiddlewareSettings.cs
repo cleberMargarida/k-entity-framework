@@ -4,22 +4,41 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace K.EntityFrameworkCore.Middlewares.Consumer;
 
-internal class ConsumerMiddlewareSettings<T>(IModel model, IConsumerProcessingConfig consumerConfig) : MiddlewareSettings<T>(isMiddlewareEnabled: true), IConsumerProcessingConfig
+internal class ConsumerMiddlewareSettings<T> : MiddlewareSettings<T>, IConsumerProcessingConfig
     where T : class
 {
-    /// <inheritdoc />
-    public int MaxBufferedMessages { get; } = model.GetMaxBufferedMessages<T>() ?? consumerConfig.MaxBufferedMessages;
+    public ConsumerMiddlewareSettings(IModel model, IConsumerProcessingConfig consumerConfig)
+        : base(isMiddlewareEnabled: true)
+    {
+        MaxBufferedMessages = model.GetMaxBufferedMessages<T>() ?? consumerConfig.MaxBufferedMessages;
+        BackpressureMode = model.GetBackpressureMode<T>() ?? consumerConfig.BackpressureMode;
+        ExclusiveConnection = model.HasExclusiveConnection<T>();
+
+        var high = model.GetHighWaterMarkRatio<T>() ?? consumerConfig.HighWaterMarkRatio;
+        var low = model.GetLowWaterMarkRatio<T>() ?? consumerConfig.LowWaterMarkRatio;
+
+        if (high <= low)
+        {
+            low = high * 0.5;
+        }
+
+        HighWaterMarkRatio = high;
+        LowWaterMarkRatio = low;
+    }
 
     /// <inheritdoc />
-    public ConsumerBackpressureMode BackpressureMode { get; } = model.GetBackpressureMode<T>() ?? consumerConfig.BackpressureMode;
+    public int MaxBufferedMessages { get; }
 
     /// <inheritdoc />
-    public double HighWaterMarkRatio { get; } = model.GetHighWaterMarkRatio<T>() ?? consumerConfig.HighWaterMarkRatio;
+    public ConsumerBackpressureMode BackpressureMode { get; }
 
     /// <inheritdoc />
-    public double LowWaterMarkRatio { get; } = model.GetLowWaterMarkRatio<T>() ?? consumerConfig.LowWaterMarkRatio;
+    public double HighWaterMarkRatio { get; }
 
     /// <inheritdoc />
-    public bool ExclusiveConnection { get; } = model.HasExclusiveConnection<T>();
+    public double LowWaterMarkRatio { get; }
+
+    /// <inheritdoc />
+    public bool ExclusiveConnection { get; }
 }
 

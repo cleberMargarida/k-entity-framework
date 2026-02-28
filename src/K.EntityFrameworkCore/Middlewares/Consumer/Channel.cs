@@ -34,12 +34,12 @@ internal abstract class Channel(IConsumerProcessingConfig globalSettings)
     /// <summary>
     /// Gets the high water mark count, computed from <see cref="Capacity"/> and <see cref="HighWaterMarkRatio"/>.
     /// </summary>
-    internal int HighWaterMark => (int)(Capacity * HighWaterMarkRatio);
+    internal int HighWaterMark => Math.Max(1, (int)(Capacity * HighWaterMarkRatio));
 
     /// <summary>
     /// Gets the low water mark count, computed from <see cref="Capacity"/> and <see cref="LowWaterMarkRatio"/>.
     /// </summary>
-    internal int LowWaterMark => (int)(Capacity * LowWaterMarkRatio);
+    internal int LowWaterMark => Math.Max(1, (int)(Capacity * LowWaterMarkRatio));
 
     /// <summary>
     /// Returns <see langword="true"/> when the channel count has reached or exceeded the high water mark,

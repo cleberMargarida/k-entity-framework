@@ -67,7 +67,7 @@ Custom middleware is inserted at a well-defined extension point in each pipeline
 
 ### Producer Pipeline
 
-```
+```text
 Serializer → [User MW 1] → [User MW 2] → TracePropagation → Forget → Outbox → Producer
 ```
 
@@ -75,7 +75,7 @@ User middleware runs **after serialization**, so the `Envelope<T>` has its `Payl
 
 ### Consumer Pipeline
 
-```
+```text
 Subscriber → Consumer → TraceExtraction → Deserializer → [User MW 1] → [User MW 2] → HeaderFilter → Inbox
 ```
 

@@ -4,6 +4,7 @@ using K.EntityFrameworkCore.Interfaces;
 using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -264,9 +265,7 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
     {
         modelBuilder.Model.SetProducerForgetEnabled<T>();
 
-        var settings = new ProducerForgetMiddlewareSettings<T>();
-        configure?.Invoke(new ProducerForgetBuilder<T>(settings));
-        modelBuilder.Model.SetProducerForgetStrategy<T>(settings.Strategy);
+        configure?.Invoke(new ProducerForgetBuilder<T>(modelBuilder.Model));
 
         return this;
     }
@@ -398,6 +397,12 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(ratio, 0.0);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(ratio, 1.0);
+
+        var existingLow = ((IModel)modelBuilder.Model).GetLowWaterMarkRatio<T>();
+        if (existingLow.HasValue && ratio <= existingLow.Value)
+            throw new ArgumentOutOfRangeException(nameof(ratio), ratio,
+                $"HighWaterMark ratio ({ratio}) must be greater than LowWaterMark ratio ({existingLow.Value}).");
+
         modelBuilder.Model.SetHighWaterMarkRatio<T>(ratio);
         return this;
     }
@@ -415,6 +420,12 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(ratio, 0.0);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(ratio, 1.0);
+
+        var existingHigh = ((IModel)modelBuilder.Model).GetHighWaterMarkRatio<T>();
+        if (existingHigh.HasValue && ratio >= existingHigh.Value)
+            throw new ArgumentOutOfRangeException(nameof(ratio), ratio,
+                $"LowWaterMark ratio ({ratio}) must be less than HighWaterMark ratio ({existingHigh.Value}).");
+
         modelBuilder.Model.SetLowWaterMarkRatio<T>(ratio);
         return this;
     }

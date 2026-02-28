@@ -25,14 +25,21 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
             var activity = KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.OutboxWorker.Publish");
             var startTimestamp = Stopwatch.GetTimestamp();
 
-            producer.Produce(this.topicName, new Message<string, byte[]>
+            try
             {
-                Headers = outboxMessage.Headers.ToConfluentHeaders(),
-                Key = outboxMessage.AggregateId!,
-                Value = outboxMessage.Payload,
+                producer.Produce(this.topicName, new Message<string, byte[]>
+                {
+                    Headers = outboxMessage.Headers.ToConfluentHeaders(),
+                    Key = outboxMessage.AggregateId!,
+                    Value = outboxMessage.Payload,
 
-            }, HandleDeliveryReport);
-
+                }, HandleDeliveryReport);
+            }
+            catch
+            {
+                activity?.Dispose();
+                throw;
+            }
 
             return new ValueTask<T?>(tcs.Task);
 
