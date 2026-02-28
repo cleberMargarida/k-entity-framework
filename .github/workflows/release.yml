@@ -27,12 +27,7 @@ jobs:
     name: Publish to NuGet
     needs: [check-commits]
     runs-on: ubuntu-latest
-
-    # Proceed only when the push contains a release-worthy commit or is a merge.
-    if: |
-      needs.check-commits.outputs.is-merge-commit == 'true' ||
-      needs.check-commits.outputs.has-release-commits == 'true'
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
