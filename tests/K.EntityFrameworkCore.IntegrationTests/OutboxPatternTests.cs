@@ -255,7 +255,7 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     }
 
     [Fact(Timeout = 60_000)]
-    public async Task Given_OutboxWithHeadersAndOutboxWithout_When_ProducingToBoth_Then_HeaderConfigurationDoesNotLeak()
+    public async Task Given_OutboxWithHeadersAndOutboxWithout_When_ProducingToBoth_Then_BothTopicsDeliverCorrectCounts()
     {
         // Arrange
         defaultTopic.HasName("outbox-with-headers-topic");
@@ -304,14 +304,14 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     {
         // Arrange - polling interval is a worker-global setting;
         // calling HasOutboxWorker on either topic builder affects the whole worker.
-        defaultTopic.HasName("outbox-fast-poll-topic");
+        defaultTopic.HasName("outbox-poll-topic-a");
         defaultTopic.HasProducer(producer =>
         {
             producer.HasKey(msg => msg.Id);
             producer.HasOutbox(outbox => outbox.UseBackgroundOnly());
         });
 
-        alternativeTopic.HasName("outbox-slow-poll-topic");
+        alternativeTopic.HasName("outbox-poll-topic-b");
         alternativeTopic.HasProducer(producer =>
         {
             producer.HasKey(msg => msg.Id);
@@ -342,8 +342,8 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         Assert.All(fastResults, r => Assert.InRange(r.Id, 4000, 4004));
         Assert.All(slowResults, r => Assert.InRange(r.Id, 4100, 4104));
 
-        Assert.True(TopicExist("outbox-fast-poll-topic"));
-        Assert.True(TopicExist("outbox-slow-poll-topic"));
+        Assert.True(TopicExist("outbox-poll-topic-a"));
+        Assert.True(TopicExist("outbox-poll-topic-b"));
     }
 
     [Fact(Timeout = 60_000)]
@@ -351,14 +351,14 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
     {
         // Arrange - max messages per poll is a worker-global setting;
         // calling HasOutboxWorker on either topic builder affects the whole worker.
-        defaultTopic.HasName("outbox-small-batch-topic");
+        defaultTopic.HasName("outbox-topic-a");
         defaultTopic.HasProducer(producer =>
         {
             producer.HasKey(msg => msg.Id);
             producer.HasOutbox(outbox => outbox.UseBackgroundOnly());
         });
 
-        alternativeTopic.HasName("outbox-large-batch-topic");
+        alternativeTopic.HasName("outbox-topic-b");
         alternativeTopic.HasProducer(producer =>
         {
             producer.HasKey(msg => msg.Id);
@@ -389,8 +389,8 @@ public class OutboxPatternTests(KafkaFixture kafka, PostgreSqlFixture postgreSql
         Assert.All(smallBatchResults, r => Assert.InRange(r.Id, 4200, 4205));
         Assert.All(largeBatchResults, r => Assert.InRange(r.Id, 4300, 4305));
 
-        Assert.True(TopicExist("outbox-small-batch-topic"));
-        Assert.True(TopicExist("outbox-large-batch-topic"));
+        Assert.True(TopicExist("outbox-topic-a"));
+        Assert.True(TopicExist("outbox-topic-b"));
     }
 
     [Fact(Timeout = 60_000)]

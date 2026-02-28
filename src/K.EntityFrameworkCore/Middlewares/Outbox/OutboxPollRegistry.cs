@@ -44,6 +44,7 @@ internal sealed class OutboxPollRegistry(ILogger<OutboxPollRegistry> logger) : I
         public IMiddlewareSpecifier? MiddlewareSpecifier { get; set; }
         public CancellationTokenSource Cts { get; } = new();
         public Task? PollingTask { get; set; }
+        public bool HasLoggedExclusiveNodeFallback { get; set; }
 
         public void Dispose()
         {
@@ -205,10 +206,11 @@ internal sealed class OutboxPollRegistry(ILogger<OutboxPollRegistry> logger) : I
 
     private async Task ExecuteTickAsync(DbContextPollingState state, CancellationToken ct)
     {
-        if (state.CoordinationStrategy == OutboxCoordinationStrategy.ExclusiveNode)
+        if (state.CoordinationStrategy == OutboxCoordinationStrategy.ExclusiveNode && !state.HasLoggedExclusiveNodeFallback)
         {
             // ExclusiveNode is not yet fully implemented (see REV-013 deprecation)
             logger.LogWarning("ExclusiveNode coordination strategy is not yet implemented. Proceeding with SingleNode behavior for DbContext {DbContextType}.", state.DbContextType.Name);
+            state.HasLoggedExclusiveNodeFallback = true;
         }
 
         using var scope = state.ApplicationServiceProvider.CreateScope();

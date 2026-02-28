@@ -74,7 +74,8 @@ modelBuilder.Topic<OrderCreated>(topic =>
 The outbox background poller starts automatically on the first `SaveChanges` — no extra service registration is needed. You can optionally tune worker-global polling behaviour via `HasOutboxWorker()` in `OnModelCreating`:
 
 ```csharp
-// Worker-global settings — applies to the single background outbox worker.
+// Worker-global settings — registers a global outbox registry that manages
+// per-DbContext polling loops (see OutboxPollRegistry for runtime details).
 modelBuilder.HasOutboxWorker(worker => worker
     .WithPollingInterval(TimeSpan.FromSeconds(5))
     .WithMaxMessagesPerPoll(50)
@@ -92,7 +93,7 @@ modelBuilder.Topic<OrderCreated>(topic =>
 });
 ```
 
-> **Note:** `HasOutboxWorker` is called on `ModelBuilder` (not on a topic builder) because the outbox worker is global.
+> **Note:** `HasOutboxWorker` is called on `ModelBuilder` (not on a topic builder) because the outbox registry is registered at global scope. At runtime, however, the registry creates independent polling loops per `DbContext` type, each with its own polling state and lifecycle (managed by `OutboxPollRegistry`). The settings configured here — such as polling interval and max messages per poll — apply as defaults to every per-`DbContext` polling loop.
 
 ## Usage
 

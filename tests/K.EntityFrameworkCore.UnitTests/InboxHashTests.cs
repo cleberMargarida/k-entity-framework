@@ -27,11 +27,6 @@ public class InboxHashTests
     /// </summary>
     private static IModel CreateModel<T>(System.Linq.Expressions.Expression<Func<T, object>> valueAccessor) where T : class
     {
-        var options = new DbContextOptionsBuilder()
-            .UseInMemoryDatabase("hash_test_" + Guid.NewGuid())
-            .Options;
-
-        using var dbContext = new DbContext(options);
         var modelBuilder = new ModelBuilder();
 
         modelBuilder.Entity<InboxMessage>(entity =>
@@ -43,7 +38,6 @@ public class InboxHashTests
         modelBuilder.Model.SetInboxEnabled<T>();
         modelBuilder.Model.SetInboxDeduplicationValueAccessor<T>(valueAccessor);
 
-        // Force model finalization through the DbContext
         return modelBuilder.FinalizeModel();
     }
 
@@ -177,6 +171,18 @@ public class InboxHashTests
         var hash2 = settings.Hash(new TestMessage { Value = "こんにちは世界" });
 
         Assert.Equal(hash1, hash2);
+    }
+
+    [Fact]
+    public void Hash_NullValue_ProducesConsistentHash()
+    {
+        var settings = CreateSettings<TestMessage>(m => m.Value!);
+
+        var hash1 = settings.Hash(new TestMessage { Value = null });
+        var hash2 = settings.Hash(new TestMessage { Value = null });
+
+        Assert.Equal(hash1, hash2);
+        Assert.NotEqual(0UL, hash1);
     }
 
     [Fact]
