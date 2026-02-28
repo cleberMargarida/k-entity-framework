@@ -2,10 +2,7 @@
 #
 # Builds DocFX GitHub Pages Deployment and deploys it to GitHub Pages.
 #
-# Triggered on every push to master. Uses _check-commits.yml to
-# determine whether the push contains docs- or feat-worthy changes
-# (or is a merge commit); skips the deploy job otherwise, avoiding
-# unnecessary Pages deployments for chore / fix-only pushes.
+# Triggered on every push to master.
 
 name: GitHub Pages Deployment
 
@@ -16,21 +13,10 @@ on:
       - master
 
 jobs:
-  # ── 0. Commit inspection ──────────────────────────────────────────────────────
-  check-commits:
-    name: Check commits
-    uses: ./.github/workflows/_check-commits.yml
-
   # ── 1. Build & Deploy ─────────────────────────────────────────────────────────
   deploy:
     name: Build and deploy GitHub Pages Deployment
-    needs: [check-commits]
     runs-on: ubuntu-latest
-
-    # Deploy only when a docs: or feat: commit is present, or on a merge.
-    if: |
-      needs.check-commits.outputs.is-merge-commit == 'true' ||
-      needs.check-commits.outputs.has-docs-commits == 'true'
 
     permissions:
       contents: read
