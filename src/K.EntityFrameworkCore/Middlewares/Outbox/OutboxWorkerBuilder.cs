@@ -3,6 +3,7 @@ using K.EntityFrameworkCore.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox;
 
@@ -73,10 +74,42 @@ public sealed class OutboxWorkerBuilder<TDbContext>
 
     /// <summary>
     /// Configures exclusive-node coordination (clustered, but only one works at a time)
+    /// using default <see cref="ExclusiveNodeOptions"/>.
     /// </summary>
+    /// <returns>The builder instance for chaining.</returns>
     public OutboxWorkerBuilder<TDbContext> UseExclusiveNode()
+        => UseExclusiveNode(configure: null);
+
+    /// <summary>
+    /// Configures exclusive-node coordination (clustered, but only one works at a time)
+    /// with custom options. The leader is elected via a Kafka consumer group on a
+    /// single-partition coordination topic; only the leader processes outbox rows.
+    /// </summary>
+    /// <param name="configure">
+    /// Optional action to configure <see cref="ExclusiveNodeOptions"/>.
+    /// When <c>null</c>, default option values are used.
+    /// </param>
+    /// <returns>The builder instance for chaining.</returns>
+    public OutboxWorkerBuilder<TDbContext> UseExclusiveNode(Action<ExclusiveNodeOptions>? configure)
     {
-        Services.TryAddSingleton<IOutboxCoordinationStrategy<TDbContext>, ExclusiveNodeCoordination<TDbContext>>();
+        if (configure is not null)
+        {
+            Services.Configure(configure);
+        }
+
+        // Remove any previously registered coordination strategy (e.g., the SingleNode default)
+        // so the exclusive-node strategy takes precedence.
+        Services.RemoveAll<IOutboxCoordinationStrategy<TDbContext>>();
+
+        // Register the implementation as a singleton shared across both interfaces.
+        Services.TryAddSingleton<ExclusiveNodeCoordination<TDbContext>>();
+
+        Services.AddSingleton<IOutboxCoordinationStrategy<TDbContext>>(sp =>
+            sp.GetRequiredService<ExclusiveNodeCoordination<TDbContext>>());
+
+        Services.AddSingleton<IHostedService>(sp =>
+            sp.GetRequiredService<ExclusiveNodeCoordination<TDbContext>>());
+
         return this;
     }
 

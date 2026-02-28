@@ -1,5 +1,6 @@
 ﻿using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Interfaces;
+using K.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,6 +75,9 @@ public sealed class OutboxPollingWorker<TDbContext> : BackgroundService
                     var query = coordination.ApplyScope(outboxMessages);
 
                     var outboxMessageArray = await query.Take(maxMessagesPerPoll).ToArrayAsync(stoppingToken);
+
+                    using var activity = KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.OutboxWorker.Poll");
+                    activity?.SetTag("k_ef.outbox.batch_size", outboxMessageArray.Length);
 
                     var outboxFinishedTasks = new Task[outboxMessageArray.Length];
 

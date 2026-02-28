@@ -3,6 +3,7 @@ global using IProducer = Confluent.Kafka.IProducer<string, byte[]>;
 using Confluent.Kafka;
 using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Core;
+using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.HeaderFilter;
 using K.EntityFrameworkCore.Middlewares.Inbox;
 using K.EntityFrameworkCore.Middlewares.Outbox;
@@ -54,8 +55,8 @@ internal class KafkaOptionsExtension : IDbContextOptionsExtension
         services.AddScoped(typeof(OutboxMiddleware<>));
         services.AddScoped(typeof(OutboxProducerMiddleware<>));
 
-        //services.AddScoped(typeof(ForgetMiddlewareSettings<>));
-        //services.AddScoped(typeof(ForgetMiddleware<>));
+        services.AddScoped(typeof(ProducerForgetMiddlewareSettings<>));
+        services.AddScoped(typeof(ProducerForgetMiddleware<>));
 
         services.AddSingleton(typeof(Channel<>));
 
@@ -66,6 +67,12 @@ internal class KafkaOptionsExtension : IDbContextOptionsExtension
 
         services.AddScoped(typeof(InboxMiddlewareSettings<>));
         services.AddScoped(typeof(InboxMiddleware<>));
+
+        services.AddScoped(typeof(TracePropagationMiddlewareSettings<>));
+        services.AddScoped(typeof(TracePropagationMiddleware<>));
+
+        services.AddScoped(typeof(TraceExtractionMiddlewareSettings<>));
+        services.AddScoped(typeof(TraceExtractionMiddleware<>));
 
         services.AddScoped(typeof(HeaderFilterMiddlewareSettings<>));
         services.AddScoped(typeof(HeaderFilterMiddleware<>));

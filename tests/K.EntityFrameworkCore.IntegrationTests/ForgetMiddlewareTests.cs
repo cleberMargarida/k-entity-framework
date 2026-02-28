@@ -3,7 +3,7 @@ namespace K.EntityFrameworkCore.IntegrationTests;
 [Collection("IntegrationTests")]
 public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgreSql) : IntegrationTest(kafka, postgreSql)
 {
-    [Fact(Skip = "Forget not implemented")]
+    [Fact]
     public async Task Given_ProducerWithForgetMiddleware_When_PublishingMessage_Then_MessageIsPublishedWithFireAndForgetSemantics()
     {
         // Arrange
@@ -26,7 +26,7 @@ public class ForgetMiddlewareTests(KafkaFixture kafka, PostgreSqlFixture postgre
         Assert.True(TopicExist("forget-topic"));
     }
 
-    [Fact(Skip = "Forget is not implemented yet")]
+    [Fact]
     public async Task Given_ProducerWithForgetAwaitStrategy_When_PublishingMessage_Then_AwaitForgetSemantics()
     {
         // Arrange

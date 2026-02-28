@@ -1,6 +1,8 @@
 ﻿using Confluent.Kafka;
+using K.EntityFrameworkCore.Diagnostics;
 using K.EntityFrameworkCore.Middlewares.Core;
 using K.EntityFrameworkCore.Middlewares.Producer;
+using System.Diagnostics;
 using System.Text;
 
 namespace K.EntityFrameworkCore.Middlewares.Outbox
@@ -20,6 +22,8 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
             OutboxMessage outboxMessage = target as OutboxMessage ?? throw new InvalidOperationException("Outbox not stored.");
 
             var tcs = new TaskCompletionSource<T?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var activity = KafkaDiagnostics.Source.StartActivity("K.EntityFrameworkCore.OutboxWorker.Publish");
+            var startTimestamp = Stopwatch.GetTimestamp();
 
             producer.Produce(this.topicName, new Message<string, byte[]>
             {
@@ -34,6 +38,9 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
 
             void HandleDeliveryReport(DeliveryReport<string, byte[]> report)
             {
+                var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
+                KafkaDiagnostics.OutboxPublishDuration.Record(elapsed.TotalMilliseconds);
+
                 outboxMessage.ProcessedAt = report.Timestamp.UtcDateTime;
                 bool isSuccessfullyProcessed = report.Error.Code is ErrorCode.NoError;
                 if (isSuccessfullyProcessed)
@@ -45,6 +52,7 @@ namespace K.EntityFrameworkCore.Middlewares.Outbox
                     outboxMessage.Retries++;
                 }
 
+                activity?.Dispose();
                 tcs.SetResult(null);
             }
         }

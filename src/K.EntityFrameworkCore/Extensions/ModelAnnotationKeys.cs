@@ -68,6 +68,16 @@ internal static class ModelAnnotationKeys
     public static string ProducerForgetEnabled(Type messageType) => $"{BasePrefix}ProducerForgetEnabled[{messageType.FullName}]";
 
     /// <summary>
+    /// Annotation key for storing the forget strategy for a producer message type.
+    /// </summary>
+    public static string ProducerForgetStrategy(Type messageType) => $"{BasePrefix}ProducerForgetStrategy[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing the forget timeout for a producer message type.
+    /// </summary>
+    public static string ProducerForgetTimeout(Type messageType) => $"{BasePrefix}ProducerForgetTimeout[{messageType.FullName}]";
+
+    /// <summary>
     /// Annotation key for storing InboxMiddlewareSettings by message type.
     /// </summary>
     public static string InboxMiddlewareSettings(Type messageType) => $"{BasePrefix}InboxMiddlewareSettings[{messageType.FullName}]";
@@ -114,6 +124,16 @@ internal static class ModelAnnotationKeys
     public static string ConsumerExclusiveConnectionConfig(Type messageType) => $"{BasePrefix}ConsumerExclusiveConnectionConfig[{messageType.FullName}]";
 
     /// <summary>
+    /// Annotation key for storing the high water mark ratio for a consumer message type.
+    /// </summary>
+    public static string ConsumerHighWaterMarkRatio(Type messageType) => $"{BasePrefix}ConsumerHighWaterMarkRatio[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing the low water mark ratio for a consumer message type.
+    /// </summary>
+    public static string ConsumerLowWaterMarkRatio(Type messageType) => $"{BasePrefix}ConsumerLowWaterMarkRatio[{messageType.FullName}]";
+
+    /// <summary>
     /// Annotation key for storing header property accessors for a producer message type.
     /// </summary>
     public static string ProducerHeaderAccessors(Type messageType) => $"{BasePrefix}ProducerHeaderAccessors[{messageType.FullName}]";
@@ -127,4 +147,19 @@ internal static class ModelAnnotationKeys
     /// Annotation key for storing topic specifications for a message type.
     /// </summary>
     public static string TopicSpecification(Type messageType) => $"{BasePrefix}TopicSpecification[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing the circuit breaker configuration for a consumer message type.
+    /// </summary>
+    public static string ConsumerCircuitBreakerConfig(Type messageType) => $"{BasePrefix}ConsumerCircuitBreakerConfig[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing user-registered producer middleware types for a message type.
+    /// </summary>
+    public static string UserProducerMiddlewares(Type messageType) => $"{BasePrefix}UserProducerMiddlewares[{messageType.FullName}]";
+
+    /// <summary>
+    /// Annotation key for storing user-registered consumer middleware types for a message type.
+    /// </summary>
+    public static string UserConsumerMiddlewares(Type messageType) => $"{BasePrefix}UserConsumerMiddlewares[{messageType.FullName}]";
 }

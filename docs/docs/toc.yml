@@ -17,10 +17,16 @@
   href: ../features/inbox.md
 - name: Outbox Pattern
   href: ../features/outbox.md
+- name: Exclusive Node Coordination
+  href: ../features/exclusive-node.md
 - name: Consumer Configuration
   href: ../features/consumer-configuration.md
+- name: Consumer Backpressure
+  href: ../features/consumer-backpressure.md
 - name: Topic Provisioning
   href: ../features/topic-provisioning.md
+- name: Observability
+  href: ../features/observability.md
 
 - name: Architecture
   topicHtml: <span class="text-body-tertiary">Architecture</span>

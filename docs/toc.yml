@@ -1,4 +1,18 @@
 - name: Docs
   href: docs/
+- name: Features
+  items:
+  - name: Circuit Breaker
+    href: features/circuit-breaker.md
+  - name: Consumer Backpressure
+    href: features/consumer-backpressure.md
+  - name: Custom Middleware
+    href: features/custom-middleware.md
+  - name: Exclusive Node
+    href: features/exclusive-node.md
+  - name: Forget Middleware
+    href: features/forget-middleware.md
+  - name: Observability
+    href: features/observability.md
 - name: API Reference
   href: api/
