@@ -14,6 +14,12 @@ internal class ConsumerMiddlewareSettings<T>(IModel model, IConsumerProcessingCo
     public ConsumerBackpressureMode BackpressureMode { get; } = model.GetBackpressureMode<T>() ?? consumerConfig.BackpressureMode;
 
     /// <inheritdoc />
+    public double HighWaterMarkRatio { get; } = model.GetHighWaterMarkRatio<T>() ?? consumerConfig.HighWaterMarkRatio;
+
+    /// <inheritdoc />
+    public double LowWaterMarkRatio { get; } = model.GetLowWaterMarkRatio<T>() ?? consumerConfig.LowWaterMarkRatio;
+
+    /// <inheritdoc />
     public bool ExclusiveConnection { get; } = model.HasExclusiveConnection<T>();
 }
 

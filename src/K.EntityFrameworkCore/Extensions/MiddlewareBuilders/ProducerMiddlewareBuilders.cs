@@ -40,8 +40,12 @@ public class OutboxBuilder<T>(IMutableModel model) where T : class
 /// Fluent builder for configuring producer ForgetMiddleware settings.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
-public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareSettings<T> settings) where T : class
+public class ProducerForgetBuilder<T> where T : class
 {
+    private readonly IMutableModel _model;
+
+    internal ProducerForgetBuilder(IMutableModel model) => _model = model;
+
     /// <summary>
     /// Sets the forget strategy to AwaitForget.
     /// </summary>
@@ -51,8 +55,8 @@ public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareSettings<T> settin
     /// <returns>The builder instance.</returns>
     public ProducerForgetBuilder<T> UseAwaitForget(TimeSpan? timeout = null)
     {
-        settings.Strategy = ForgetStrategy.AwaitForget;
-        settings.Timeout = timeout ?? TimeSpan.FromSeconds(30);
+        _model.SetProducerForgetStrategy<T>(ForgetStrategy.AwaitForget);
+        _model.SetProducerForgetTimeout<T>(timeout ?? TimeSpan.FromSeconds(30));
         return this;
     }
 
@@ -62,7 +66,7 @@ public class ProducerForgetBuilder<T>(ProducerForgetMiddlewareSettings<T> settin
     /// <returns>The builder instance.</returns>
     public ProducerForgetBuilder<T> UseFireForget()
     {
-        settings.Strategy = ForgetStrategy.FireForget;
+        _model.SetProducerForgetStrategy<T>(ForgetStrategy.FireForget);
         return this;
     }
 }

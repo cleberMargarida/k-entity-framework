@@ -334,11 +334,11 @@ internal static class ModelAnnotationHelpers
     }
 
     /// <summary>
-    /// Sets the producer forget strategy for a message type in the model annotations.
+    /// Sets the forget strategy for a producer message type in the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
-    /// <param name="strategy">The forget strategy to set.</param>
+    /// <param name="strategy">The forget strategy.</param>
     public static void SetProducerForgetStrategy<T>(this IMutableModel model, ForgetStrategy strategy)
         where T : class
     {
@@ -347,16 +347,42 @@ internal static class ModelAnnotationHelpers
     }
 
     /// <summary>
-    /// Gets the producer forget strategy for a message type from the model annotations.
+    /// Gets the forget strategy for a producer message type from the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
     /// <param name="model">The Entity Framework model.</param>
-    /// <returns>The forget strategy, or null if not configured.</returns>
+    /// <returns>The forget strategy, or null if not set.</returns>
     public static ForgetStrategy? GetProducerForgetStrategy<T>(this IModel model)
         where T : class
     {
         var annotationKey = ModelAnnotationKeys.ProducerForgetStrategy(typeof(T));
         return model.FindAnnotation(annotationKey)?.Value as ForgetStrategy?;
+    }
+
+    /// <summary>
+    /// Sets the forget timeout for a producer message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="timeout">The timeout duration.</param>
+    public static void SetProducerForgetTimeout<T>(this IMutableModel model, TimeSpan timeout)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerForgetTimeout(typeof(T));
+        model.SetAnnotation(annotationKey, timeout);
+    }
+
+    /// <summary>
+    /// Gets the forget timeout for a producer message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The forget timeout, or null if not set.</returns>
+    public static TimeSpan? GetProducerForgetTimeout<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerForgetTimeout(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as TimeSpan?;
     }
 
     /// <summary>
@@ -409,6 +435,58 @@ internal static class ModelAnnotationHelpers
     {
         var annotationKey = ModelAnnotationKeys.ConsumerBackpressureMode(typeof(T));
         return model.FindAnnotation(annotationKey)?.Value as ConsumerBackpressureMode?;
+    }
+
+    /// <summary>
+    /// Sets the high water mark ratio for a consumer message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="ratio">The high water mark ratio (0.0–1.0).</param>
+    public static void SetHighWaterMarkRatio<T>(this IMutableModel model, double ratio)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerHighWaterMarkRatio(typeof(T));
+        model.SetAnnotation(annotationKey, ratio);
+    }
+
+    /// <summary>
+    /// Gets the high water mark ratio for a consumer message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The high water mark ratio, or null if not set.</returns>
+    public static double? GetHighWaterMarkRatio<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerHighWaterMarkRatio(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as double?;
+    }
+
+    /// <summary>
+    /// Sets the low water mark ratio for a consumer message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="ratio">The low water mark ratio (0.0–1.0).</param>
+    public static void SetLowWaterMarkRatio<T>(this IMutableModel model, double ratio)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerLowWaterMarkRatio(typeof(T));
+        model.SetAnnotation(annotationKey, ratio);
+    }
+
+    /// <summary>
+    /// Gets the low water mark ratio for a consumer message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The low water mark ratio, or null if not set.</returns>
+    public static double? GetLowWaterMarkRatio<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerLowWaterMarkRatio(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as double?;
     }
 
     /// <summary>
@@ -529,6 +607,100 @@ internal static class ModelAnnotationHelpers
         var annotationKey = ModelAnnotationKeys.TopicSpecification(typeof(T));
         var topicSpecification = model.FindAnnotation(annotationKey)?.Value as TopicSpecification;
         return topicSpecification;
+    }
+
+    /// <summary>
+    /// Sets the circuit breaker configuration for a consumer message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="config">The circuit breaker configuration.</param>
+    public static void SetCircuitBreakerConfig<T>(this IMutableModel model, ICircuitBreakerConfig config)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerCircuitBreakerConfig(typeof(T));
+        model.SetAnnotation(annotationKey, config);
+    }
+
+    /// <summary>
+    /// Gets the circuit breaker configuration for a consumer message type.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The circuit breaker configuration, or null if not set.</returns>
+    public static ICircuitBreakerConfig? GetCircuitBreakerConfig<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerCircuitBreakerConfig(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as ICircuitBreakerConfig;
+    }
+
+    /// <summary>
+    /// Gets the circuit breaker configuration for a consumer message type.
+    /// </summary>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="type">The message type.</param>
+    /// <returns>The circuit breaker configuration, or null if not set.</returns>
+    public static ICircuitBreakerConfig? GetCircuitBreakerConfig(this IModel model, Type type)
+    {
+        var annotationKey = ModelAnnotationKeys.ConsumerCircuitBreakerConfig(type);
+        return model.FindAnnotation(annotationKey)?.Value as ICircuitBreakerConfig;
+    }
+
+    /// <summary>
+    /// Adds a user-registered producer middleware type for a message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="middlewareType">The user middleware type to register.</param>
+    public static void AddUserProducerMiddleware<T>(this IMutableModel model, Type middlewareType)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.UserProducerMiddlewares(typeof(T));
+        var existing = model.FindAnnotation(annotationKey)?.Value as List<UserMiddlewareRegistration> ?? [];
+        existing.Add(new UserMiddlewareRegistration(middlewareType));
+        model.SetAnnotation(annotationKey, existing);
+    }
+
+    /// <summary>
+    /// Gets the user-registered producer middleware types for a message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>List of user middleware registrations, or empty list if none registered.</returns>
+    public static List<UserMiddlewareRegistration> GetUserProducerMiddlewares<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.UserProducerMiddlewares(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as List<UserMiddlewareRegistration> ?? [];
+    }
+
+    /// <summary>
+    /// Adds a user-registered consumer middleware type for a message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="middlewareType">The user middleware type to register.</param>
+    public static void AddUserConsumerMiddleware<T>(this IMutableModel model, Type middlewareType)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.UserConsumerMiddlewares(typeof(T));
+        var existing = model.FindAnnotation(annotationKey)?.Value as List<UserMiddlewareRegistration> ?? [];
+        existing.Add(new UserMiddlewareRegistration(middlewareType));
+        model.SetAnnotation(annotationKey, existing);
+    }
+
+    /// <summary>
+    /// Gets the user-registered consumer middleware types for a message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>List of user middleware registrations, or empty list if none registered.</returns>
+    public static List<UserMiddlewareRegistration> GetUserConsumerMiddlewares<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.UserConsumerMiddlewares(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as List<UserMiddlewareRegistration> ?? [];
     }
 
     /// <summary>

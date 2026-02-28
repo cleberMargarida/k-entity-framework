@@ -298,6 +298,18 @@ public class ProducerBuilder<T>(ModelBuilder modelBuilder)
         return this;
     }
 
+    /// <summary>
+    /// Registers a custom middleware to be inserted into the producer pipeline after serialization.
+    /// Multiple middleware are chained in registration order (FIFO).
+    /// </summary>
+    /// <typeparam name="TMiddleware">The middleware type implementing <see cref="IMiddleware{T}"/>. Must be a class with <c>IsEnabled</c> returning <c>true</c> to participate in the pipeline.</typeparam>
+    /// <returns>The producer builder instance for method chaining.</returns>
+    public ProducerBuilder<T> HasMiddleware<TMiddleware>() where TMiddleware : class, IMiddleware<T>
+    {
+        modelBuilder.Model.AddUserProducerMiddleware<T>(typeof(TMiddleware));
+        return this;
+    }
+
     private static string GetPropertyName<TSource>(Expression<Func<TSource, object>> expression)
     {
         Expression body = expression.Body;
@@ -374,6 +386,40 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
     }
 
     /// <summary>
+    /// Sets the high water mark ratio for this message type's channel.
+    /// When the channel fill level reaches this ratio of capacity, the Kafka consumer will be paused
+    /// to prevent further message fetching until the channel drains.
+    /// Default is inherited from global consumer configuration (0.80).
+    /// </summary>
+    /// <param name="ratio">The ratio between 0.0 and 1.0 (exclusive of 0.0).</param>
+    /// <returns>The consumer builder instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="ratio"/> is not between 0.0 and 1.0.</exception>
+    public ConsumerBuilder<T> WithHighWaterMark(double ratio)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(ratio, 0.0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(ratio, 1.0);
+        modelBuilder.Model.SetHighWaterMarkRatio<T>(ratio);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the low water mark ratio for this message type's channel.
+    /// When a paused consumer's channel fill level drops to this ratio of capacity, the consumer will be resumed.
+    /// Default is inherited from global consumer configuration (0.50).
+    /// Must be less than the high water mark ratio.
+    /// </summary>
+    /// <param name="ratio">The ratio between 0.0 and 1.0.</param>
+    /// <returns>The consumer builder instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="ratio"/> is not between 0.0 and 1.0.</exception>
+    public ConsumerBuilder<T> WithLowWaterMark(double ratio)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(ratio, 0.0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(ratio, 1.0);
+        modelBuilder.Model.SetLowWaterMarkRatio<T>(ratio);
+        return this;
+    }
+
+    /// <summary>
     /// Configures this message type to use a dedicated consumer connection.
     /// When enabled, a separate KafkaConsumerPollService will be created specifically for this type,
     /// allowing for type-specific consumer configurations and isolation.
@@ -385,6 +431,34 @@ public class ConsumerBuilder<T>(ModelBuilder modelBuilder)
         modelBuilder.Model.SetExclusiveConnection<T>();
         modelBuilder.Model.SetExclusiveConnectionConfig<T>(connection);
 
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a circuit breaker for this consumer.
+    /// When too many processing failures occur within the sliding window, the circuit opens
+    /// and the consumer is paused. After the reset interval, the circuit enters half-open state
+    /// and probes with a single message to test recovery.
+    /// </summary>
+    /// <param name="configure">Optional action to configure circuit breaker settings. If null, default values are used.</param>
+    /// <returns>The consumer builder instance.</returns>
+    public ConsumerBuilder<T> HasCircuitBreaker(Action<CircuitBreakerBuilder>? configure = null)
+    {
+        var builder = new CircuitBreakerBuilder();
+        configure?.Invoke(builder);
+        modelBuilder.Model.SetCircuitBreakerConfig<T>(builder.Build());
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a custom middleware to be inserted into the consumer pipeline after deserialization.
+    /// Multiple middleware are chained in registration order (FIFO).
+    /// </summary>
+    /// <typeparam name="TMiddleware">The middleware type implementing <see cref="IMiddleware{T}"/>. Must be a class with <c>IsEnabled</c> returning <c>true</c> to participate in the pipeline.</typeparam>
+    /// <returns>The consumer builder instance for method chaining.</returns>
+    public ConsumerBuilder<T> HasMiddleware<TMiddleware>() where TMiddleware : class, IMiddleware<T>
+    {
+        modelBuilder.Model.AddUserConsumerMiddleware<T>(typeof(TMiddleware));
         return this;
     }
 

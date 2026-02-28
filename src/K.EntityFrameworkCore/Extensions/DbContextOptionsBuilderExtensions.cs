@@ -57,6 +57,38 @@ public class KafkaClientBuilder(ClientConfig clientConfig) : IClientConfig
     }
 
     /// <summary>
+    /// Gets a value indicating whether distributed tracing is disabled.
+    /// </summary>
+    internal bool IsTracingDisabled { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether metrics collection is disabled.
+    /// </summary>
+    internal bool IsMetricsDisabled { get; private set; }
+
+    /// <summary>
+    /// Disables OpenTelemetry distributed tracing for this Kafka client.
+    /// When disabled, trace context will not be propagated through message headers.
+    /// </summary>
+    /// <returns>The same builder instance for method chaining.</returns>
+    public KafkaClientBuilder DisableTracing()
+    {
+        IsTracingDisabled = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Disables OpenTelemetry metrics collection for this Kafka client.
+    /// When disabled, counters and histograms will not be recorded.
+    /// </summary>
+    /// <returns>The same builder instance for method chaining.</returns>
+    public KafkaClientBuilder DisableMetrics()
+    {
+        IsMetricsDisabled = true;
+        return this;
+    }
+
+    /// <summary>
     /// Gets the underlying Confluent.Kafka ClientConfig instance.
     /// </summary>
     internal ClientConfig ClientConfig => clientConfig;
@@ -1169,6 +1201,17 @@ public interface IConsumerProcessingConfig
     /// </summary>
     ConsumerBackpressureMode BackpressureMode { get; }
 
+    /// <summary>
+    /// The ratio of channel capacity at which the consumer should be paused.
+    /// Default is 0.80 (80%). Must be between 0.0 and 1.0.
+    /// </summary>
+    double HighWaterMarkRatio { get; }
+
+    /// <summary>
+    /// The ratio of channel capacity at which a paused consumer should be resumed.
+    /// Default is 0.50 (50%). Must be between 0.0 and 1.0 and less than <see cref="HighWaterMarkRatio"/>.
+    /// </summary>
+    double LowWaterMarkRatio { get; }
 
     /// <summary>
     /// Creates internal channel options from this consumer configuration.
@@ -1196,8 +1239,6 @@ public interface IConsumerProcessingConfig
 /// </summary>
 public enum ConsumerBackpressureMode
 {
-    //TODO: when applying backpressure, consider pausing the consumer when the buffer is full and resuming when space is available.
-
     /// <summary>
     /// Applies backpressure by slowing down message consumption.
     /// This is the recommended mode for most scenarios as it prevents message loss.
@@ -1478,6 +1519,8 @@ internal class ConsumerConfigInternal : ConsumerConfig, IConsumerConfig
 
     public int MaxBufferedMessages { get; set; } = 10_000;
     public ConsumerBackpressureMode BackpressureMode { get; set; } = ConsumerBackpressureMode.ApplyBackpressure;
+    public double HighWaterMarkRatio { get; set; } = 0.80;
+    public double LowWaterMarkRatio { get; set; } = 0.50;
 
     // ISharedOperationalConfig implementation - properties that can be configured separately for consumers
     // These delegate to the underlying ConsumerConfig which inherits from ClientConfig

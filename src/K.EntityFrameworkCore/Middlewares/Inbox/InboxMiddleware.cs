@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using K.EntityFrameworkCore.Diagnostics;
 using K.EntityFrameworkCore.Extensions;
 using K.EntityFrameworkCore.Middlewares.Consumer;
 using K.EntityFrameworkCore.Middlewares.Core;
@@ -35,6 +36,7 @@ internal class InboxMiddleware<T>(
         var isDuplicate = (await inboxMessages.FindAsync(new object[] { hashId }, cancellationToken)) != null;
         if (isDuplicate)
         {
+            KafkaDiagnostics.InboxDuplicatesFiltered.Add(1);
             return null;
         }
 
