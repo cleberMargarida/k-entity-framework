@@ -3,6 +3,7 @@ using Confluent.Kafka.Admin;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -18,8 +19,8 @@ public abstract class IntegrationTest : IDisposable
 {
     private readonly KafkaFixture kafka;
 
-    private readonly ModelBuilder internalModelBuilder = new();
-    private WebApplication host;
+    private IHost host;
+    protected ModelBuilder modelBuilder = new();
     protected WebApplicationBuilder builder;
     protected PostgreTestContext context;
     protected TopicTypeBuilder<DefaultMessage> defaultTopic;
@@ -43,8 +44,8 @@ public abstract class IntegrationTest : IDisposable
                        .EnableServiceProviderCaching(false)
                        .UseKafkaExtensibility(builder.Configuration.GetConnectionString("kafka")));
 
-        defaultTopic = new TopicTypeBuilder<DefaultMessage>(internalModelBuilder);
-        alternativeTopic = new TopicTypeBuilder<AlternativeMessage>(internalModelBuilder);
+        defaultTopic = new TopicTypeBuilder<DefaultMessage>(modelBuilder);
+        alternativeTopic = new TopicTypeBuilder<AlternativeMessage>(modelBuilder);
     }
 
     protected async Task StartHostAsync()
@@ -52,9 +53,12 @@ public abstract class IntegrationTest : IDisposable
         host = builder.Build();
 
         context = host.Services.GetService<PostgreTestContext>();
-        PostgreTestContext.Annotations.AddRange(internalModelBuilder.Model.GetAnnotations());
+        PostgreTestContext.Annotations.AddRange(modelBuilder.Model.GetAnnotations());
 
         await context.Database.EnsureCreatedAsync();
+
+        await context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE outbox_messages");
+
         await host.StartAsync();
     }
 
@@ -92,9 +96,9 @@ public abstract class IntegrationTest : IDisposable
 
     public void Dispose()
     {
+        host?.Dispose();
         DeleteKafkaTopics();
-        host?.StopAsync();
-        (host as IDisposable)?.Dispose();
-        context.Dispose();
+        context?.Dispose();
+        PostgreTestContext.Annotations?.Clear();
     }
 }

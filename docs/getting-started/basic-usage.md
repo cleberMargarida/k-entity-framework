@@ -150,9 +150,6 @@ builder.Services.AddDbContext<MyDbContext>(options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
     .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
 
-// Register the outbox worker if you are using the outbox pattern
-builder.Services.AddOutboxKafkaWorker<MyDbContext>();
-
 // Register your consumer
 builder.Services.AddHostedService<OrderEventProcessor>();
 
@@ -204,8 +201,7 @@ builder.Services.AddDbContext<OrderDbContext>(opts => opts
     // Configure Kafka
     .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
 
-// If you use outbox patterns, add the worker
-builder.Services.AddOutboxKafkaWorker<OrderDbContext>();
+// The outbox worker starts automatically — no extra registration needed.
 
 // Add background processor that reads from the DbContext topic
 builder.Services.AddHostedService<OrderEventProcessor>();

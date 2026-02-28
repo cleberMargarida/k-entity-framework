@@ -40,6 +40,8 @@ internal class KafkaOptionsExtension : IDbContextOptionsExtension
 
         services.AddSingleton(typeof(ConsumerPollRegistry));
 
+        services.AddSingleton(typeof(OutboxPollRegistry));
+
         services.AddScoped(typeof(ScopedCommandRegistry));
         services.AddScoped(typeof(ClientSettings<>));
         services.AddScoped(typeof(ProducerMiddlewareInvoker<>));

@@ -15,7 +15,7 @@ The Outbox pattern solves the dual-write problem in distributed systems by:
 
 1.  [`OutboxMessage`](../api/K.EntityFrameworkCore.OutboxMessage.yml) - An entity that stores pending messages in your database.
 2.  [`OutboxProducerMiddleware<T>`](../api/K.EntityFrameworkCore.Middlewares.Outbox.OutboxMiddlewareSettings-1.yml) - Intercepts produce operations and stores messages in the outbox.
-3.  [`OutboxPollingWorker<TDbContext>`](../api/K.EntityFrameworkCore.Extensions.OutboxPollingWorkerSettings-1.yml) - A background service that polls the outbox and publishes messages.
+3.  **OutboxPollRegistry** - An internal singleton that lazily starts a background polling loop on the first `SaveChanges` and publishes pending messages.
 
 ### Message Flow
 
@@ -27,7 +27,7 @@ graph LR
     C --> D["Store in DbSet OutboxMessage"]
     D --> E["SaveChangesAsync"]
     E --> F["Transaction Commit"]
-    F --> G["OutboxPollingWorker"]
+    F --> G["Background Poller"]
     G --> H["Produce to Kafka"]
 
     %% Base style for all nodes
@@ -69,24 +69,31 @@ modelBuilder.Topic<OrderCreated>(topic =>
 });
 ```
 
-### 2. Configure the Outbox Worker
+### 2. Configure the Outbox Worker (optional)
 
-In your `Program.cs` or `Startup.cs`, register the `OutboxPollingWorker`.
+The outbox background poller starts automatically on the first `SaveChanges` — no extra service registration is needed. You can optionally tune worker-global polling behaviour via `HasOutboxWorker()` in `OnModelCreating`:
 
 ```csharp
-builder.Services.AddDbContext<MyDbContext>(options => options
-    .UseSqlServer(connectionString)
-    .UseKafkaExtensibility(kafka =>
-    {
-        kafka.BootstrapServers = "localhost:9092";
-    }));
+// Worker-global settings — registers a global outbox registry that manages
+// per-DbContext polling loops (see OutboxPollRegistry for runtime details).
+modelBuilder.HasOutboxWorker(worker => worker
+    .WithPollingInterval(TimeSpan.FromSeconds(5))
+    .WithMaxMessagesPerPoll(50)
+    .UseSingleNode()); // .UseExclusiveNode() is not yet implemented — avoid in production
 
-builder.Services.AddOutboxKafkaWorker<MyDbContext>(worker => worker
-    .PollingInterval(TimeSpan.FromSeconds(5))
-    .MaxMessagesPerPoll(100)
-    .UseSingleNode() // or .UseExclusiveNode() for clustered deployments
-);
+modelBuilder.Topic<OrderCreated>(topic =>
+{
+    topic.HasName("order-events");
+
+    topic.HasProducer(producer =>
+    {
+        producer.HasKey(order => order.OrderId);
+        producer.HasOutbox(); // per-type publishing strategy (optional)
+    });
+});
 ```
+
+> **Note:** `HasOutboxWorker` is called on `ModelBuilder` (not on a topic builder) because the outbox registry is registered at global scope. At runtime, however, the registry creates independent polling loops per `DbContext` type, each with its own polling state and lifecycle (managed by `OutboxPollRegistry`). The settings configured here — such as polling interval and max messages per poll — apply as defaults to every per-`DbContext` polling loop.
 
 ## Usage
 
@@ -136,12 +143,6 @@ builder.Services.AddDbContext<PostgreTestContext>(opts => opts
     
     // Register DbContext and configure Kafka extensibility on it
     .UseKafkaExtensibility(builder.Configuration.GetConnectionString("Kafka")));
-
-builder.Services.AddOutboxKafkaWorker<PostgreTestContext>(options =>
-{
-    options.PollingInterval = TimeSpan.FromSeconds(5);
-    options.BatchSize = 50;
-});
 
 var app = builder.Build();
 app.Run();
@@ -193,7 +194,7 @@ Producer usage is identical from the app perspective — call SaveChanges and th
 
 ### Batch publishing notes
 
-When producing many messages in one DbContext SaveChanges operation, the library will handle batching according to the worker settings and producer configuration. Tune worker batch sizes and polling intervals in `AddOutboxKafkaWorker` options.
+When producing many messages in one DbContext SaveChanges operation, the library will handle batching according to the worker settings and producer configuration. Tune batch sizes and polling intervals via `ModelBuilder.HasOutboxWorker()` (e.g. `WithPollingInterval`, `WithMaxMessagesPerPoll`).
 
 ## Alternative: Debezium CDC Integration
 

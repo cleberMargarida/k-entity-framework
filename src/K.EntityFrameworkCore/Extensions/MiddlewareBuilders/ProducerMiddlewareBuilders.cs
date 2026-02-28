@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace K.EntityFrameworkCore.Extensions.MiddlewareBuilders;
 
 /// <summary>
-/// Fluent builder for configuring OutboxMiddleware settings.
+/// Fluent builder for configuring per-type outbox publishing strategy.
+/// For worker-global settings (polling interval, batch size, coordination strategy),
+/// use <see cref="ModelBuilderExtensions.HasOutboxWorker"/> with <see cref="OutboxGlobalBuilder"/>.
 /// </summary>
 /// <typeparam name="T">The message type.</typeparam>
 public class OutboxBuilder<T>(IMutableModel model) where T : class

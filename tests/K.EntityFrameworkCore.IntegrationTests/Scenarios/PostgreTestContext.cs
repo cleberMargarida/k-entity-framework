@@ -21,13 +21,11 @@ public sealed class PostgreTestContext(DbContextOptions options) : DbContext(opt
 
     public override void Dispose()
     {
-        Annotations.Clear();
         base.Dispose();
     }
 
     public override ValueTask DisposeAsync()
     {
-        Annotations.Clear();
         return base.DisposeAsync();
     }
 }

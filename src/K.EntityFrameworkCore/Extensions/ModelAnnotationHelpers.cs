@@ -1,4 +1,5 @@
 using Confluent.Kafka.Admin;
+using K.EntityFrameworkCore.Middlewares.Forget;
 using K.EntityFrameworkCore.Middlewares.Outbox;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
@@ -333,6 +334,32 @@ internal static class ModelAnnotationHelpers
     }
 
     /// <summary>
+    /// Sets the producer forget strategy for a message type in the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <param name="strategy">The forget strategy to set.</param>
+    public static void SetProducerForgetStrategy<T>(this IMutableModel model, ForgetStrategy strategy)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerForgetStrategy(typeof(T));
+        model.SetAnnotation(annotationKey, strategy);
+    }
+
+    /// <summary>
+    /// Gets the producer forget strategy for a message type from the model annotations.
+    /// </summary>
+    /// <typeparam name="T">The message type.</typeparam>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The forget strategy, or null if not configured.</returns>
+    public static ForgetStrategy? GetProducerForgetStrategy<T>(this IModel model)
+        where T : class
+    {
+        var annotationKey = ModelAnnotationKeys.ProducerForgetStrategy(typeof(T));
+        return model.FindAnnotation(annotationKey)?.Value as ForgetStrategy?;
+    }
+
+    /// <summary>
     /// Sets the maximum buffered messages for a consumer message type in the model annotations.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
@@ -539,5 +566,76 @@ internal static class ModelAnnotationHelpers
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Sets the outbox polling interval in the model annotations.
+    /// </summary>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="interval">The polling interval. Must be greater than <see cref="TimeSpan.Zero"/>.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="interval"/> is zero or negative.</exception>
+    public static void SetOutboxPollingInterval(this IMutableModel model, TimeSpan interval)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(interval, TimeSpan.Zero, nameof(interval));
+        model.SetAnnotation(ModelAnnotationKeys.OutboxPollingInterval, interval);
+    }
+
+    /// <summary>
+    /// Gets the outbox polling interval from the model annotations.
+    /// </summary>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The polling interval, or <c>TimeSpan.FromSeconds(1)</c> if not set.</returns>
+    public static TimeSpan GetOutboxPollingInterval(this IModel model)
+    {
+        return model.FindAnnotation(ModelAnnotationKeys.OutboxPollingInterval)?.Value as TimeSpan?
+            ?? TimeSpan.FromSeconds(1);
+    }
+
+    /// <summary>
+    /// Sets the maximum number of messages per outbox poll in the model annotations.
+    /// </summary>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="max">The maximum number of messages. Must be greater than zero.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="max"/> is zero or negative.</exception>
+    public static void SetOutboxMaxMessagesPerPoll(this IMutableModel model, int max)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(max, 0, nameof(max));
+        model.SetAnnotation(ModelAnnotationKeys.OutboxMaxMessagesPerPoll, max);
+    }
+
+    /// <summary>
+    /// Gets the maximum number of messages per outbox poll from the model annotations.
+    /// </summary>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The maximum messages per poll, or <c>100</c> if not set.</returns>
+    public static int GetOutboxMaxMessagesPerPoll(this IModel model)
+    {
+        return model.FindAnnotation(ModelAnnotationKeys.OutboxMaxMessagesPerPoll)?.Value as int?
+            ?? 100;
+    }
+
+    /// <summary>
+    /// Sets the outbox coordination strategy in the model annotations.
+    /// </summary>
+    /// <param name="model">The mutable Entity Framework model.</param>
+    /// <param name="strategy">The coordination strategy to use.</param>
+    public static void SetOutboxCoordinationStrategy(this IMutableModel model, OutboxCoordinationStrategy strategy)
+    {
+        model.SetAnnotation(ModelAnnotationKeys.OutboxCoordinationStrategy, strategy);
+    }
+
+    /// <summary>
+    /// Gets the outbox coordination strategy from the model annotations.
+    /// </summary>
+    /// <param name="model">The Entity Framework model.</param>
+    /// <returns>The coordination strategy, or <see cref="OutboxCoordinationStrategy.SingleNode"/> if not set.</returns>
+    public static OutboxCoordinationStrategy GetOutboxCoordinationStrategy(this IModel model)
+    {
+        var value = model.FindAnnotation(ModelAnnotationKeys.OutboxCoordinationStrategy)?.Value;
+        if (value is OutboxCoordinationStrategy strategy && Enum.IsDefined(strategy))
+        {
+            return strategy;
+        }
+        return OutboxCoordinationStrategy.SingleNode;
     }
 }

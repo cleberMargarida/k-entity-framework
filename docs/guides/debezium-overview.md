@@ -48,13 +48,13 @@ flowchart LR
 > - You need **operational visibility** into database changes
 
 > [!WARNING]
-> **Use Polling Worker when:**
+> **Use the built-in poller when:**
 > - You have a **simple setup** with low event volume
 > - **Ease of deployment** is more important than latency
 > - You don't want to manage CDC infrastructure
 > - Events can be delayed by seconds without impact
 
-For polling worker setup, see the [OutboxPollingWorker documentation](../features/outbox.md).
+For built-in poller details, see the [Outbox documentation](../features/outbox.md).
 
 ## Custom SMT Requirement
 
@@ -114,9 +114,9 @@ The consumer framework reads Kafka headers individually — including `$type` fo
 InvalidOperationException: The required '$type' Kafka header was not found on the message.
 ```
 
-### Why the polling worker is unaffected
+### Why the built-in poller is unaffected
 
-The built-in polling worker calls `ProducerMiddlewareSettings.GetHeaders()`, which writes `$type`, `$runtimeType`, and all user-defined headers as individual Confluent Kafka headers from the start. There is no blob step, so no SMT is needed.
+The built-in poller calls `ProducerMiddlewareSettings.GetHeaders()`, which writes `$type`, `$runtimeType`, and all user-defined headers as individual Confluent Kafka headers from the start. There is no blob step, so no SMT is needed.
 
 ---
 

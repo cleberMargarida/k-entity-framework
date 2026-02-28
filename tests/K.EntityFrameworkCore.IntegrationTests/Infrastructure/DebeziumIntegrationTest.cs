@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics.CodeAnalysis;
 
 namespace K.EntityFrameworkCore.IntegrationTests.Infrastructure;
@@ -16,7 +17,7 @@ public abstract class DebeziumIntegrationTest : IDisposable
 {
     private readonly DebeziumFixture _debezium;
     private readonly ModelBuilder internalModelBuilder = new();
-    private WebApplication host;
+    private IHost host;
     protected WebApplicationBuilder builder;
     protected DebeziumTestContext context;
     protected TopicTypeBuilder<DebeziumOrderPlaced> orderEventTopic;
@@ -54,8 +55,8 @@ public abstract class DebeziumIntegrationTest : IDisposable
 
     public void Dispose()
     {
-        host?.StopAsync();
-        (host as IDisposable)?.Dispose();
+        host?.Dispose();
         context?.Dispose();
+        DebeziumTestContext.Annotations.Clear();
     }
 }

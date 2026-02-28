@@ -44,25 +44,8 @@ internal class InboxMiddleware<T>(
             ExpireAt = DateTime.UtcNow + inboxSetting.DeduplicationTimeWindow,
         });
 
-        scopedCommandRegistry.Add(new CommitMiddlewareInvokeCommand(this.consumer, offset).ExecuteAsync);
+        scopedCommandRegistry.AddCommit(this.consumer, offset);
 
         return message;
-    }
-
-    private readonly struct CommitMiddlewareInvokeCommand(IConsumer consumer, TopicPartitionOffset topicPartitionOffset)
-    {
-        public ValueTask ExecuteAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
-        {
-            _ = serviceProvider;
-            cancellationToken.ThrowIfCancellationRequested();
-
-            consumer.StoreOffset(new TopicPartitionOffset(
-                  topicPartitionOffset.Topic
-                , topicPartitionOffset.Partition
-                , topicPartitionOffset.Offset + 1
-                , topicPartitionOffset.LeaderEpoch));
-
-            return ValueTask.CompletedTask;
-        }
     }
 }
